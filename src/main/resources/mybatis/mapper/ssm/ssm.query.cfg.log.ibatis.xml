@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.query.cfg.log">
+    <!-- 增加前端查询日志 -->
+    <insert id="add" parameterType="com.bi.queryer.ssm.query.log.cfg.SSMQueryCfgLogEntity">
+        INSERT INTO ssm_query_cfg_log(
+            user_name,
+            session_id,
+            template_id,
+            <foreach collection="logFields" open="" separator="," close="," item="e">
+                ${e}
+            </foreach>
+            created_time,
+            env
+        )
+        VALUES(
+            #{userName},
+            #{sessionId},
+            #{templateId},
+            <foreach collection="logValues" open="" separator="," close="," item="e">
+                #{e}
+            </foreach>
+            now(),
+            #{env}
+        )
+        on duplicate key update updated_time = now(), template_id = #{templateId}
+            <foreach collection="logContent"  index="key" item="value"  open=","  separator=","  close="">
+                ${key}=#{value}
+            </foreach>
+    </insert>
+</mapper>

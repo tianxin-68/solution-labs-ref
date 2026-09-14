@@ -1,0 +1,149 @@
+{
+  "filter": [
+    {
+      "id": "405f24f8135e44c08278a43a9d13c986",
+      "code": "dt",
+      "name": "order_date",
+      "title": "日期",
+      "filterValueType": "include",
+      "filterQueryRule": "default",
+      "filterValueMode": "",
+      "valuesTitle": "前7日 到 昨天",
+      "values": [
+        {
+          "levelFieldName": "",
+          "levelFieldId": "",
+          "id": "${CurrentDay-7}",
+          "title": "前7日",
+          "realId": ""
+        },
+        {
+          "levelFieldName": "",
+          "levelFieldId": "",
+          "id": "${CurrentDay-1}",
+          "title": "昨天",
+          "realId": ""
+        }
+      ],
+      "showOrder": 1
+    }
+  ],
+  "result": {
+    "rowDimensions": [
+      {
+        "id": "405f24f8135e44c08278a43a9d13c986",
+        "code": "dt",
+        "name": "order_date",
+        "title": "日期",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "aggExpression": "",
+        "categoryAggregation": {
+          "enable": 0,
+          "categories": []
+        },
+        "showOrder": 1
+      },
+      {
+        "id": "7ad4ed6792cc43a2b4a3fa532e1b2b66",
+        "code": "businessline",
+        "name": "businessline",
+        "title": "业务线",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "aggExpression": "",
+        "showOrder": 2
+      },
+      {
+        "id": "ef82c6f0d5bc45638d403651bc06b8d7",
+        "code": "dim_order_source_channel_category_lvl2_name",
+        "name": "dim_order_source_channel_category_lvl2_name",
+        "title": "二级渠道名称",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "aggExpression": "",
+        "showOrder": 3
+      }
+    ],
+    "colDimensions": [],
+    "measures": [
+      {
+        "id": "5ea9fd6cb9ba44c481599684ed1bc26d",
+        "code": "order_gmv",
+        "name": "order_gmv",
+        "title": "成单GMV",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "aggExpression": "",
+        "showOrder": 1
+      },
+      {
+        "id": "order_gmv_hb",
+        "code": "order_gmv_hb",
+        "name": "order_gmv_hb",
+        "title": "成单GMV_环比",
+        "displayTitle": "",
+        "sortType": "DESC",
+        "aggExpression": "",
+        "showOrder": 2,
+        "isAnalysis": 1,
+        "analysisConfig" : {
+          "dateFieldCode" : "dt",
+          "dateGranularity" : "d",
+          "measureCode" : "order_gmv",
+          "calcMode" : "hb" ,
+          "calcType" : "ratio"
+        }
+      },
+      {
+        "id": "order_gmv_tb_w",
+        "code": "order_gmv_tb_w",
+        "name": "order_gmv_tb_w",
+        "title": "成单GMV_周同比",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "aggExpression": "",
+        "showOrder": 3,
+        "isAnalysis": 1,
+        "analysisConfig" : {
+          "dateFieldCode" : "dt",
+          "dateGranularity" : "d",
+          "measureCode" : "order_gmv",
+          "calcMode" : "tb_w" ,
+          "calcType" : "ratio"
+        }
+      },
+      {
+        "id": "6f24873d97db44848e842e460b70cd2d",
+        "code": "order_user",
+        "name": "order_user",
+        "title": "成单用户数",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "showOrder": 4
+      },
+      {
+        "id": "order_user_zb",
+        "code": "order_user_zb",
+        "name": "order_user_zb",
+        "title": "成单用户数_占比",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "aggExpression": "",
+        "showOrder": 5,
+        "isAnalysis": 1,
+        "analysisConfig" : {
+          "dateFieldCode" : "dt",
+          "dateGranularity" : "d",
+          "measureCode" : "order_user",
+          "calcMode" : "zb" ,
+          "calcType" : "ratio"
+        }
+      }
+    ]
+  },
+  "setting": {
+    "queryRowLimit": 500
+  },
+  "sessionId": ""
+}

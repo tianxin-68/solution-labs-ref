@@ -1,0 +1,49 @@
+-- 获取所有指标目标值适配的粒度和维度
+uri : target/value/measure/adaptive/list
+request :
+{
+
+}
+
+response：
+{
+    data : [
+        {
+            "measureCode" : "O_ORD_00001", // 白皮书编码
+            "adaptiveList" : [
+                            {
+                                "dateGranularityList" : ["w","m"],
+                                "dimensionList" : [
+                                    {
+                                        "fieldCode" : "ABC",  // 白皮书编码
+                                        "fieldTitle" : "业务线"
+                                    },
+                                     {
+                                        "fieldCode" : "AAB",
+                                        "fieldTitle" : "渠道"
+                                     }
+                                ]
+                            },
+                            {
+                                "dateGranularityList" : ["q","y"],
+                                "dimensionList" : [
+                                    {
+                                        "fieldCode" : "DBX",  // 白皮书编码
+                                        "fieldTitle" : "省份"
+                                    },
+                                     {
+                                        "fieldCode" : "DBY",
+                                        "fieldTitle" : "城市"
+                                     }
+                                ]
+                            }
+            ]
+
+        },
+        {
+            "measureCode" : "O_ORD_00002", // 白皮书编码
+            "supportConfigList" : []
+        }
+    ]
+}
+

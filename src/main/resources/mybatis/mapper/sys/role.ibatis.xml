@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="role">
+
+	<select id="queryRoleUserName" parameterType="java.util.HashMap" resultType="Integer">
+		select
+		  count(1)
+		from bi_portal.sys_user_role t
+		where 1=1
+		  and t.role_id = #{roleId}
+		  and t.user_name = #{userName}
+	</select>
+
+	<update id="updateUserRoleByWorkOrder" parameterType="java.util.HashMap">
+		REPLACE INTO bi_portal.sys_user_role
+		(USER_NAME, ROLE_ID, CREATED_TIME, UPDATED_TIME, active_duration_days)
+		values
+		<foreach collection="roles" index="index" item="item" separator=",">
+			(#{userName}, #{item.roleId}, NOW(), NOW(), #{activeDuration})
+		</foreach>
+	</update>
+
+	<update id="insertSsdRole" parameterType="java.util.HashMap">
+		REPLACE INTO bi_portal.sys_user_role
+		(USER_NAME, ROLE_ID, CREATED_TIME, UPDATED_TIME, active_duration_days)
+		values
+		<foreach collection="roles" index="index" item="item" separator=",">
+			(#{userName}, #{item.roleId}, NOW(), NOW(), #{item.activeDurationDays})
+		</foreach>
+	</update>
+
+</mapper>	

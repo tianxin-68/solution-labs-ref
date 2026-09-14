@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.portal.resource.auth.inherit">
+
+    <select id="queryByResId" parameterType="java.util.HashMap"
+            resultType="com.bi.queryer.ssm.portal.auth.entity.PortalResourceAuthInherit">
+        select
+            id,
+            portal_id       as portalId,
+            res_id          as resId,
+            res_type        as resType,
+            inherit_enabled as inheritEnabled
+        from ssm_portal_resource_auth_inherit
+        where res_id   = #{resId}
+          and res_type = #{resType}
+        limit 1
+    </select>
+
+    <!-- 查询门户下全量继承配置，用于内存遍历继承链，避免逐层查库 -->
+    <select id="queryByPortalId" parameterType="String"
+            resultType="com.bi.queryer.ssm.portal.auth.entity.PortalResourceAuthInherit">
+        select
+            res_id          as resId,
+            res_type        as resType,
+            inherit_enabled as inheritEnabled
+        from ssm_portal_resource_auth_inherit
+        where portal_id = #{portalId}
+    </select>
+
+    <!-- 查询门户下关闭继承的资源 id 集合，用于菜单树按「是否继承父级权限」剪枝 -->
+    <select id="queryDisabledResIdsByPortalId" parameterType="String" resultType="String">
+        select res_id
+        from ssm_portal_resource_auth_inherit
+        where portal_id = #{portalId}
+          and inherit_enabled = 0
+    </select>
+
+    <insert id="insertOrUpdate" parameterType="com.bi.queryer.ssm.portal.auth.entity.PortalResourceAuthInherit">
+        insert into ssm_portal_resource_auth_inherit
+        (portal_id, res_id, res_type, inherit_enabled, created_by, created_time, updated_by, updated_time)
+        values
+        (#{portalId}, #{resId}, #{resType}, #{inheritEnabled},
+         #{createdBy}, now(), #{updatedBy}, now())
+        on duplicate key update
+            portal_id       = values(portal_id),
+            inherit_enabled = values(inherit_enabled),
+            updated_by      = values(updated_by),
+            updated_time    = values(updated_time)
+    </insert>
+
+</mapper>

@@ -1,0 +1,46 @@
+{
+  "measures": [
+    {
+      "code": "pay_gmv",
+      "dataType": "nbr",
+      "isKpi": false,
+      "isMeasure": true,
+      "title": "支付GMV",
+      "displayTitle": "",
+      "path": [
+        "订单交易监控",
+        "指标-用户支付",
+        "支付GMV"
+      ],
+      "isPlaceholder": false,
+      "sortType": "NONE",
+      "isComputed": false,
+      "name": "pay_gmv",
+      "showOrder": 1,
+      "id": "d12712be9c764c72909358d385ea1c52",
+      "aggExpression": "",
+      "aggExpressionType" : "avg_by_d"
+    },
+    {
+      "code": "pay_user",
+      "dataType": "nbr",
+      "isKpi": false,
+      "isMeasure": true,
+      "title": "2C-支付用户数",
+      "displayTitle": "",
+      "path": [
+        "订单交易监控",
+        "指标-用户支付",
+        "2C-支付用户数"
+      ],
+      "isPlaceholder": false,
+      "sortType": "NONE",
+      "isComputed": false,
+      "name": "pay_user",
+      "showOrder": 2,
+      "id": "b584c0b886204c33b0be2bf2ef55c882",
+      "aggExpression": "",
+      "aggExpressionType" : "avg_by_d"
+    }
+  ]
+}

@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="fieldCtg">
+
+    <select id="queryFieldCtgByType" parameterType="String" resultType="com.bi.queryer.ssm.meta.MetaFieldCategory">
+        SELECT
+          t.ctg_id as id,
+          t.ctg_name as name,
+          t.parent_ctg_id as parentId,
+          t.sort_id as showOrder,
+          t.is_active as isActive,
+          t.rpt_dev_owner as rptDevOwner,
+          t.biz_owner as bizOwner,
+          t.oversized as oversized,
+          t.is_module as isModule,
+          t.ctg_desc as ctgDesc,
+          t.etl_job as etlJob,
+          t.data_dev_owner as dataDevOwner,
+          t.is_auto_archive as isAutoArchive,
+          t.data_date as dataDate,
+          t.data_desc as dataDesc,
+          t.module_beta_member as moduleBetaMember,
+          t.is_test_ctg as isTestCtg,
+          dataset.dataset_id as datasetId
+        FROM
+          ssd_field_ctg t
+        left join (SELECT ctg_id, GROUP_CONCAT(dataset_id) dataset_id FROM ssm_dataset_ctg_rel GROUP BY ctg_id) dataset
+        on dataset.ctg_id = t.ctg_id
+        WHERE t.`ctg_type` = #{type}
+        ORDER BY parent_ctg_id,
+          sort_id
+    </select>
+
+    <select id="queryFrontFieldCtg" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.MetaFieldCategory">
+        SELECT
+          t.ctg_id as id,
+          t.ctg_name as name,
+          t.parent_ctg_id as parentId,
+          t.sort_id as showOrder,
+          t.is_active as isActive,
+          t.rpt_dev_owner as rptDevOwner,
+          t.biz_owner as bizOwner,
+          t.oversized as oversized,
+          t.is_module as isModule,
+          t.ctg_desc as ctgDesc,
+          t.etl_job as etlJob,
+          t.data_dev_owner as dataDevOwner,
+          t.is_auto_archive as isAutoArchive
+        FROM
+          ssd_field_ctg t
+        WHERE t.`ctg_type` = 'front' and t.is_active = 1
+        <if test="isModule != null and '' != isModule">
+            and  t.is_module = #{isModule}
+        </if>
+        ORDER BY parent_ctg_id,
+          sort_id
+    </select>
+
+    <select id="queryMaxOrderByParentId" parameterType="com.bi.queryer.ssm.meta.MetaFieldCategory" resultType="Integer">
+        SELECT IFNULL(MAX(t.`sort_id`),0) FROM ssd_field_ctg t WHERE t.`parent_ctg_id` = #{parentId} and t.ctg_type = #{type}
+    </select>
+
+    <insert id="insertIntoFieldCtg" parameterType="com.bi.queryer.ssm.meta.MetaFieldCategory">
+
+        insert into ssd_field_ctg
+        (
+            ctg_id,
+            ctg_type,
+            ctg_name,
+            parent_ctg_id,
+            sort_id,
+            is_active,
+            oversized,
+            is_module,
+            data_date,
+            data_desc,
+            ctg_desc,
+            etl_job,
+            created_time,
+            created_by,
+            rpt_dev_owner,
+            biz_owner,
+            data_dev_owner,
+            is_auto_archive,
+            module_beta_member,
+            is_test_ctg
+        )
+        values
+        (
+            #{id},
+            #{type},
+            #{name},
+            #{parentId},
+            #{showOrder},
+            #{isActive},
+            #{oversized},
+            #{isModule},
+            #{dataDate},
+            #{dataDesc},
+            #{ctgDesc},
+            #{etlJob},
+            now(),
+            #{createdBy},
+            #{rptDevOwner},
+            #{bizOwner},
+            #{dataDevOwner},
+            #{isAutoArchive},
+            #{moduleBetaMember},
+            #{isTestCtg}
+        )
+    </insert>
+
+    <update id="updateFieldCtg" parameterType="com.bi.queryer.ssm.meta.MetaFieldCategory">
+
+        update ssd_field_ctg t
+        set
+        t.ctg_name = #{name},
+        t.sort_id = #{showOrder},
+        t.is_active = #{isActive},
+        t.oversized = #{oversized},
+        t.is_module = #{isModule},
+        t.ctg_desc = #{ctgDesc},
+        t.etl_job = #{etlJob},
+        t.updated_time = now(),
+        t.updated_by = #{updatedBy},
+        t.parent_ctg_id = #{parentId},
+        t.rpt_dev_owner = #{rptDevOwner},
+        t.biz_owner = #{bizOwner},
+        t.data_dev_owner = #{dataDevOwner},
+        t.is_auto_archive = #{isAutoArchive},
+        t.data_date = #{dataDate},
+        t.data_desc = #{dataDesc},
+        t.module_beta_member = #{moduleBetaMember},
+        t.is_test_ctg = #{isTestCtg}
+        where t.ctg_id = #{id}
+
+    </update>
+
+    <delete id="deleteFieldCtgById" parameterType="String">
+        delete from ssd_field_ctg where ctg_id = #{id}
+    </delete>
+
+    <select id="queryFieldCtgById" parameterType="String" resultType="com.bi.queryer.ssm.meta.MetaFieldCategory">
+        SELECT
+            t.ctg_id as id,
+            t.ctg_name as name,
+            t.parent_ctg_id as parentId,
+            t.sort_id as showOrder,
+            t.oversized as oversized,
+            t.is_module as isModule,
+            t.ctg_desc as ctgDesc,
+            t.etl_job as etlJob,
+            t.is_active as isActive,
+            t.rpt_dev_owner as rptDevOwner,
+            t.biz_owner as bizOwner,
+            t.data_dev_owner as dataDevOwner
+        FROM
+            ssd_field_ctg t
+        WHERE t.`ctg_id` = #{ctgId}
+    </select>
+
+    <select id="queryChildFieldCtgByParentId" parameterType="String" resultType="com.bi.queryer.ssm.meta.MetaFieldCategory">
+        SELECT
+          t.ctg_id as id,
+          t.ctg_name as name,
+          t.parent_ctg_id as parentId,
+          t.sort_id as showOrder,
+          t.oversized as oversized,
+          t.is_module as isModule,
+          t.ctg_desc as ctgDesc,
+          t.etl_job as etlJob,
+          t.is_active as isActive,
+          t.rpt_dev_owner as rptDevOwner,
+          t.biz_owner as bizOwner,
+          t.data_dev_owner as dataDevOwner
+        FROM
+          ssd_field_ctg t
+        WHERE t.`parent_ctg_id` = #{parentId}
+        order by t.sort_id
+    </select>
+
+    <sql id="sqlFilter">
+        <if test="ctgIdList != null and ctgIdList.size()>0 ">
+            and ctg.ctg_id in (
+            <foreach collection="ctgIdList" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+            )
+        </if>
+        <if test="searchTxt != null and '' != searchTxt">
+            and (
+                t.`field_name` LIKE concat('%',#{searchTxt},'%')
+                or t.field_title  LIKE concat('%',#{searchTxt},'%')
+                or t.field_code  LIKE concat('%',#{searchTxt},'%')
+                )
+        </if>
+    </sql>
+
+    <select id="queryCtgFieldList" parameterType="java.util.HashMap" resultType="com.bi.queryer.util.UpperCaseMap">
+        SELECT
+          ctg.ctg_name as ctgName,
+          t.`field_id` as fieldId,
+          CASE
+            WHEN LENGTH(t.`dim_table_name`) = 0 or t.`dim_table_name` is null
+            THEN t.`fct_table_name`
+            ELSE t.`dim_table_name`
+          END as tableName,
+          t.`field_name` as fieldName,
+          t.field_title as fieldTitle,
+          t.`field_code` as fieldCode,
+          ctg.rpt_dev_owner as rptDevOwner,
+          ctg.biz_owner as bizOwner,
+          ctg.oversized as oversized,
+          ctg.is_module as isModule,
+          ctg.data_dev_owner as dataDevOwner
+        FROM
+          ssd_field_def t
+          LEFT JOIN ssm_field_ctg_rel rel on t.field_id = rel.field_id and rel.ctg_type = #{type}
+          left join ssd_field_ctg ctg on rel.ctg_id = ctg.ctg_id
+          where ctg.ctg_id is not null
+          and rel.is_active = 1
+          <include refid="sqlFilter"/>
+        ORDER BY t.`created_time` DESC
+        LIMIT ${pageRowLower}, ${prePageSize}
+    </select>
+
+    <select id="queryExportCtgFieldList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.mgr.fieldCtg.model.FieldCtgExportEntity">
+        SELECT
+          ctg.ctg_id AS ctgId,
+          ctg.ctg_name AS ctgName,
+          ctg.ctg_name_path AS ctgPath,
+          t.`field_id` AS fieldId,
+          t.`field_name` AS fieldName,
+          t.`field_code` AS fieldCode,
+          t.field_title AS fieldTitle,
+          def.table_id AS tableId,
+          def.table_name AS tableName,
+          def.table_owner AS tableOwner
+        FROM
+          ssd_field_def t
+          LEFT JOIN ssm_field_ctg_rel rel ON t.field_id = rel.field_id AND rel.ctg_type = #{type}
+          LEFT JOIN `v_ssd_field_ctg` ctg ON rel.ctg_id = ctg.ctg_id
+          LEFT JOIN ssd_table_def def ON (def.`table_id` = t.`fct_table_id` OR def.`table_id` = t.`dim_table_id`)
+          WHERE ctg.ctg_id IS NOT NULL
+          and rel.is_active = 1
+        <include refid="sqlFilter"/>
+        ORDER BY t.`created_time` DESC
+    </select>
+
+    <select id="queryCtgFieldListCount" parameterType="java.util.HashMap" resultType="Integer">
+        SELECT
+           count(1)
+        FROM
+        ssd_field_def t
+        LEFT JOIN ssm_field_ctg_rel rel on t.field_id = rel.field_id and rel.ctg_type = #{type}
+        LEFT JOIN ssd_field_ctg ctg on rel.ctg_id = ctg.ctg_id
+        where ctg.ctg_id is not null
+        and rel.is_active = 1
+        <include refid="sqlFilter"/>
+        ORDER BY t.`created_time` DESC
+    </select>
+
+    <update id="saveField" parameterType="java.util.HashMap">
+
+        update ssd_field_def t
+        set
+        <choose>
+            <when test="type=='front'">
+                t.front_ctg_id = #{ctgId}
+            </when>
+            <otherwise>
+                t.end_ctg_id = #{ctgId}
+            </otherwise>
+        </choose>
+        where t.field_id in
+        (
+        <foreach  collection="fieldIds" index="index" item="item" separator="," >
+            #{item}
+        </foreach>
+        )
+
+    </update>
+
+    <select id="getFieldByCtgId" parameterType="java.util.HashMap" resultType="String">
+
+        select
+            t.field_id
+        from
+            ssm_field_ctg_rel t
+        where
+            t.ctg_type = #{type}
+        and t.ctg_id =  #{ctgId}
+        and t.is_active = 1
+
+    </select>
+
+    <update id="updateFieldCtgNull" parameterType="java.util.HashMap">
+        update ssd_field_def t set
+        <choose>
+            <when test="type=='front'">
+                t.front_ctg_id = null
+            </when>
+            <otherwise>
+                t.end_ctg_id = null
+            </otherwise>
+        </choose>
+        where
+        <choose>
+            <when test="type=='front'">
+                t.front_ctg_id = #{ctgId}
+            </when>
+            <otherwise>
+                t.end_ctg_id = #{ctgId}
+            </otherwise>
+        </choose>
+    </update>
+
+    <update id="deleteFieldCtgAssociate" parameterType="java.util.HashMap">
+        update
+            ssm_field_ctg_rel t
+        set
+            is_active = 0,
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where t.field_id = #{fieldId}
+            and t.ctg_id = #{ctgId}
+    </update>
+
+    <!--获取前台目录所有可查询的字段-->
+    <select id="queryFieldsByCtgId" parameterType="String" resultType="com.bi.queryer.ssm.meta.MetaField">
+        SELECT
+          t1.`field_id` AS id,
+          t1.`field_code` AS `code`,
+          t1.`field_name` AS `name` ,
+          t1.`field_title` AS title,
+          t1.is_measure AS isMeasure
+        FROM
+          ssd_field_def t1
+          INNER JOIN `ssm_field_ctg_rel` t2 ON t1.`field_id` = t2.`field_id` AND t2.`ctg_type` = 'front'
+        WHERE t2.`ctg_id` = #{ctgId}
+          AND t1.`is_result` = 1
+          AND t1.`is_active` = 1
+          AND t2.`is_active` = 1
+        ORDER BY t1.`sort_id`
+    </select>
+
+    <select id="getCtgNameByCtgId" parameterType="String" resultType="String">
+        SELECT ctg_name FROM ssd_field_ctg WHERE ctg_id = #{ctgId} LIMIT 1
+    </select>
+
+    <update id="updateFieldCtgIsActive" parameterType="String">
+        update ssd_field_ctg t
+        set
+        t.is_active = 0,
+        t.updated_time = now()
+        where t.ctg_id = #{id}
+    </update>
+
+    <select id="queryCtgRptDevOwnerList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.MetaFieldCategory">
+        SELECT
+          c.ctg_id as id,
+          c.ctg_name as name,
+          c.parent_ctg_id as parentId,
+          CONCAT(pc.ctg_name, '/', c.ctg_name) AS parentName,
+          c.sort_id as showOrder,
+          c.is_active as isActive,
+          c.oversized as oversized,
+          c.is_module as isModule,
+          c.ctg_desc as ctgDesc,
+          c.etl_job as etlJob,
+          c.rpt_dev_owner AS rptDevOwner,
+          c.biz_owner AS bizOwner,
+          c.data_dev_owner as dataDevOwner,
+          c.is_auto_archive as isAutoArchive
+        FROM ssd_field_ctg c
+        LEFT JOIN ssd_field_ctg pc ON c.parent_ctg_id = pc.ctg_id
+        WHERE 1=1
+            and c.ctg_type = 'front'
+            and c.is_active = 1
+            and pc.is_active = 1
+            AND c.ctg_id IN
+            <foreach item="item" collection="ctgIdList" separator="," open="(" close=")" index="">
+                #{item}
+            </foreach>
+
+    </select>
+
+    <!--查询目录下是否有字段关联业务线或渠道-->
+    <select id="queryColumnRelatedCount" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.mgr.fieldCtg.model.CtgAuthDetailRsp">
+        SELECT
+            count(1) as isShow,
+            t3.dim_code as dimCode
+        FROM
+            ssd_field_def t1
+        INNER JOIN `ssm_field_ctg_rel` t2 ON t1.`field_id` = t2.`field_id` AND t2.`ctg_type` = 'front'
+        INNER JOIN ssd_field_auth_dim t3 ON (t1.field_code = t3.field_code or t1.field_code = t3.white_paper_code) and t3.module_code = 'ssm_row'
+        WHERE
+            t1.is_active = 1
+            AND t2.is_active = 1
+            AND t2.ctg_id IN
+            <foreach item="item" collection="ctgIdList" separator="," open="(" close=")" index="">
+                #{item}
+            </foreach>
+            AND t3.dim_code IN
+            <foreach item="item" collection="dimCodeList" separator="," open="(" close=")" index="">
+                #{item}
+            </foreach>
+        GROUP BY t3.dim_code
+    </select>
+
+    <!--获取目录的数据权限设置-->
+    <select id="queryCtgNeedAuthById" parameterType="String" resultType="com.bi.queryer.ssm.mgr.fieldCtg.model.CtgNeedAuthEntity">
+        SELECT
+          t.ctg_id as ctgId,
+          t.dim_code as dimCode,
+          t.item_code as itemCode,
+          t.created_time as createdTime,
+          t.created_by as createdBy
+        FROM
+          ssd_ctg_data_auth t
+        WHERE t.ctg_id = #{ctgId}
+    </select>
+
+    <!--删除目录配置的权限数据-->
+    <delete id="deleteCtgNeedAuthById" parameterType="String">
+        delete from ssd_ctg_data_auth where ctg_id = #{id}
+    </delete>
+
+    <!--批量插入权限数据-->
+    <insert id="insertCtgNeedAuth" parameterType="java.util.List">
+        insert into ssd_ctg_data_auth
+        (
+        ctg_id,
+        dim_code,
+        item_code,
+        created_time,
+        created_by
+        )
+        values
+        <foreach collection="list" index="index" item="item" separator="," >
+            (#{item.ctgId},#{item.dimCode},#{item.itemCode},#{item.createdTime},#{item.createdBy})
+        </foreach>
+    </insert>
+
+    <select id="queryAllFieldAuthList" resultType="java.util.HashMap">
+        SELECT
+          t1.dim_code AS dimCode,
+          t3.`ctg_id` AS ctgId
+        FROM
+          ssd_field_auth_dim t1
+        INNER JOIN ssd_field_def t2
+            ON t1.field_code = t2.field_code
+        INNER JOIN `ssm_field_ctg_rel` t3 ON t2.`field_id` = t3.`field_id` AND t3.`ctg_type` = 'front'
+        WHERE t2.is_active = 1
+         AND t3.`is_active` = 1
+    </select>
+
+    <select id="queryAuthFieldParentList" parameterType="java.util.List" resultType="java.util.HashMap">
+        <foreach collection="list" index="index" item="item" separator="union all" >
+            select
+                '${item.dimCode}' as dimCode,
+                t.parent_ctg_id as  ctgId
+            from
+                ssd_field_ctg t
+            where t.parent_ctg_id != -1 and t.ctg_id = #{item.ctgId} and t.ctg_type = 'front'
+        </foreach>
+    </select>
+
+    <select id="queryAllNeedAuthList" resultType="com.bi.queryer.ssm.mgr.fieldCtg.model.CtgNeedAuthEntity">
+        SELECT
+          t.ctg_id as ctgId,
+          t.dim_code as dimCode,
+          t.item_code as itemCode,
+          t.created_time as createdTime,
+          t.created_by as createdBy
+        FROM
+          ssd_ctg_data_auth t
+    </select>
+
+    <select id="queryModuleDescList" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.meta.MetaFieldCategory">
+        SELECT
+          t.ctg_id as id,
+          t.ctg_name as name,
+          t.rpt_dev_owner as dataDevOwner,
+          t.data_date as dataDate,
+          t.data_desc as dataDesc
+        FROM
+            ssd_field_ctg t
+        WHERE
+            t.ctg_type = 'front'
+            and (t.data_date != '' or t.data_desc != '')
+        ORDER BY t.parent_ctg_id,t.sort_id
+        LIMIT ${startNum}, ${pageSize}
+    </select>
+
+    <select id="queryModuleDescListCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT
+          count(1)
+        FROM
+            ssd_field_ctg t
+        WHERE
+            t.ctg_type = 'front'
+            and (t.data_date != '' or t.data_desc != '')
+    </select>
+
+    <select id="queryCtgIdPathByCtgId" parameterType="String" resultType="String">
+        SELECT ctg_id FROM v_ssd_field_ctg WHERE ctg_id_path LIKE concat('%',#{ctgId},'/%')
+    </select>
+
+    <delete id="batchDelete" parameterType="java.util.HashMap">
+        delete
+            from
+            ssd_field_ctg
+        where
+            ctg_id in
+            <foreach item="item" collection="ctgIds" separator="," open="(" close=")" index="">
+                #{item}
+            </foreach>
+    </delete>
+
+    <insert id="batchAdd" parameterType="java.util.HashMap">
+        insert into ssd_field_ctg
+        (
+            ctg_id,
+            ctg_type,
+            ctg_name,
+            parent_ctg_id,
+            sort_id,
+            is_active,
+            is_module,
+            ctg_desc,
+            etl_job,
+            rpt_dev_owner,
+            biz_owner,
+            data_dev_owner,
+            data_type,
+            created_time,
+            created_by,
+            updated_time,
+            updated_by
+        )
+        values
+        <foreach collection="ctgList" index="index" item="item" separator="," >
+            (
+            #{item.id},
+            #{item.type},
+            #{item.name},
+            #{item.parentId},
+            #{item.showOrder},
+            1,
+            #{item.isModule},
+            #{item.ctgDesc},
+            #{item.etlJob},
+            #{item.rptDevOwner},
+            #{item.bizOwner},
+            #{item.dataDevOwner},
+            #{item.dataType},
+             now(),
+             #{userName},
+             now(),
+             #{userName}
+            )
+
+        </foreach>
+    </insert>
+
+    <delete id="batchDeleteCtgDataAuth" parameterType="java.util.HashMap">
+        delete from ssd_ctg_data_auth where  ctg_id in (
+            <foreach item="item" collection="ctgIds" separator="," index="">
+                #{item}
+            </foreach>
+        )
+    </delete>
+
+    <insert id="batchAddCtgDataAuth" parameterType="java.util.HashMap">
+        insert into ssd_ctg_data_auth
+        (
+        ctg_id,
+        dim_code,
+        item_code,
+        created_time,
+        created_by
+        )
+        values
+        <foreach collection="dataAuthList" index="index" item="item" separator="," >
+            (#{item.ctgId},#{item.dimCode},#{item.itemCode},now(),#{userName})
+        </foreach>
+    </insert>
+
+    <insert id="batchInsertFieldCtgRel" parameterType="java.util.HashMap">
+        insert into ssm_field_ctg_rel
+            (
+             field_id,
+             ctg_type,
+             ctg_id,
+             is_active,
+             sort_id,
+             created_time,
+             created_by
+            )
+        values
+         <foreach collection="fieldCtgRelList" index="index" item="item" separator="," >
+            (
+             #{item.fieldId},
+             #{item.ctgType},
+             #{item.ctgId},
+             1,
+             #{item.sortId},
+             now(),
+             #{userName}
+             )
+        </foreach>
+    </insert>
+
+    <update id="disableFieldCtg" parameterType="java.util.HashMap">
+        update ssd_field_ctg
+            set is_active = 0 ,
+                updated_time = now(),
+                updated_by = #{userName}
+        where ctg_id = #{ctgId}
+    </update>
+
+    <update id="updateSortId" parameterType="com.bi.queryer.ssm.meta.MetaFieldCategory">
+        update ssd_field_ctg
+            set sort_id = #{showOrder},
+                updated_time = now(),
+                updated_by = #{updatedBy}
+        where ctg_id = #{id}
+    </update>
+</mapper>

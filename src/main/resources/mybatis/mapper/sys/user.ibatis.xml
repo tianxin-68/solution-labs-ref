@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="user">
+
+	<sql id="sqlFilter">
+
+		<if test="searchText != null and '' != searchText">
+			AND (
+			biu.USER_NAME LIKE concat('%',#{searchText},'%')
+			OR biu.dept_name LIKE concat('%' , #{searchText} , '%')
+			OR biu.USER_REALNAME LIKE concat('%' , #{searchText} , '%')
+			)
+		</if>
+
+		<if test="selectUserList != null and selectUserList.size()>0">
+			and biu.USER_NAME not in
+			(
+			<foreach  collection="selectUserList" index="index" item="item" separator="," >
+				#{item}
+			</foreach>
+			)
+		</if>
+
+		<if test="isActive != null and '' != isActive">
+			and biu.IS_ACTIVE = #{isActive}
+		</if>
+	</sql>
+
+	<!-- 通过用户名查找 -->
+	<select id="queryUserByName" parameterType="java.util.HashMap" resultType="com.bi.queryer.sys.user.vo.User">
+		SELECT 
+		  t.USER_ID AS id,
+		  t.USER_NAME AS NAME,
+		  t.USER_REALNAME AS realName,
+		  t.DEPT_ID as deptId,
+		  t.dept_name AS deptPathName,
+		  t.IS_ADMIN AS isAdmin,
+		  t.job_name AS jobName,
+		  t.EMP_ACCOUNT empAccount,
+		  t.AUTH_MODE authMode,
+		  t.PASSWORD password,
+		  DATE_FORMAT(t.CREATED_TIME,'%Y-%m-%d %H:%i:%s') createdTime
+		FROM bi_portal.sys_user t
+		WHERE 1 = 1
+		  AND t.IS_ACTIVE = 1
+		  AND t.USER_NAME = #{userName}
+	</select>
+
+	<!-- 通过用户名查找 -->
+	<select id="queryUserListByNames" parameterType="java.util.List" resultType="com.bi.queryer.sys.user.vo.User">
+		SELECT
+			t.USER_ID AS id,
+			t.USER_NAME AS NAME,
+			t.USER_REALNAME AS realName,
+			t.DEPT_ID as deptId,
+			t.dept_name AS deptPathName,
+			t.IS_ADMIN AS isAdmin,
+			t.job_name AS jobName,
+			t.EMP_ACCOUNT empAccount,
+			t.AUTH_MODE authMode,
+			t.PASSWORD password,
+			DATE_FORMAT(t.CREATED_TIME,'%Y-%m-%d %H:%i:%s') createdTime
+		FROM bi_portal.sys_user t
+		WHERE 1 = 1
+		 AND t.IS_ACTIVE = 1
+		 AND t.USER_NAME in
+		<foreach item="item" collection="list" separator="," open="(" close=")" index="">
+			#{item}
+		</foreach>
+	</select>
+
+	<!-- 通过部门获取有权限的用户名 -->
+	<select id="queryUserNamesByDeptId" parameterType="java.util.HashMap" resultType="java.lang.String">
+		select
+			hr1.USER_NAME as userName
+		from bi_portal.hr_employee hr1
+				 inner join (
+			select
+				user_auth.user_name
+			from (
+					 SELECT
+						 t.`owner_id` AS user_name
+					 FROM bi_portal.sys_data_auth t
+					 WHERE 1=1
+					   and t.`owner_type` = 'User'
+					   AND t.`module_code` = 'ssd_ctg'
+					   AND t.`dim_code` = 'ssm_ctg'
+					   AND t.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t.active_duration_days DAY)
+
+
+					 UNION ALL
+
+					 SELECT
+						 sur.USER_NAME AS user_name
+					 FROM bi_portal.sys_data_auth t1
+							  INNER JOIN bi_portal.sys_user_role sur
+										 ON t1.`owner_id` = sur.ROLE_ID
+					 WHERE 1=1
+					   and t1.`owner_type` = 'Role'
+					   AND t1.`module_code` = 'ssd_ctg'
+					   AND t1.`dim_code` = 'ssm_ctg'
+					   AND sur.created_time > DATE_ADD(CURDATE(), INTERVAL -1* sur.active_duration_days DAY)
+
+					 UNION ALL
+
+					 SELECT
+						 hr2.USER_NAME as user_name
+					 FROM bi_portal.sys_data_auth t1
+							  inner join bi_portal.hr_employee hr2
+										 on CONCAT(hr2.dept_id, '/') LIKE CONCAT('%', t1.owner_id, '/%')
+					 WHERE 1=1
+					   and t1.owner_type= 'Dept'
+					   AND t1.`module_code` = 'ssd_ctg'
+					   AND t1.`dim_code` = 'ssm_ctg'
+					   AND t1.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t1.active_duration_days DAY)
+				 ) user_auth
+			group by user_auth.user_name
+		) user_auth2
+							on hr1.user_name = user_auth2.user_name
+		where concat(hr1.dept_id , '/') like concat('%', #{deptId}, '/%')
+	</select>
+
+	<!--通过姓名获取用户信息-->
+	<select id="getUserDeptInfo" parameterType="String" resultType="com.bi.queryer.ssm.sensitive.model.DownloadWorkOrderInfoRV">
+		SELECT
+			d.deptLeaderEMail,
+			IF
+				( isnull( d.applicantDept ) , '', SUBSTR( d.applicantDept, 1, CHAR_LENGTH( d.applicantDept ) - 1 ) ) AS applicantDept
+		FROM
+			(
+			SELECT
+				concat(
+				IF
+					( isnull( t1.dept1_name ) OR t1.dept1_name = '', '', concat( t1.dept1_name, '-' ) ),
+				IF
+					( isnull( t1.dept2_name ) OR t1.dept2_name = '', '', concat( t1.dept2_name, '-' ) ),
+				IF
+					( isnull( t1.dept3_name ) OR t1.dept3_name = '', '', concat( t1.dept3_name, '-' ) ),
+				IF
+					( isnull( t1.dept4_name ) OR t1.dept4_name = '', '', concat( t1.dept4_name, '-' ) ),
+				IF
+					( isnull( t1.dept5_name ) OR t1.dept5_name = '', '', concat( t1.dept5_name, '-' ) )
+				) AS `applicantDept`,
+				t1.manager_level2_user_name AS deptLeaderEMail
+			FROM
+				bi_portal.hr_employee t1
+			WHERE
+				t1.IS_ACTIVE = 1
+			AND t1.USER_NAME = #{userName}
+			) d
+
+	</select>
+
+	<!-- 查找所有角色 -->
+	<select id="queryAllUser" parameterType="java.util.HashMap"  resultType="com.bi.queryer.sys.user.vo.User">
+		SELECT
+		biu.USER_ID AS id,
+		biu.USER_NAME AS name,
+		biu.USER_REALNAME AS realName,
+		biu.dept_name AS deptPathName,
+		biu.IS_ADMIN AS isAdmin,
+		biu.IS_ACTIVE AS isActive,
+		biu.EMP_ACCOUNT empAccount,
+		biu.AUTH_MODE AS authMode,
+		DATE_FORMAT(biu.CREATED_TIME,'%Y-%m-%d %H:%i:%s') createdTime
+		FROM
+		bi_portal.sys_user biu
+		WHERE 1=1
+		<include refid="sqlFilter"/>
+		ORDER BY deptPathName desc, USER_NAME
+		LIMIT ${pageRowLower}, ${prePageSize}
+	</select>
+
+	<!-- 用户总数 -->
+	<select id="queryAllUserCount" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+		SELECT
+		COUNT(1)
+		FROM
+		bi_portal.sys_user biu
+		WHERE 1=1
+		<include refid="sqlFilter"/>
+	</select>
+
+	<select id="queryDeptListByIds" parameterType="java.util.List" resultType="com.bi.queryer.ssm.query.template.model.DeptEntity">
+		SELECT
+			t.dept_id AS deptId,
+			t.dept_name AS deptName,
+		    t.dept_path_name AS deptPathName
+		FROM bi_portal.sys_dept t
+		WHERE 1 = 1
+		AND t.dept_id in
+		<foreach item="item" collection="list" separator="," open="(" close=")" index="">
+			#{item}
+		</foreach>
+	</select>
+
+	<select id="queryValidUserEmailList" parameterType="java.util.List" resultType="java.lang.String">
+		SELECT
+			distinct t.email
+		FROM bi_portal.hr_employee t
+		WHERE 1 = 1
+		AND t.email in
+		<foreach item="item" collection="list" separator="," open="(" close=")" index="">
+			#{item}
+		</foreach>
+	</select>
+
+
+	<select id="batchQueryUser" parameterType="java.util.ArrayList" resultType="com.bi.queryer.sys.user.vo.UserRsp">
+		select
+		    user_name as userName,
+		    user_realname as userRealName,
+		    dept_name as deptName
+		from
+		    bi_portal.sys_user
+		 where user_name in
+			<foreach item="item" collection="list" separator="," open="(" close=")" index="">
+				#{item}
+			</foreach>
+	</select>
+
+	<resultMap id="EmployeeResultMap" type="com.bi.queryer.sys.user.model.HrEmployee">
+		<result column="USER_ID" jdbcType="VARCHAR" property="userId"/>
+		<result column="USER_NAME" jdbcType="VARCHAR" property="userName"/>
+		<result column="USER_REALNAME" jdbcType="VARCHAR" property="userRealname"/>
+		<result column="phone" jdbcType="VARCHAR" property="phone"/>
+		<result column="DEPT_ID" jdbcType="VARCHAR" property="deptId"/>
+		<result column="DEPT_NAME" jdbcType="VARCHAR" property="deptName"/>
+		<result column="EMAIL" jdbcType="VARCHAR" property="email"/>
+		<result column="dept1_name" jdbcType="VARCHAR" property="dept1Name"/>
+		<result column="dept2_name" jdbcType="VARCHAR" property="dept2Name"/>
+		<result column="dept3_name" jdbcType="VARCHAR" property="dept3Name"/>
+		<result column="dept4_name" jdbcType="VARCHAR" property="dept4Name"/>
+		<result column="dept5_name" jdbcType="VARCHAR" property="dept5Name"/>
+		<result column="dept6_name" jdbcType="VARCHAR" property="dept6Name"/>
+		<result column="manager_user_name" jdbcType="VARCHAR" property="managerUserName"/>
+	</resultMap>
+
+	<select id="queryEmployeeByEmail" parameterType="java.util.HashMap" resultMap="EmployeeResultMap">
+		SELECT USER_ID, USER_NAME, USER_REALNAME, phone, DEPT_ID, DEPT_NAME, EMAIL,
+		       dept1_name, dept2_name, dept3_name, dept4_name, dept5_name, dept6_name, manager_user_name
+		FROM bi_portal.hr_employee
+		WHERE EMAIL = #{email}
+		LIMIT 1
+	</select>
+
+	<!-- 查询与指定用户同部门(最小部门单位)的所有用户名 -->
+	<select id="queryDeptColleagueUserNames" parameterType="String" resultType="java.lang.String">
+		SELECT user_name
+		FROM bi_portal.hr_employee
+		WHERE dept_id = (
+			SELECT dept_id
+			FROM bi_portal.hr_employee
+			WHERE user_name = #{userName}
+		)
+	</select>
+
+	<!--
+	  按用户名批量查 HR 所属部门 DEPT_ID，供指标膨胀 owner 组织过滤。
+	  仅返回 userName + deptId；业务侧用 DEPT_ID 包含判断匹配油液/配件/BI 部门。
+	-->
+	<select id="listEmployeeDeptByUserNames" parameterType="java.util.List"
+			resultType="com.bi.queryer.sys.user.model.HrEmployee">
+		SELECT
+			USER_NAME AS userName,
+			DEPT_ID AS deptId
+		FROM bi_portal.hr_employee
+		WHERE USER_NAME IN
+		<foreach item="item" collection="list" separator="," open="(" close=")">
+			#{item}
+		</foreach>
+	</select>
+
+	<update id="updateUserAuthListByWorkOrder" parameterType="java.util.List">
+		REPLACE INTO bi_portal.sys_user_auth
+		(USER_NAME, RES_ID, RES_TYPE, IS_APPEND, CREATED_TIME, active_duration_days)
+		values
+		<foreach collection="list" index="index" item="item" separator=",">
+			(#{item.userName}, #{item.resId}, 'Menu', 0, NOW(), #{item.activeDurationDays})
+		</foreach>
+	</update>
+
+</mapper>

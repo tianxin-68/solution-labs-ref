@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.template.cfg">
+
+    <delete id="batchDeleteByCfgIdList" parameterType="java.util.ArrayList">
+        delete from
+            ssd_query_template_cfg
+        where
+            cfg_id in
+            <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </delete>
+
+    <select id="getById" parameterType="String" resultType="String">
+        SELECT
+            tpl_config as tplConfig
+        FROM
+            ssd_query_template_cfg
+        WHERE
+            cfg_id = #{cfgId}
+    </select>
+
+    <delete id="delete" parameterType="String">
+        delete from ssd_query_template_cfg where cfg_id = #{cfgId}
+    </delete>
+
+</mapper>

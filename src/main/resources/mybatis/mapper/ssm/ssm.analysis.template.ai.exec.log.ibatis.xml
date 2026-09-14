@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.analysis.template.ai.exec.log">
+
+    <!-- 新增 AI 执行日志 -->
+    <insert id="addAiExecLog" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplAiExecLogEntity">
+        insert into ssm_analysis_tpl_ai_exec_log
+        (
+        analysis_tpl_id,
+        analysis_mode,
+        analysis_input,
+        exec_result,
+        error_msg,
+        exec_duration,
+        env,
+        created_by,
+        created_time
+        )
+        values
+        (
+        #{analysisTplId},
+        #{analysisMode},
+        #{analysisInput},
+        #{execResult},
+        #{errorMsg},
+        #{execDuration},
+        #{env},
+        #{createdBy},
+        now()
+        )
+    </insert>
+
+    <!-- 根据 ID 删除 AI 执行日志 -->
+    <delete id="deleteAiExecLogById" parameterType="java.lang.Integer">
+        delete from ssm_analysis_tpl_ai_exec_log
+        where run_log_id = #{runLogId}
+    </delete>
+
+    <!-- 根据条件删除 AI 执行日志 -->
+    <delete id="deleteAiExecLogByCondition" parameterType="java.util.Map">
+        delete from ssm_analysis_tpl_ai_exec_log
+        where 1 = 1
+        <if test="analysisTplId != null">
+            and analysis_tpl_id = #{analysisTplId}
+        </if>
+        <if test="analysisMode != null">
+            and analysis_mode = #{analysisMode}
+        </if>
+        <if test="execResult != null">
+            and exec_result = #{execResult}
+        </if>
+        <if test="createdBy != null">
+            and created_by = #{createdBy}
+        </if>
+    </delete>
+
+    <!-- 根据 ID 查询 AI 执行日志 -->
+    <select id="getAiExecLogById" parameterType="java.lang.Integer"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplAiExecLogEntity">
+        select
+        run_log_id as runLogId,
+        analysis_tpl_id as analysisTplId,
+        analysis_mode as analysisMode,
+        analysis_input as analysisInput,
+        exec_result as execResult,
+        error_msg as errorMsg,
+        exec_duration as execDuration,
+        created_by as createdBy,
+        created_time as createdTime
+        from ssm_analysis_tpl_ai_exec_log
+        where run_log_id = #{runLogId}
+    </select>
+
+    <!-- 根据分析模板 ID 查询 AI 执行日志列表 -->
+    <select id="listAiExecLogByAnalysisTplId" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplAiExecLogEntity">
+        select
+        run_log_id as runLogId,
+        analysis_tpl_id as analysisTplId,
+        analysis_mode as analysisMode,
+        analysis_input as analysisInput,
+        exec_result as execResult,
+        error_msg as errorMsg,
+        exec_duration as execDuration,
+        created_by as createdBy,
+        created_time as createdTime
+        from ssm_analysis_tpl_ai_exec_log
+        where analysis_tpl_id = #{analysisTplId}
+        order by created_time desc
+    </select>
+
+    <!-- 根据条件查询 AI 执行日志列表 -->
+    <select id="listAiExecLogByCondition" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplAiExecLogEntity">
+        select
+        run_log_id as runLogId,
+        analysis_tpl_id as analysisTplId,
+        analysis_mode as analysisMode,
+        analysis_input as analysisInput,
+        exec_result as execResult,
+        error_msg as errorMsg,
+        exec_duration as execDuration,
+        created_by as createdBy,
+        created_time as createdTime
+        from ssm_analysis_tpl_ai_exec_log
+        where 1 = 1
+        <if test="analysisTplId != null">
+            and analysis_tpl_id = #{analysisTplId}
+        </if>
+        <if test="analysisMode != null">
+            and analysis_mode = #{analysisMode}
+        </if>
+        <if test="execResult != null">
+            and exec_result = #{execResult}
+        </if>
+        <if test="createdBy != null">
+            and created_by = #{createdBy}
+        </if>
+        order by created_time desc
+    </select>
+
+    <!-- 批量插入 AI 执行日志 -->
+    <insert id="batchInsertAiExecLog" parameterType="java.util.List">
+        insert into ssm_analysis_tpl_ai_exec_log
+        (
+        analysis_tpl_id,
+        analysis_mode,
+        analysis_input,
+        exec_result,
+        error_msg,
+        exec_duration,
+        created_by,
+        created_time
+        )
+        values
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.analysisTplId},
+            #{item.analysisMode},
+            #{item.analysisInput},
+            #{item.execResult},
+            #{item.errorMsg},
+            #{item.execDuration},
+            #{item.createdBy},
+            now()
+            )
+        </foreach>
+    </insert>
+
+</mapper>

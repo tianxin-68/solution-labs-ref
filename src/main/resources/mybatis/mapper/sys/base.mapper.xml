@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="base">
+	<select id="queryMapListBySQL" resultType="com.bi.queryer.util.BIMap" parameterType="java.util.HashMap">
+		<![CDATA[
+			${sql}
+		]]>
+	</select>
+	
+	<select id="queryObjectListBySQL" resultType="java.lang.Object" parameterType="java.util.HashMap">
+	<![CDATA[
+		${sql}
+	]]>
+	</select>
+	
+	<select id="queryObjectBySQL" resultType="java.lang.Object" parameterType="java.util.HashMap">
+	<![CDATA[
+		${sql}
+	]]>
+	</select>
+	<select id="queryMapBySQL" resultType="com.bi.queryer.util.BIMap" parameterType="java.util.HashMap">
+	<![CDATA[
+		${sql}
+	]]>
+	</select>
+
+	<!-- 执行数据操作的语句 -->
+	<update id="executeSql" parameterType="java.util.HashMap">
+	<![CDATA[
+		${sql}
+	]]>
+	</update>
+</mapper>

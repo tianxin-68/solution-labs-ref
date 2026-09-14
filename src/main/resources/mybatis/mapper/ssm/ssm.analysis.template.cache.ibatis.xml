@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.analysis.template.cache">
+    <select id="getAnalysisTemplate" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.portal.cache.entity.AnalysisTemplateCacheEntity">
+        select
+            t5.portal_id as portalId,
+            t5.portal_name as portalName,
+            t4.menu_name as menuName,
+            t4.menu_id as menuId,
+            t3.analysis_tpl_name as analysisTplName,
+            t3.analysis_tpl_id as analysisTplId,
+            t6.date_granularity as dateGranularity
+        from bi_ssm.ssm_analysis_tpl_cfg_prod t1
+        inner join bi_ssm.ssm_analysis_tpl_base t3
+        on t1.analysis_tpl_id = t3.analysis_tpl_id
+        inner join bi_ssm.ssm_portal_menu t4
+        on t1.analysis_tpl_id = t4.content_ref_id
+        inner join bi_ssm.ssm_portal t5
+        on t4.portal_id = t5.portal_id
+        inner join bi_ssm.ssm_analysis_tpl_cache_cfg t6
+        on t4.menu_id = t6.analysis_tpl_menu_id
+        where 1=1
+            and t1.is_latest = 1
+            and t3.is_active = 1
+            and t4.is_active = 1
+            and t6.is_active = 1
+          <if test=" menuId != null and menuId != '' " >
+              and t6.analysis_tpl_menu_id == #{menuId}
+          </if>
+        order by t5.sort_id, t4.sort_id
+    </select>
+
+    <insert id="addLog" parameterType="com.bi.queryer.ssm.portal.cache.entity.AnalysisTemplateCacheLogEntity">
+        insert into bi_ssm.ssm_analysis_tpl_cache_log(
+            portal_id,
+            portal_name,
+            menu_name,
+            menu_id,
+            menu_url,
+            analysis_tpl_id,
+            analysis_tpl_name,
+            analysis_date_granularity,
+            cache_by,
+            cache_info,
+            cache_begin_time,
+            cache_end_time,
+            is_cache_success
+        )
+        values(
+            #{portalId},
+            #{portalName},
+            #{menuName},
+            #{menuId},
+            #{menuUrl},
+            #{analysisTplId},
+            #{analysisTplName},
+            #{analysisDateGranularity},
+            #{cacheBy},
+            #{cacheInfo},
+            #{cacheBeginTime},
+            #{cacheEndTime},
+            #{isCacheSuccess}
+        )
+    </insert>
+
+</mapper>

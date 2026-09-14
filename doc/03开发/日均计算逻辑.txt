@@ -1,0 +1,25 @@
+========================================================
+日期不汇总：涉及调整内容包括：当前值计算、同环比值计算、自定义对比值计算
+粒度=日，逻辑不变
+
+粒度=周
+- count(distinct) -> sum(count(distinct by dt))*1.0000/7
+- sum() -> sum()*1.0000/7
+
+粒度=月
+- count(distinct) -> sum(count(distinct by dt))*1.0000/get_month_days(dt)
+- sum() -> sum()*1.0000/get_month_days(dt)
+
+粒度=年
+- count(distinct) -> sum(count(distinct by dt))*1.0000/get_year_days(dt)
+- sum() -> sum()*1.0000/get_year_days(dt)
+
+========================================================
+日期汇总：涉及调整内容包括：当前值计算、自定义对比值计算
+当前值
+- count(distinct) -> sum(count(distinct by dt))/查询条件天数
+- sum() -> sum()/查询条件天数
+
+定义对比值
+- count(distinct) -> sum(count(distinct by dt))/定义对比天数
+- sum() -> sum()/定义对比天数

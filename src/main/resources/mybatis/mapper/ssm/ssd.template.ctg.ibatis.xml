@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.template.ctg">
+
+    <!-- 查询所有目录（含有权限的共享空间目录） -->
+    <select id="queryAllCategories" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.ctg.model.QueryTemplateCategory">
+        select
+            t1.ctg_id as id,
+            t1.ctg_name as name,
+            t1.ctg_type as type,
+            t1.ctg_desc as description,
+            t1.sort_id as sortId,
+            t1.ctg_parent_id as parentId,
+            0 as isAdmin,
+            t1.created_by as createdBy,
+            t1.updated_by as updatedBy,
+            date_format(t1.created_time , '%Y-%m-%d %H:%i:%s') as createdTime,
+            date_format(t1.updated_time , '%Y-%m-%d %H:%i:%s') as updatedTime
+        from ssd_query_template_ctg t1
+        where t1.ctg_id in ('fav', 'my','share', 'space') or t1.ctg_type in ('space')
+
+        union all
+
+        select
+            t1.ctg_id as id,
+            t1.ctg_name as name,
+            t1.ctg_type as type,
+            t1.ctg_desc as description,
+            t1.sort_id as sortId,
+            t1.ctg_parent_id as parentId,
+            case
+                when t1.created_by = #{userName} then 1
+                else 0
+            end as isAdmin,
+            t1.created_by as createdBy,
+            t1.updated_by as updatedBy,
+            date_format(t1.created_time , '%Y-%m-%d %H:%i:%s') as createdTime,
+            date_format(t1.updated_time , '%Y-%m-%d %H:%i:%s') as updatedTime
+        from ssd_query_template_ctg t1
+        where 1=1
+          and t1.is_active = 1
+          and t1.ctg_id not in ('fav', 'my','share', 'space')
+          and t1.ctg_type not in ('space')
+          and t1.created_by = #{userName}
+        order by sortId asc, name asc
+    </select>
+
+    <!-- 查询当前用户有最大权限角色的共享空间-->
+    <select id="queryMaxRoleSpaceCategories" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.ctg.model.TemplateSpaceEntity">
+        select
+            space.space_ctg_id as spaceCtgId,
+            max(space.owner_role) as ownerRole
+        from (
+                 select s1.space_ctg_id, s1.owner_id, s1.owner_role
+                 from ssd_query_template_space s1
+                 where s1.owner_type = 'dept'
+                   and concat(#{deptId}, '/') like concat('%', s1.owner_id, '/%')
+                 union all
+                 select s2.space_ctg_id, s2.owner_id, s2.owner_role
+                 from ssd_query_template_space s2
+                 where s2.owner_type = 'user'
+                   and s2.owner_id = #{userName}
+             ) space
+        group by space.space_ctg_id
+    </select>
+
+
+    <!-- 通过id查询目录 -->
+    <select id="getCategoryById" parameterType="java.lang.String" resultType="com.bi.queryer.ssm.query.ctg.model.QueryTemplateCategory">
+        select
+            t1.ctg_id as id,
+            t1.ctg_name as name,
+            t1.ctg_type as type,
+            t1.sort_id as sortId,
+            t1.ctg_desc as description,
+            t1.ctg_parent_id as parentId,
+            t1.created_by as createdBy,
+            t1.updated_by as updatedBy,
+            date_format(t1.created_time , '%Y-%m-%d %H:%i:%s') as createdTime,
+            date_format(t1.updated_time , '%Y-%m-%d %H:%i:%s') as updatedTime
+        from ssd_query_template_ctg t1
+        where 1 = 1
+          and t1.ctg_id = #{ctgId}
+    </select>
+
+    <insert id="addCategory" parameterType="com.bi.queryer.ssm.query.ctg.model.QueryTemplateCategory">
+        insert into ssd_query_template_ctg(
+            ctg_id,
+            ctg_name,
+            ctg_type,
+            ctg_desc,
+            sort_id,
+            ctg_parent_id,
+            is_active,
+            created_time,
+            created_by
+        )
+        values(
+                  #{id},
+                  #{name},
+                  #{type},
+                  #{description},
+                  #{sortId},
+                  #{parentId},
+                  1,
+                  now(),
+                  #{createdBy}
+              )
+    </insert>
+
+    <insert id="batchAddCategory" parameterType="java.util.List">
+        insert into ssd_query_template_ctg(
+            ctg_id,
+            ctg_name,
+            ctg_type,
+            ctg_desc,
+            sort_id,
+            ctg_parent_id,
+            is_active,
+            created_time,
+            created_by
+        )
+        values
+        <foreach collection="list" item="record" separator=",">
+            (#{record.id},
+            #{record.name},
+            #{record.type},
+            #{record.description},
+            #{record.sortId},
+            #{record.parentId},
+            1,
+            now(),
+            #{record.createdBy})
+        </foreach>
+    </insert>
+
+    <update id="updateCategory" parameterType="com.bi.queryer.ssm.query.ctg.model.QueryTemplateCategory">
+        update ssd_query_template_ctg
+        set ctg_name = #{name},
+            ctg_type = #{type},
+            ctg_desc = #{description},
+            ctg_parent_id = #{parentId},
+            sort_id = 9999,
+            updated_time = now(),
+            updated_by = #{updatedBy}
+        where ctg_id = #{id}
+    </update>
+
+    <!-- 更新目录类型 -->
+    <update id="updateCategoryType" parameterType="java.util.HashMap">
+        update ssd_query_template_ctg
+        set ctg_type = #{type}
+        where ctg_id in (${ctgIdList})
+    </update>
+
+    <!-- 更新目录类型 -->
+    <update id="updateCategoryName" parameterType="com.bi.queryer.ssm.query.ctg.model.QueryTemplateCategory">
+        update ssd_query_template_ctg
+        set ctg_name = #{name},
+            updated_time = now(),
+            updated_by = #{updatedBy}
+        where ctg_id = #{id}
+    </update>
+
+    <!-- 更新目录类型 -->
+    <update id="updateCategoryParent" parameterType="java.util.Map">
+        update ssd_query_template_ctg
+        set ctg_parent_id = #{parentId},
+        ctg_type = #{type},
+        updated_time = now(),
+        updated_by = #{userName}
+        where ctg_id in
+        <foreach item="ctgId" collection="ctgIdList" separator="," open="(" close=")">
+            #{ctgId}
+        </foreach>
+        <if test=" userName != null">
+            and created_by = #{userName}
+        </if>
+    </update>
+
+    <delete id="deleteCategoryById" parameterType="java.util.HashMap">
+        delete from ssd_query_template_ctg where ctg_id in (${ctgIdList})
+    </delete>
+
+    <!-- 通过分类id删除模板基础信息 -->
+    <delete id="deleteTemplateBaseByCtg" parameterType="java.util.HashMap">
+        delete from ssd_query_template where ctg_id in (${ctgIdList})
+    </delete>
+
+    <!-- 通过分类id删除模板配置信息 -->
+    <delete id="deleteTemplateConfigByCtg" parameterType="java.util.HashMap">
+        delete t1 from ssd_query_template_cfg t1
+        inner join
+        (
+            select k1.cfg_id
+            from ssd_query_template k1
+            where k1.cfg_id in (${cfgIdList})
+            group by k1.cfg_id having count(1) = 1
+        )t2 on t1.cfg_id = t2.cfg_id
+    </delete>
+
+    <select id="getTemplateConfigIdByCtg" parameterType="java.util.HashMap" resultType="java.lang.String">
+        select cfg_id as cfgId
+        from ssd_query_template
+        where ctg_id in (${ctgIdList})
+    </select>
+
+    <select id="updateTemplateCtg" parameterType="java.util.HashMap">
+        update ssd_query_template set ctg_id = #{ctgId}
+        where tpl_id in
+        <foreach item="item" collection="tplIdList" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="getTemplateConfigById" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.model.TemplateCfgEntity">
+        select
+                cfg_id as cfgId,
+                tpl_config as tplConfig
+        from ssd_query_template_cfg
+        where cfg_id in (${cfgIdList})
+    </select>
+
+    <select id="queryTemplateByCtgIds" parameterType="java.util.List" resultType="com.bi.queryer.ssm.query.template.model.TemplateRsp">
+        select
+            t1.tpl_id as tplId,
+            t1.tpl_name as tplName,
+            t1.tpl_desc as tplDesc,
+            t1.tpl_type as tplType,
+            t1.cfg_id as cfgId,
+            t1.tpl_owner as tplOwner,
+            t1.ctg_id as ctgId,
+            t2.tpl_config as tplConfig,
+            t1.dataset_id as datasetId
+        from ssd_query_template t1
+        inner join ssd_query_template_cfg t2 on t1.cfg_id = t2.cfg_id
+        where t1.ctg_id in
+            <foreach item="item" collection="list" separator="," open="(" close=")" index="">
+                #{item}
+            </foreach>
+    </select>
+
+    <insert id="batchAddTplSpace" parameterType="java.util.List">
+        insert into ssd_query_template_space (pkid, space_ctg_id, owner_type, owner_id, owner_desc, owner_role, created_by, created_time)
+        values
+        <foreach collection="list" item="record" separator=",">
+            (#{record.pkid}, #{record.spaceCtgId}, #{record.ownerType},
+            #{record.ownerId}, #{record.ownerDesc}, #{record.ownerRole},
+            #{record.createdBy}, now())
+        </foreach>
+    </insert>
+
+    <!-- 通过分类id删除模板基础信息 -->
+    <delete id="deleteSpaceByCtgId" parameterType="java.lang.String">
+        delete from ssd_query_template_space where space_ctg_id = #{ctgId}
+    </delete>
+
+    <select id="querySpaceListByCtgId" parameterType="java.lang.String" resultType="com.bi.queryer.ssm.query.ctg.model.TemplateSpaceEntity">
+        select
+            pkid,
+            space_ctg_id as spaceCtgId,
+            owner_type as ownerType,
+            owner_id as ownerId,
+            owner_desc as ownerDesc,
+            owner_role as ownerRole,
+            created_by as createdBy,
+            created_time as createdTime,
+            updated_by as updatedBy,
+            updated_time as updatedTime
+        from ssd_query_template_space
+        where space_ctg_id = #{ctgId}
+    </select>
+
+    <delete id="exitSpaceByUserName" parameterType="java.util.Map">
+        delete from
+            ssd_query_template_space
+        where space_ctg_id = #{ctgId}
+        and owner_type = 'user'
+        and owner_id = #{userName}
+    </delete>
+
+    <select id="getCtgPath" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.model.TemplateCtgPathEntity">
+        select
+            ctg_id as ctgId,
+            ctg_id_path as ctgIdPath,
+            ctg_name_path as ctgNamePath
+        from v_ssd_query_template_ctg
+        where ctg_id in
+        <foreach item="item" collection="list" separator="," open="(" close=")" index="">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="getCtgPathByCtgId" parameterType="String" resultType="com.bi.queryer.ssm.query.template.model.TemplateCtgPathEntity">
+        select
+            ctg_id as ctgId,
+            ctg_id_path as ctgIdPath,
+            ctg_name_path as ctgNamePath
+        from
+            v_ssd_query_template_ctg
+        where
+            ctg_id = #{ctgId}
+    </select>
+
+    <select id="batchQueryTemplateByCtg" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.model.TemplateRsp">
+        select
+            t.tpl_id AS tplId,
+            t.tpl_name AS tplName,
+            t.ctg_id AS ctgId,
+            c.ctg_name AS ctgName,
+            c.ctg_type AS ctgType
+        from ssd_query_template t
+        inner join ssd_query_template_ctg c on t.ctg_id = c.ctg_id
+        where t.ctg_id in
+        <foreach item="item" collection="ctgIdList" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+        <if test=" userName != null">
+            and FIND_IN_SET(#{userName}, t.tpl_owner) > 0
+        </if>
+    </select>
+</mapper>

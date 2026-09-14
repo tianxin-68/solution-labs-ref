@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="menu">
+
+    <!-- 查询分析师（rpt_dev_owner）：当前目录 → 父目录 COALESCE -->
+    <select id="querySsdCtgOwnerWithParentByCtgId" parameterType="String" resultType="String">
+        SELECT COALESCE(
+            NULLIF(TRIM(t.rpt_dev_owner), ''),
+            NULLIF(TRIM(p.rpt_dev_owner), '')
+        )
+        FROM ssd_field_ctg t
+        LEFT JOIN ssd_field_ctg p
+            ON p.ctg_id = t.parent_ctg_id
+           AND p.ctg_type = 'front'
+           AND t.parent_ctg_id IS NOT NULL
+           AND t.parent_ctg_id != '-1'
+        WHERE t.ctg_type = 'front'
+          AND t.ctg_id = #{ctgId}
+        LIMIT 1
+    </select>
+
+
+
+    <!-- 查询开发owner（data_dev_owner）：当前目录 → 父目录 COALESCE -->
+    <select id="querySsdCtgDevOwnerWithParentByCtgId" parameterType="String" resultType="String">
+        SELECT COALESCE(
+            NULLIF(TRIM(t.data_dev_owner), ''),
+            NULLIF(TRIM(p.data_dev_owner), '')
+        )
+        FROM ssd_field_ctg t
+        LEFT JOIN ssd_field_ctg p
+            ON p.ctg_id = t.parent_ctg_id
+           AND p.ctg_type = 'front'
+           AND t.parent_ctg_id IS NOT NULL
+           AND t.parent_ctg_id != '-1'
+        WHERE t.ctg_type = 'front'
+          AND t.ctg_id = #{ctgId}
+        LIMIT 1
+    </select>
+
+    <!-- 查询当前目录的业务owner（biz_owner） -->
+    <select id="querySsdCtgBusinessOwnerByCtgId" parameterType="String" resultType="String">
+        SELECT NULLIF(TRIM(t.biz_owner), '')
+        FROM ssd_field_ctg t
+        WHERE t.ctg_type = 'front'
+          AND t.ctg_id = #{ctgId}
+            LIMIT 1
+    </select>
+
+    <select id="queryMenuIdByCode" parameterType="String" resultType="String">
+        SELECT MENU_ID
+        FROM bi_portal.sys_menu t
+        WHERE t.MENU_CODE = #{menuCode}
+        LIMIT 1
+    </select>
+
+</mapper>

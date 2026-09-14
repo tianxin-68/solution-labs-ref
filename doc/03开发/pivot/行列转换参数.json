@@ -1,0 +1,15 @@
+{
+  "pivotConfigure": {
+    "isActive": 1,
+    "pivotDataset": {
+      "rows": [],
+      "cols": [
+        "dt",
+        "measures"
+      ]
+    },
+    "dataSet": {
+
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "thb": {
+    "items": [
+      {
+        "calcSettings": [
+          {
+            "dateGranularity": "d",
+            "calcModes": [
+              "hb",
+              "tb_m",
+              "tb_y"
+            ]
+          }
+        ],
+        "calcTypes": [
+          "ratio"
+        ],
+        "measureIdList": [
+          "all"
+        ]
+      }
+    ],
+    "isActive": 1
+  },
+  "zb": {
+    "items": [
+      {
+        "measureIdList": [
+          "all"
+        ],
+        "calcMode": "zb_cs",
+        "showPercentCell": true
+      }
+    ],
+    "isActive": 0
+  },
+  "total": {
+    "items": [
+      {
+        "calcMode": "c_s_total",
+        "dimIdList": [
+          "405f24f8135e44c08278a43a9d13c986"
+        ],
+        "aggType": "sum"
+      },
+      {
+        "calcMode": "c_total",
+        "dimIdList": [],
+        "aggType": "sum"
+      },
+      {
+        "calcMode": "r_total",
+        "dimIdList": [],
+        "aggType": "sum"
+      }
+    ],
+    "isActive": 1
+  },
+  "compare": {
+    "items": [
+      {
+        "title" : "对比",
+        "measureIdList": [
+          "all"
+        ],
+        "dateGranularity": "d",
+        "baseDates": [
+          "2023-08-21",
+          "2023-08-22"
+        ],
+        "compareDates": [
+          "2023-07-20",
+          "2023-07-21"
+        ],
+        "calcTypes": [
+          "ratio"
+        ],
+        "calcMode": "c_cmp"
+      }
+    ],
+    "isActive": 0
+  },
+  "ctr": {
+    "isActive" : 1,
+    "items" : [
+      {
+         "ctrCalcMode" : "hb",
+         "compareIndex" : 0
+      },
+      {
+         "ctrCalcMode" : "tb_w",
+        "compareIndex" : 0
+      },
+      {
+        "ctrCalcMode" : "c_cmp",
+        "compareIndex" : 0
+      },
+      {
+        "ctrCalcMode" : "c_cmp",
+        "compareIndex" : 1
+      }
+    ]
+  },
+  "setting": {
+    "zbAndTotalSetting": {
+      "isActive": 1,
+      "activeMode": "total"
+    }
+  }
+}

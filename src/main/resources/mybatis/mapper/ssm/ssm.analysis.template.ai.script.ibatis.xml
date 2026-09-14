@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.analysis.template.ai.script">
+
+    <!-- 新增 AI 脚本 -->
+    <insert id="addAiScript" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplAiScriptEntity">
+        insert into ssm_analysis_tpl_ai_script
+        (
+            script_id,
+            widget_id,
+            analysis_tpl_cfg_id,
+            analysis_tpl_id,
+            script_type,
+            script_status,
+            script_content,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time
+        )
+        values
+        (
+            #{scriptId},
+            #{widgetId},
+            #{analysisTplCfgId},
+            #{analysisTplId},
+            #{scriptType},
+            #{scriptStatus},
+            #{scriptContent},
+            #{createdBy},
+            now(),
+            #{updatedBy},
+            now()
+        )
+    </insert>
+
+    <!-- 更新 AI 脚本 -->
+    <update id="updateAiScript" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplAiScriptEntity">
+        update ssm_analysis_tpl_ai_script
+        <set>
+            <if test="widgetId != null">
+                widget_id = #{widgetId},
+            </if>
+            <if test="analysisTplId != null">
+                analysis_tpl_id = #{analysisTplId},
+            </if>
+            <if test="scriptType != null">
+                script_type = #{scriptType},
+            </if>
+            <if test="scriptStatus != null">
+                script_status = #{scriptStatus},
+            </if>
+            <if test="scriptContent != null">
+                script_content = #{scriptContent},
+            </if>
+            <if test="updatedBy != null">
+                updated_by = #{updatedBy},
+            </if>
+            updated_time = now()
+        </set>
+        where script_id = #{scriptId} and analysis_tpl_cfg_id = #{analysisTplCfgId}
+    </update>
+
+    <update id="updateAiScriptCfgId" parameterType="java.util.Map">
+        update ssm_analysis_tpl_ai_script
+        <set>
+            <if test="widgetId != null">
+                widget_id = #{widgetId},
+            </if>
+            <if test="analysisTplCfgId != null">
+                analysis_tpl_cfg_id = #{newAnalysisTplCfgId},
+            </if>
+            updated_time = now()
+        </set>
+        where analysis_tpl_id = #{analysisTplId} and analysis_tpl_cfg_id = #{oldAnalysisTplCfgId}
+    </update>
+
+    <!-- 根据 ID 删除 AI 脚本 -->
+    <delete id="deleteAiScriptById" parameterType="java.lang.Integer">
+        delete from ssm_analysis_tpl_ai_script
+        where script_id = #{scriptId}
+    </delete>
+
+    <!-- 根据条件删除 AI 脚本 -->
+    <delete id="deleteAiScriptByCondition" parameterType="java.util.Map">
+        delete from ssm_analysis_tpl_ai_script
+        where 1 = 1
+        <if test="scriptId != null">
+            and script_id = #{scriptId}
+        </if>
+        <if test="analysisTplId != null">
+            and analysis_tpl_id = #{analysisTplId}
+        </if>
+        <if test="analysisTplCfgIds != null">
+            and analysis_tpl_cfg_id in
+            <foreach item="item" collection="analysisTplCfgIds" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </delete>
+
+    <!-- 根据 ID 查询 AI 脚本 -->
+    <select id="getAiScriptById" parameterType="java.lang.Integer"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplAiScriptEntity">
+        select
+            script_id as scriptId,
+            widget_id as widgetId,
+            analysis_tpl_cfg_id as analysisTplCfgId,
+            analysis_tpl_id as analysisTplId,
+            script_type as scriptType,
+            script_status as scriptStatus,
+            script_content as scriptContent,
+            created_by as createdBy,
+            created_time as createdTime,
+            updated_by as updatedBy,
+            updated_time as updatedTime
+            from ssm_analysis_tpl_ai_script
+        where script_id = #{scriptId}
+    </select>
+
+    <!-- 根据组件 ID 查询 AI 脚本 -->
+    <select id="getAiScriptByWidgetId" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplAiScriptEntity">
+        select
+            script_id as scriptId,
+            widget_id as widgetId,
+            analysis_tpl_cfg_id as analysisTplCfgId,
+            analysis_tpl_id as analysisTplId,
+            script_type as scriptType,
+            script_status as scriptStatus,
+            script_content as scriptContent,
+            created_by as createdBy,
+            created_time as createdTime,
+            updated_by as updatedBy,
+            updated_time as updatedTime
+            from ssm_analysis_tpl_ai_script
+        where widget_id = #{widgetId}
+    </select>
+
+    <!-- 根据分析模板 ID 查询 AI 脚本列表 -->
+    <select id="listAiScriptByAnalysisTplId" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplAiScriptEntity">
+        select
+            script_id as scriptId,
+            widget_id as widgetId,
+            analysis_tpl_cfg_id as analysisTplCfgId,
+            analysis_tpl_id as analysisTplId,
+            script_type as scriptType,
+            script_status as scriptStatus,
+            script_content as scriptContent,
+            created_by as createdBy,
+            created_time as createdTime,
+            updated_by as updatedBy,
+            updated_time as updatedTime
+        from ssm_analysis_tpl_ai_script
+        where analysis_tpl_id = #{analysisTplId}
+        order by created_time desc
+    </select>
+
+    <!-- 根据分析模板配置 ID 查询 AI 脚本列表 -->
+    <select id="listAiScriptByAnalysisTplCfgId" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplAiScriptEntity">
+        select
+            script_id as scriptId,
+            widget_id as widgetId,
+            analysis_tpl_cfg_id as analysisTplCfgId,
+            analysis_tpl_id as analysisTplId,
+            script_type as scriptType,
+            script_status as scriptStatus,
+            script_content as scriptContent,
+            created_by as createdBy,
+            created_time as createdTime,
+            updated_by as updatedBy,
+            updated_time as updatedTime
+        from ssm_analysis_tpl_ai_script
+        where analysis_tpl_id = #{analysisTplId} and analysis_tpl_cfg_id in
+        <foreach item="item" collection="analysisTplCfgIds" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <!-- 根据条件查询 AI 脚本列表 -->
+    <select id="listAiScriptByCondition" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplAiScriptEntity">
+        select
+            script_id as scriptId,
+            widget_id as widgetId,
+            analysis_tpl_cfg_id as analysisTplCfgId,
+            analysis_tpl_id as analysisTplId,
+            script_type as scriptType,
+            script_status as scriptStatus,
+            script_content as scriptContent,
+            created_by as createdBy,
+            created_time as createdTime,
+            updated_by as updatedBy,
+            updated_time as updatedTime
+        from ssm_analysis_tpl_ai_script
+        where 1 = 1
+        <if test="analysisTplId != null">
+            and analysis_tpl_id = #{analysisTplId}
+        </if>
+        <if test="analysisTplCfgIds != null">
+            and analysis_tpl_cfg_id in
+            <foreach item="item" collection="analysisTplCfgIds" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="scriptIds != null and scriptIds.size() > 0">
+            and script_id in
+            <foreach item="item" collection="scriptIds" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <!-- 批量插入 AI 脚本 -->
+    <insert id="batchInsertAiScript" parameterType="java.util.List">
+        insert into ssm_analysis_tpl_ai_script
+        (
+            script_id,
+            widget_id,
+            analysis_tpl_cfg_id,
+            analysis_tpl_id,
+            script_type,
+            script_status,
+            script_content,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time
+        )
+        values
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.scriptId},
+            #{item.widgetId},
+            #{item.analysisTplCfgId},
+            #{item.analysisTplId},
+            #{item.scriptType},
+            #{item.scriptStatus},
+            #{item.scriptContent},
+            #{item.createdBy},
+            now(),
+            #{item.updatedBy},
+            now()
+            )
+        </foreach>
+    </insert>
+
+    <!-- 批量插入 AI 脚本与查询模板关系 -->
+    <insert id="batchInsertAiQueryTplRel" parameterType="java.util.List">
+        insert into ssm_analysis_tpl_ai_query_tpl_rel
+        (
+            script_id,
+            widget_id,
+            analysis_tpl_cfg_id,
+            analysis_tpl_id,
+            local_tpl_id,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time
+        )
+        values
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.scriptId},
+            #{item.widgetId},
+            #{item.analysisTplCfgId},
+            #{item.analysisTplId},
+            #{item.localTplId},
+            #{item.createdBy},
+            now(),
+            #{item.updatedBy},
+            now()
+            )
+        </foreach>
+    </insert>
+
+</mapper>

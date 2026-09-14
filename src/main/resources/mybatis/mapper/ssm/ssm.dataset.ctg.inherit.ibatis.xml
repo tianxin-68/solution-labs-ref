@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.dataset.ctg.inherit">
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.mgr.fieldCtg.model.DatasetCtgInheritEntity">
+        insert into ssm_dataset_ctg_inherit
+        (
+            item_type,
+            item_value,
+            is_inherited,
+            created_time,
+            created_by
+        )
+        value
+        (
+            #{itemType},
+            #{itemValue},
+            #{isInherited},
+            now(),
+            #{createdBy}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.bi.queryer.ssm.mgr.fieldCtg.model.DatasetCtgInheritEntity">
+        update
+            ssm_dataset_ctg_inherit
+        set
+            is_inherited = #{isInherited},
+            updated_time = now(),
+            updated_by = #{updatedBy}
+        where
+            item_type = #{itemType}
+            and item_value = #{itemValue}
+    </update>
+
+    <delete id="delete" parameterType="com.bi.queryer.ssm.mgr.fieldCtg.model.DatasetCtgInheritEntity">
+        delete from
+            ssm_dataset_ctg_inherit
+        where
+            item_type = #{itemType}
+            and item_value = #{itemValue}
+    </delete>
+
+    <select id="selectInheritCount" parameterType="java.util.HashMap" resultType="Integer">
+        select
+            count(1)
+        from
+            ssm_dataset_ctg_inherit
+        where item_type = #{itemType}
+            and item_value = #{itemValue}
+    </select>
+
+    <select id="selectInheritInfo" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.mgr.fieldCtg.model.DatasetCtgInheritEntity">
+        select
+            item_type as itemType,
+            item_value as itemValue,
+            is_inherited as isInherited
+         from
+            ssm_dataset_ctg_inherit
+         where
+            item_type = #{itemType}
+            and item_value = #{itemValue}
+    </select>
+
+    <select id="selectAllInherit" resultType="com.bi.queryer.ssm.mgr.fieldCtg.model.DatasetCtgInheritEntity">
+        select
+            item_type as itemType,
+            item_value as itemValue,
+            is_inherited as isInherited
+        from
+            ssm_dataset_ctg_inherit
+    </select>
+
+    <select id="queryInheritedDatasetIds" resultType="String">
+        SELECT
+          item_value
+        FROM
+          ssm_dataset_ctg_inherit
+        WHERE item_type = 'dataset'
+          AND is_inherited = 1
+    </select>
+
+    <select id="queryInheritedDataset" resultType="com.bi.queryer.ssm.mgr.dataset.model.DatasetRsq">
+        SELECT DISTINCT
+          t2.dataset_id as datasetId,
+          t2.dataset_name as datasetName,
+          t2.data_dev_owner as dataDevOwner
+        FROM
+          ssm_dataset_ctg_inherit t1
+          inner join ssm_dataset t2 on t1.item_value = t2.dataset_id
+        WHERE t1.item_type = 'dataset'
+          AND t1.is_inherited = 1
+          and t2.is_active = 1
+    </select>
+
+    <select id="queryInheritedCtgByDatasetId" resultType="com.bi.queryer.ssm.meta.MetaFieldCategory">
+        SELECT DISTINCT
+          t2.ctg_name as `name`,
+          t2.data_dev_owner as dataDevOwner
+        FROM
+          ssm_dataset_ctg_inherit t1
+          INNER JOIN ssd_field_ctg t2
+            ON t1.item_value = t2.ctg_id
+          INNER JOIN ssm_dataset_ctg_rel t3
+            ON t2.ctg_id = t3.ctg_id
+        WHERE t1.item_type = 'ctg'
+          AND t1.is_inherited = 1
+          AND t2.is_active = 1
+          AND t2.parent_ctg_id = '-1'
+          AND t3.dataset_id = #{datasetId}
+    </select>
+
+    <delete id="batchDelete" parameterType="java.util.HashMap">
+        delete from
+            ssm_dataset_ctg_inherit
+        where
+            item_type = 'ctg'
+            and item_value in
+            <foreach collection="ctgIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </delete>
+
+    <delete id="batchDeleteByList" parameterType="java.util.HashMap">
+        delete from
+            ssm_dataset_ctg_inherit
+        where
+         item_value in
+        <foreach collection="inheritList" item="item" open="(" separator="," close=")">
+            #{item.itemValue}
+        </foreach>
+    </delete>
+
+    <insert id="batchAddCtgInherit" parameterType="java.util.HashMap">
+         insert into ssm_dataset_ctg_inherit
+        (
+            item_type,
+            item_value,
+            is_inherited,
+            created_time,
+            created_by
+        )
+        values
+        <foreach collection="ctgList" item="item" open="" separator="," close="">
+            (
+                'ctg',
+                #{item.id},
+                1,
+                now(),
+                #{userName}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="batchAddCtgInheritByList" parameterType="java.util.HashMap">
+        insert into ssm_dataset_ctg_inherit
+        (
+        item_type,
+        item_value,
+        is_inherited,
+        created_time,
+        created_by
+        )
+        values
+        <foreach collection="inheritList" item="item" open="" separator="," close="">
+            (
+            #{item.itemType},
+            #{item.itemValue},
+            #{item.isInherited},
+            now(),
+            #{item.createdBy}
+            )
+        </foreach>
+    </insert>
+
+
+
+</mapper>

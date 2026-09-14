@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.role.ext">
+
+    <!-- 查询用户在 ssm_role_user_ext 中的角色名列表 -->
+    <select id="queryRoleNamesByUserName" parameterType="String" resultType="String">
+        SELECT role_name
+        FROM ssm_role_user_ext
+        WHERE user_name = #{userName}
+    </select>
+
+    <!-- 根据角色名列表，从 ssm_role_ctg_auth_ext 获取 ctg_full_name -->
+    <select id="queryCtgFullNamesByRoleNames" parameterType="java.util.List" resultType="String">
+        SELECT DISTINCT ctg_full_name
+        FROM ssm_role_ctg_auth_ext
+        WHERE role_name IN
+        <foreach collection="list" item="roleName" open="(" separator="," close=")">
+            #{roleName}
+        </foreach>
+    </select>
+
+    <!-- 根据 ctg_full_name 列表，从 v_ssd_field_ctg 获取 ctg_id（走 OLAP 数据源） -->
+    <select id="queryCtgIdsByCtgFullNames" parameterType="java.util.List" resultType="String">
+        SELECT DISTINCT ctg_id
+        FROM v_ssd_field_ctg
+        WHERE ctg_name_path IN
+        <foreach collection="list" item="ctgFullName" open="(" separator="," close=")">
+            #{ctgFullName}
+        </foreach>
+    </select>
+
+    <!-- 根据角色名列表查询关联用户名 -->
+    <select id="queryUserNamesByRoleNames" parameterType="java.util.List" resultType="String">
+        SELECT DISTINCT user_name
+        FROM ssm_role_user_ext
+        WHERE role_name IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <!-- 查询 ssm_role_user_ext 中全部不重复用户名 -->
+    <select id="queryAllUserNames" resultType="String">
+        SELECT DISTINCT user_name
+        FROM ssm_role_user_ext
+        WHERE user_name IS NOT NULL AND user_name != ''
+    </select>
+
+</mapper>

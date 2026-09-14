@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.dataset">
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.meta.SSMDataset">
+        insert into ssm_dataset
+        (
+            dataset_id,
+            dataset_name,
+            rpt_dev_owner,
+            data_dev_owner,
+            data_date,
+            data_desc,
+            is_standard_dataset,
+            dataset_type,
+            sort_id,
+            is_active,
+            created_time,
+            created_by
+        )
+        values
+        (
+            #{datasetId},
+            #{datasetName},
+            #{rptDevOwner},
+            #{dataDevOwner},
+            #{dataDate},
+            #{dataDesc},
+            #{isStandardDataset},
+            #{datasetType},
+            #{sortId},
+            #{isActive},
+            now(),
+            #{createdBy}
+        )
+    </insert>
+
+    <select id="queryMaxSortId" resultType="Double">
+        select IFNULL(MAX(sort_id),0)  from ssm_dataset
+    </select>
+
+    <update id="update" parameterType="com.bi.queryer.ssm.meta.SSMDataset">
+        update
+            ssm_dataset
+         set
+            dataset_name = #{datasetName},
+            rpt_dev_owner = #{rptDevOwner},
+            data_dev_owner = #{dataDevOwner},
+            data_date = #{dataDate},
+            data_desc = #{dataDesc},
+            sort_id = #{sortId},
+            updated_time = now(),
+            updated_by = #{updatedBy},
+            is_active = #{isActive},
+            is_standard_dataset = #{isStandardDataset},
+            dataset_type = #{datasetType}
+         where
+            dataset_id = #{datasetId}
+    </update>
+
+    <select id="getById" parameterType="String" resultType="com.bi.queryer.ssm.meta.SSMDataset">
+         select
+             dataset_id as datasetId,
+             dataset_name as datasetName,
+             rpt_dev_owner as rptDevOwner,
+             data_dev_owner as dataDevOwner,
+             data_date as dataDate,
+             data_desc as dataDesc,
+             sort_id as sortId,
+             is_active as isActive,
+             is_standard_dataset as isStandardDataset,
+             dataset_type as datasetType
+         from
+             ssm_dataset
+         where
+             dataset_id = #{datasetId}
+    </select>
+    
+    <select id="getDatasetCtgCount" parameterType="String" resultType="Integer">
+        SELECT COUNT(1) FROM `ssm_dataset_ctg_rel` WHERE dataset_id = #{datasetId}
+    </select>
+
+    <delete id="delete" parameterType="java.util.HashMap">
+        delete
+            from
+            ssm_dataset
+        where
+            dataset_id = #{datasetId}
+    </delete>
+
+    <delete id="deleteDatasetCtgRelByCtgId" parameterType="String">
+        delete from ssm_dataset_ctg_rel where ctg_id = #{id}
+    </delete>
+
+    <delete id="batchDeleteDatasetCtgRelByCtgId" parameterType="java.util.HashMap">
+        delete from ssm_dataset_ctg_rel where ctg_id in (
+        <foreach item="item" collection="ctgIdList" separator="," index="">
+            #{item}
+        </foreach>
+        )
+    </delete>
+
+    <insert id="insertDatasetCtgRel" parameterType="com.bi.queryer.ssm.meta.SSMDatasetCtgRel">
+        insert into ssm_dataset_ctg_rel
+        (
+            rel_id,
+            ctg_id,
+            dataset_id
+        )
+        values
+        (
+            #{relId},
+            #{ctgId},
+            #{datasetId}
+        )
+    </insert>
+
+    <insert id="batchInsertDatasetCtgRel" parameterType="java.util.HashMap">
+        insert into ssm_dataset_ctg_rel
+        (rel_id,ctg_id,dataset_id)
+        select
+            md5(uuid()) as rel_id,
+            ctg_id as ctg_id,
+            #{datasetId} as dataset_id
+        from
+            ssd_field_ctg
+        where ctg_id in (
+            <foreach item="item" collection="ctgIdList" separator="," index="">
+                #{item}
+            </foreach>
+        )
+    </insert>
+
+    <select id="list" resultType="com.bi.queryer.ssm.mgr.dataset.model.DatasetRsq">
+        SELECT
+          dataset_id as datasetId,
+          dataset_name as datasetName,
+          rpt_dev_owner as rptDevOwner,
+          data_dev_owner as dataDevOwner,
+          data_date as dataDate,
+          data_desc as dataDesc,
+          sort_id as sortId,
+          is_active as isActive,
+          is_standard_dataset as isStandardDataset,
+          dataset_type as datasetType
+        FROM
+          ssm_dataset
+        WHERE is_active = 1
+        ORDER BY sort_id
+    </select>
+
+    <select id="listAll" resultType="com.bi.queryer.ssm.mgr.dataset.model.DatasetRsq">
+        SELECT
+          dataset_id as datasetId,
+          dataset_name as datasetName,
+          rpt_dev_owner as rptDevOwner,
+          data_dev_owner as dataDevOwner,
+          data_date as dataDate,
+          data_desc as dataDesc,
+          sort_id as sortId,
+          is_active as isActive,
+          is_standard_dataset as isStandardDataset,
+          dataset_type as datasetType
+        FROM
+          ssm_dataset
+        ORDER BY sort_id
+    </select>
+
+    <select id="queryByIds" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.SSMDataset">
+        SELECT
+            dataset_id as datasetId,
+            dataset_name as datasetName
+        FROM
+            ssm_dataset
+        where dataset_id in (
+            <foreach item="item" collection="datasetIdList" separator="," index="">
+                #{item}
+            </foreach>
+        )
+    </select>
+
+    <select id="queryAllDatasetCtgRel" resultType="com.bi.queryer.ssm.meta.SSMDatasetCtgRel">
+        SELECT
+          ctg_id as ctgId,
+          dataset_id as datasetId
+        FROM
+          ssm_dataset_ctg_rel
+    </select>
+
+    <select id="queryDatasetCtgRelByCtgId" parameterType="String" resultType="com.bi.queryer.ssm.meta.SSMDatasetCtgRel">
+        select
+            ctg_id as ctgId,
+            dataset_id as datasetId
+        from
+            ssm_dataset_ctg_rel
+        where
+            ctg_id = #{ctgId}
+        limit 1
+    </select>
+
+    <delete id="batchDeleteDatasetCtgRel" parameterType="java.util.HashMap">
+        delete from ssm_dataset_ctg_rel
+               where
+                 dataset_id = #{datasetId}
+                 and ctg_id in (
+                <foreach item="item" collection="ctgIds" separator="," index="">
+                    #{item}
+                </foreach>
+                 )
+    </delete>
+
+    <delete id="deleteAllDatasetAuthDim">
+        DELETE FROM ssm_dataset_auth_dim
+    </delete>
+
+    <insert id="batchInsertDatasetAuthDim" parameterType="java.util.List">
+        REPLACE INTO ssm_dataset_auth_dim (
+            dataset_id,
+            module_code,
+            dim_code,
+            module_name,
+            dim_name,
+            is_apply,
+            created_by,
+            created_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.datasetId},
+            #{item.moduleCode},
+            #{item.dimCode},
+            #{item.moduleName},
+            #{item.dimName},
+            #{item.isApply},
+            #{item.createdBy},
+            now()
+            )
+        </foreach>
+    </insert>
+
+    <select id="queryDatasetAuthDimByDatasetId" parameterType="String" resultType="com.bi.queryer.ssm.mgr.dataset.model.SSMDatasetAuthDim">
+        SELECT
+            dataset_id as datasetId,
+            module_code as moduleCode,
+            dim_code as dimCode,
+            module_name as moduleName,
+            dim_name as dimName,
+            is_apply as isApply,
+            created_by as createdBy,
+            created_time as createdTime
+        FROM
+            ssm_dataset_auth_dim
+        WHERE
+            dataset_id = #{datasetId}
+            AND is_apply = 1
+    </select>
+
+</mapper>

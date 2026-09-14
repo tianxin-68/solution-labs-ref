@@ -1,0 +1,45 @@
+package com.bi.queryer.ssm.engine.analysis.cfg.target;
+
+import cn.hutool.core.collection.CollUtil;
+import com.bi.queryer.sys.enums.Enabled;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @Author contributor
+ * @Date 16:40 2023-08-04
+ * @Description 同环比分析配置
+ **/
+public class AnalysisTargetConfig {
+
+    protected Integer isActive = Enabled.NO.getId();
+
+    private List<AnalysisTargetItemConfig> items = new ArrayList<>();
+
+    public Integer getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Integer isActive) {
+        this.isActive = isActive;
+    }
+
+    public List<AnalysisTargetItemConfig> getItems() {
+        return items;
+    }
+
+    public void setItems(List<AnalysisTargetItemConfig> items) {
+        this.items = items;
+    }
+
+
+    public boolean isActive(){
+        boolean active = Enabled.value(this.isActive);
+        if(!active || CollUtil.isEmpty(items)){
+            return false;
+        }
+
+        return active;
+    }
+}

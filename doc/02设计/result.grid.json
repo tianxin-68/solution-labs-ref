@@ -1,0 +1,34 @@
+{
+  "data": {
+    "rows":[
+      {
+        "r__d0" : "abc","r__d1" : "efg"
+      }
+    ],
+    "columns" : [
+      {
+        "id": "",
+        "code": "r__d0",
+        "name": "",
+        "title": "渠道",
+        "dataType": "text",
+        "type": "dim",
+        "dataFormat": "",
+        "level": 0,
+        "isShow": 1,
+        "rawCode": "channel_type",
+        "rawTitle": "渠道",
+        "children": [{}],
+        "isFixed": 1,
+        "canOrder": 0,
+        "orderType": "",
+        "rawQueryArea": "RowDimension",
+        "hasFilter": 0,
+        "canFilter": 0
+      }
+    ],
+    "properties":{}
+  },
+  "message" : "",
+  "success" : true
+}

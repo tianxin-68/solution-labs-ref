@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.portal.role.type.func">
+
+    <select id="queryRoleFuncCodes" parameterType="java.util.ArrayList" resultType="String">
+        SELECT
+          distinct func_code
+        FROM
+          `ssm_portal_role_type_func`
+        WHERE role_type IN (
+            <foreach collection="list" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+            )
+          AND is_active = 1
+    </select>
+    
+    <select id="queryFuncCodeByRoleIds" resultType="com.bi.queryer.ssm.portal.auth.entity.PortalRoleFunc" parameterType="java.util.ArrayList">
+        SELECT
+          t1.`role_id` as roleId,
+          t2.`func_code` as funcCode
+        FROM
+          `ssm_portal_role` t1
+          INNER JOIN `ssm_portal_role_type_func` t2
+            ON t1.`role_type` = t2.`role_type`
+        WHERE t1.role_id IN (
+            <foreach collection="list" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+          )
+          AND t1.`is_active` = 1
+          AND t2.`is_active` = 1
+    </select>
+
+</mapper>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="chat.session.favorite">
+
+    <select id="getFavoriteByChatIdAndUser" parameterType="map" resultType="com.bi.queryer.ssm.llm.chatSession.entity.ChatFavorite">
+        select
+            fav_id as favId,
+            chat_id as chatId,
+            fav_sort_id as favSortId,
+            created_by as createdBy,
+            created_time as createdTime,
+            updated_by as updatedBy,
+            updated_time as updatedTime
+        from ssm_ai_analysis_fav
+        where
+            chat_id = #{chatId}
+            and created_by = #{userName}
+        limit 1
+    </select>
+
+    <insert id="insertFavorite" parameterType="com.bi.queryer.ssm.llm.chatSession.entity.ChatFavorite" useGeneratedKeys="true" keyProperty="favId">
+        insert into ssm_ai_analysis_fav (
+            chat_id,
+            fav_sort_id,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time
+        ) values (
+            #{chatId},
+            #{favSortId},
+            #{createdBy},
+            #{createdTime},
+            #{updatedBy},
+            #{updatedTime}
+        )
+    </insert>
+
+    <delete id="deleteFavoriteByChatIdAndUser" parameterType="map">
+        delete from ssm_ai_analysis_fav
+        where
+            chat_id = #{chatId}
+            and created_by = #{userName}
+    </delete>
+
+    <delete id="deleteFavoriteByChatId" parameterType="map">
+        delete from ssm_ai_analysis_fav
+        where chat_id = #{chatId}
+    </delete>
+
+</mapper>

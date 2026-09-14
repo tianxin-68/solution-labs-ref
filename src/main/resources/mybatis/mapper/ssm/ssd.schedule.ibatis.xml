@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.schedule">
+
+    <!-- 查询模板所属目录（用户查自己的） -->
+    <select id="queryFieldStatsTotalList" resultType="com.bi.queryer.ssm.schedule.model.SSDQueryFieldStatsTotal">
+        select
+            t.`field_id` AS fieldId,
+            t.`field_code` AS fieldCode,
+            t.`field_name` AS fieldName,
+            t.`field_title` AS fieldTitle,
+            t.`is_measure` AS isMeasure,
+            t.`ctg_id` AS ctgId,
+            t.`ctg_name` AS ctgName,
+            t.`query_count` AS queryCount,
+            t.`query_user_count` AS queryUserCount,
+            DATE_FORMAT(t.`min_query_time`,'%Y-%m-%d %H:%i:%s') AS minQueryTime,
+            DATE_FORMAT(t.`max_query_time`,'%Y-%m-%d %H:%i:%s') AS maxQueryTime,
+            t.`sort_id` AS sortId
+        from `ssd_query_field_stats_total` t
+        order by t.`ctg_id`, t.`sort_id` ASC
+    </select>
+
+    <!-- 查询模板所属目录（用户查自己的） -->
+    <select id="queryMeetConditionCtgIdList" resultType="String">
+       SELECT
+            a.front_ctg_id
+       FROM (
+            SELECT
+              front_ctg_id,
+              COUNT(*) AS ctg_field_count
+            FROM
+              `ssd_field_def`
+            WHERE 1=1
+              AND front_ctg_id IS NOT NULL
+              AND is_active = 1
+            GROUP BY front_ctg_id
+            HAVING ctg_field_count > 20
+       ) a
+
+    </select>
+
+    <!-- 查询需要折叠的目录 -->
+    <select id="queryNeedArchiveCtgList" resultType="String">
+       SELECT
+            ctg_id
+       FROM
+            ssd_query_field_stats_archive_ctg
+
+    </select>
+
+    <insert id="insertQueryFieldStats" parameterType="java.util.HashMap">
+
+        INSERT INTO ssd_query_field_stats
+            (
+                field_id,
+                field_code,
+                field_name,
+                field_title,
+                ctg_id,
+                ctg_name,
+                query_count,
+                query_user_count,
+                min_query_time,
+                max_query_time,
+                sort_id
+            )
+        VALUES
+        <foreach  collection="finalUsedFieldStatsList" index="index" item="item" separator="," >
+            (
+                #{item.fieldId},
+                #{item.fieldCode},
+                #{item.fieldName},
+                #{item.fieldTitle},
+                #{item.ctgId},
+                #{item.ctgName},
+                #{item.queryCount},
+                #{item.queryUserCount},
+                #{item.minQueryTime},
+                #{item.maxQueryTime},
+                #{item.sortId}
+            )
+        </foreach>
+
+    </insert>
+
+    <delete id="deleteQueryFieldStats">
+        truncate table ssd_query_field_stats
+    </delete>
+
+    <delete id="deleteQueryFieldStatsArchiveCtg">
+        truncate table ssd_query_field_stats_archive_ctg
+    </delete>
+
+    <insert id="insertQueryFieldStatsArchiveCtg" parameterType="java.util.HashMap">
+        INSERT INTO ssd_query_field_stats_archive_ctg
+        (
+            ctg_id,
+            dt
+        )
+        VALUES
+        <foreach  collection="archiveCtgIdList" index="index" item="item" separator="," >
+            (
+            #{item},
+            NOW()
+            )
+        </foreach>
+    </insert>
+</mapper>

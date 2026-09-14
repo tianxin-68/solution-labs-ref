@@ -1,0 +1,73 @@
+======获取日期所属周id========
+-- 参数：日期，格式:yyyy-MM-dd或yyyy/MM/dd或yyyyMMdd，如：2023-01-01
+-- 返回：日期所属周id,格式yyyyww，如：202301
+get_week_id(string dateStr)
+
+======获取日期所属周名称========
+-- 参数：日期，格式:yyyy-MM-dd或yyyy/MM/dd或yyyyMMdd，如：2023-01-01
+-- 返回：周名称，如：2021年第01周
+get_week_name(string dateStr)
+
+======获取日期所属周全面========
+-- 参数：日期，格式:yyyy-MM-dd或yyyy/MM/dd或yyyyMMdd，如：2023-01-01
+-- 返回：周全名称，如：2021年第01周(2021-01-04~2021-01-10)
+get_week_fullname(string dateStr)
+
+======获取周id对应的周名称========
+-- 参数：周id，格式：yyyyww,如：202301
+-- 返回：周名称，如：2021年第01周
+get_week_name_by_id(string week_id)
+
+======获取周id对应的周全名========
+-- 参数：周id，格式：yyyyww,如：202301
+-- 返回：周全名称，如：2021年第01周(2021-01-04~2021-01-10)
+get_week_fullname_by_id(string week_id)
+
+======周加减========
+-- 参数：
+  -- week_id：周id，格式：yyyyww,如：202301
+  -- weekOffset：周偏移量，整数
+-- 返回：周id，格式：yyyyww,如：202301
+add_week(string week_id, integer weekOffset)
+
+======获取年份对应日期所属偏移年份同周中对应的星期日期========
+-- 参数：
+  -- dateStr：日期，格式:yyyy-MM-dd或yyyy/MM/dd或yyyyMMdd，如：2023-01-01
+  -- yearOffset：偏移年数，如：1，
+-- 返回：偏移年份对应日期所属同周中对应的星期日期，如：dateStr=2023-01-01，yearOffset=-1，2023-01-01周id=202252，去年weekid=202152，2023-01-01是星期日，则返回：2022-01-02
+get_year_week_day(string dateStr, integer yearOffset)
+
+
+======获取年份对应日期所属偏移年份同周中对应的星期日期========
+-- 参数：
+  -- week_id：周id，格式:yyyyww，如：202320
+  -- yearOffset：偏移年数，如：1，
+-- 返回：偏移年份对应周id，如：week_id=202320，yearOffset=-1，则返回：202220
+get_year_week_id(string week_id, integer yearOffset)
+
+======获取年月的天数========
+-- 参数：
+  -- yearMonth：年月，格式:yyyyMM或yyyy-MM，如：202309或2023-09
+-- 返回：月份的天数，如：yearMonth=202309，返回值=30
+get_month_days(string yearMonth)
+
+======获取年的天数========
+-- 参数：
+  -- year：年份，格式:yyyy，如：2023
+-- 返回：年份的天数，如：year=2023，返回值=365
+get_year_days(string year)
+
+
+======月份加减========
+-- 参数：
+  -- yearMonth：格式：yyyyMM或yyyy/MM或yyyy-MM,如：202301、2023/01、2023-01
+  -- offsetType：偏移类型：month、year
+  -- offset：整数
+-- 返回：月份，格式：yyyyMM或yyyy/MM或yyyy-MM,如：202301、2023/01、2023-01
+add_month(string yearMonth, String offsetType, integer offset)
+
+======编码======
+-- 参数：
+  -- 参数1：字段名
+  -- 参数2：编码规则，规则：原始值1,值1编码,原始值2,值2编码
+decode(city_name, "上海, 1, 北京, 2, 深圳, 3, 武汉");

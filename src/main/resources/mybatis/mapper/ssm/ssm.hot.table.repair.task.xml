@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.hot.table.repair.task">
+    <insert id="insertRepairTask" parameterType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableRepairTask">
+        insert into ssm_hot_table_repair_task
+        (
+            task_id,
+            source_table_name,
+            task_start_date,
+            task_end_date,
+            task_batch_no,
+            task_script_type,
+            task_script_content,
+            task_server_ip,
+            created_by,
+            created_time
+        )
+        values
+        <foreach item="item" index="index" collection="list" separator=",">
+            (
+            #{item.taskId},
+            #{item.sourceTableName},
+            #{item.taskStartDate},
+            #{item.taskEndDate},
+            #{item.taskBatchNo},
+            #{item.taskScriptType},
+            #{item.taskScriptContent},
+            #{item.taskServerIp},
+            #{item.createdBy},
+            now()
+            )
+        </foreach>
+
+    </insert>
+
+    <delete id="deleteBySource" parameterType="java.util.HashMap">
+       delete from ssm_hot_table_repair_task
+       where source_table_name in(
+        <foreach item="item" index="index" collection="sourceTableNames" separator=",">
+            #{item}
+        </foreach>
+           )
+    </delete>
+
+    <select id="queryRepairTask" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableRepairTask">
+        select
+            t1.task_id as taskId,
+            t1.source_table_name as sourceTableName,
+            t1.task_start_date as taskStartDate,
+            t1.task_end_date as taskEndDate,
+            t1.task_batch_no as taskBatchNo,
+            t1.task_script_type as  taskScriptType,
+            t1.task_script_content as taskScriptContent,
+            if(t3.task_exec_status is null , 'ready', t3.task_exec_status) as taskExecStatus,
+            t3.task_exec_info as taskExecInfo,
+            date_format(t3.task_exec_start_time, '%Y-%m-%d %H:%i:%s') as taskExecStartTime,
+            date_format(t3.task_exec_end_time, '%Y-%m-%d %H:%i:%s') as taskExecEndTime,
+            t1.task_desc as taskDesc,
+            t1.task_server_ip taskServerIp,
+            t1.created_by as createdBy,
+            date_format(t1.created_time, '%Y-%m-%d %H:%i:%s') as createdTime,
+            t1.updated_by as updatedBy,
+            date_format(t1.updated_time, '%Y-%m-%d %H:%i:%s') as updatedTime,
+            t2.sla_priority,
+            t3.task_exec_id as taskExecId,
+            if(t3.data_check_result is null , 'ready',t3.data_check_result) as dataCheckResult,
+            t3.data_check_info as dataCheckInfo,
+            date_format(t3.data_check_time, '%Y-%m-%d %H:%i:%s') as dataCheckTime,
+            t3.is_hot_min_date_updated as isHotMinDateUpdated
+        from ssm_hot_table_repair_task t1
+        inner join ssm_hot_table_source t2
+            on t1.source_table_name = t2.source_table_name
+        left join ssm_hot_table_repair_task_log t3
+            on t1.task_id = t3.task_id
+        where 1=1
+            and t1.is_active = 1
+            and t2.is_active = 1
+            and t2.is_auto_repair_data = 1
+        <if test="sourceTableName != null and sourceTableName != ''">
+            and t1.source_table_name = #{sourceTableName}
+        </if>
+        <if test=" taskIdList != null ">
+            and t1.task_id in(
+            <if test="taskIdList != null and taskIdList != '' ">
+                <foreach item="item" index="index" collection="taskIdList" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            )
+        </if>
+        order by t2.sla_priority desc, t1.source_table_name, t1.task_start_date desc, t1.task_batch_no
+    </select>
+
+    <update id="cancel" parameterType="java.util.HashMap">
+        update ssm_hot_table_repair_task_log
+        set task_exec_status = 'cancel',
+            task_exec_end_time = now()
+        where 1=1
+        <if test="sourceTableName != null and sourceTableName != '' ">
+            and source_table_name = #{sourceTableName}
+        </if>
+    </update>
+</mapper>

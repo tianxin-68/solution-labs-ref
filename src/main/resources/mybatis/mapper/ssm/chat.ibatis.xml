@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="chat">
+
+    <update id="updateDataConfigIsLatest" parameterType="map">
+        update agent_plat_chat_data_config
+        set is_latest = 0
+        where chat_id = #{chatId}
+          and is_latest = 1
+    </update>
+
+    <insert id="insertDataConfig" parameterType="com.bi.queryer.ssm.chat.entity.AgentPlatChatDataConfig">
+        insert into agent_plat_chat_data_config
+            (chat_data_id, chat_id, data_snapshot_type, data_snapshot_view_id, is_latest, created_by, created_time)
+        values
+            (#{chatDataId}, #{chatId}, #{dataSnapshotType}, #{dataSnapshotViewId}, #{isLatest}, #{createdBy}, now())
+    </insert>
+
+    <insert id="insertDataResult" parameterType="com.bi.queryer.ssm.chat.entity.AgentPlatChatDataTemplateViewConfig">
+        insert into agent_plat_chat_data_template_view_config
+            (chat_data_id, chat_id, data_snapshot_id, data_snapshot_query_config, widget_id)
+        values
+            (#{chatDataId}, #{chatId}, #{dataSnapshotId}, #{dataSnapshotQueryConfig}, #{widgetId})
+    </insert>
+
+    <insert id="insertDataResults" parameterType="java.util.List">
+        insert into agent_plat_chat_data_template_view_config
+            (chat_data_id, chat_id, data_snapshot_id, data_snapshot_query_config, widget_id)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.chatDataId},
+                #{item.chatId},
+                #{item.dataSnapshotId},
+                #{item.dataSnapshotQueryConfig},
+                #{item.widgetId}
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectLatestDataConfig" parameterType="map"
+            resultType="com.bi.queryer.ssm.chat.entity.AgentPlatChatDataConfig">
+        select
+            chat_data_id as chatDataId,
+            chat_id as chatId,
+            data_snapshot_type as dataSnapshotType,
+            data_snapshot_view_id as dataSnapshotViewId
+        from agent_plat_chat_data_config
+        where chat_id = #{chatId}
+          and is_latest = 1
+        limit 1
+    </select>
+
+    <select id="selectDataResultListByDataId" parameterType="map"
+            resultType="com.bi.queryer.ssm.chat.entity.AgentPlatChatDataTemplateViewConfig">
+        select
+            chat_data_id as chatDataId,
+            chat_id as chatId,
+            data_snapshot_id as dataSnapshotId,
+            data_snapshot_query_config as dataSnapshotQueryConfig,
+            widget_id as widgetId
+        from agent_plat_chat_data_template_view_config
+        where chat_data_id = #{chatDataId}
+    </select>
+
+</mapper>

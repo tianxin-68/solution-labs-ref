@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.governance.audit">
+
+    <insert id="insert" parameterType="com.bi.queryer.ssm.governance.entity.GovernanceAuditLog">
+        INSERT INTO ssm_governance_audit_log (
+            object_type, object_id, object_name, action, from_status, to_status, operator, remark, created_time
+        ) VALUES (
+            #{objectType}, #{objectId}, #{objectName}, #{action}, #{fromStatus}, #{toStatus}, #{operator}, #{remark}, now()
+        )
+    </insert>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO ssm_governance_audit_log (
+            object_type, object_id, object_name, action, from_status, to_status, operator, remark, created_time
+        ) VALUES
+        <foreach collection="list" item="l" separator=",">
+            (#{l.objectType}, #{l.objectId}, #{l.objectName}, #{l.action}, #{l.fromStatus}, #{l.toStatus},
+             #{l.operator}, #{l.remark}, now())
+        </foreach>
+    </insert>
+
+    <sql id="listWhere">
+        <where>
+            <!-- 兼容前端传 objectType=field：匹配所有字段类审计（field/metric/dim） -->
+            <choose>
+                <when test="objectType != null and 'field'.equals(objectType.toString())">
+                    AND object_type IN ('metric', 'dim')
+                </when>
+                <otherwise>
+                    <if test="objectType != null and objectType != ''">AND object_type = #{objectType}</if>
+                </otherwise>
+            </choose>
+            <if test="objectId != null and objectId != ''">AND object_id = #{objectId}</if>
+            <if test="operator != null and operator != ''">AND operator = #{operator}</if>
+            <if test="keyword != null and keyword != ''">
+                AND (object_name LIKE CONCAT('%', #{keyword}, '%') OR object_id LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="list" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.governance.entity.GovernanceAuditLog">
+        SELECT
+            id           AS id,
+            object_type  AS objectType,
+            object_id    AS objectId,
+            object_name  AS objectName,
+            action       AS action,
+            from_status  AS fromStatus,
+            to_status    AS toStatus,
+            operator     AS operator,
+            remark       AS remark,
+            DATE_FORMAT(created_time, '%Y-%m-%d %H:%i:%s') AS createdTime
+        FROM ssm_governance_audit_log
+        <include refid="listWhere"/>
+        ORDER BY id DESC
+        LIMIT #{startNum}, #{pageSize}
+    </select>
+
+    <select id="listCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM ssm_governance_audit_log
+        <include refid="listWhere"/>
+    </select>
+
+</mapper>

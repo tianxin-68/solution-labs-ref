@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="chat.session.message">
+
+    <!-- genAI_feature/v3.15.0_start -->
+    <!--
+      依赖表 chat_message：chat_id、chat_message_id（主键）、content、created_time。
+      若实际列名不同（如主键为 id、正文为 message_content），请在本文件中调整别名。
+    -->
+    <select id="countMessagesByChatIds" parameterType="map"
+            resultType="com.bi.queryer.ssm.portal.ai.vo.ChatMessageStatRow">
+        select
+            chat_id as chatId,
+            count(1) as messageCount
+        from chat_message
+        where
+            chat_id in
+            <foreach collection="chatIds" item="cid" open="(" separator="," close=")">
+                #{cid}
+            </foreach>
+        group by chat_id
+    </select>
+
+    <select id="countQaMessagesByChatIds" parameterType="map"
+            resultType="com.bi.queryer.ssm.portal.ai.vo.ChatMessageStatRow">
+        select
+            chat_id as chatId,
+            count(1) as messageCount
+        from chat_message
+        where
+            chat_id in
+            <foreach collection="chatIds" item="cid" open="(" separator="," close=")">
+                #{cid}
+            </foreach>
+            and chat_message_type = 'QA'
+            and is_summarized = 0
+        group by chat_id
+    </select>
+
+    <select id="listLatestMessagePerChatIds" parameterType="map"
+            resultType="com.bi.queryer.ssm.portal.ai.vo.ChatMessageLatestRow">
+        select
+            m.chat_id as chatId,
+            left(m.question_content, 800) as latestContent,
+            date_format(m.chat_begin_time, '%Y-%m-%d %H:%i:%s') as lastMessageTime
+        from chat_message m
+        where m.chat_message_id in
+        <foreach collection="lastChatMessageIds" item="cid" open="(" separator="," close=")">
+            #{cid}
+        </foreach>
+    </select>
+
+    <select id="listQuestionMessageByIds" parameterType="map"
+            resultType="com.bi.queryer.ssm.llm.chatSession.entity.ChatMessage">
+        select
+            m.chat_id as chatId,
+            m.question_content as questionContent,
+            m.chat_begin_time as chatBeginTime
+        from chat_message m
+        where m.chat_message_id in
+        <foreach collection="lastChatMessageIds" item="cid" open="(" separator="," close=")">
+            #{cid}
+        </foreach>
+    </select>
+    <!-- genAI_feature/v3.15.0_end -->
+
+</mapper>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="chat.context">
+
+    <select id="getChatContextByChatId" parameterType="long"
+            resultType="com.bi.queryer.ssm.llm.chatSession.resp.ChatSessionContextResp">
+        select
+            context_max_byte as contextMaxByte,
+            context_usage_byte as contextUsageByte
+        from chat_context
+        where chat_id = #{chatId}
+    </select>
+
+    <insert id="insertChatContext" parameterType="com.bi.queryer.ssm.llm.chatSession.entity.ChatContext">
+        insert into chat_context (
+            chat_id,
+            context_max_byte,
+            context_usage_byte,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time
+        ) values (
+            #{chatId},
+            #{contextMaxByte},
+            #{contextUsageByte},
+            #{createdBy},
+            #{createdTime},
+            #{updatedBy},
+            #{updatedTime}
+        )
+    </insert>
+
+    <update id="updateChatContextByChatId" parameterType="com.bi.queryer.ssm.llm.chatSession.entity.ChatContext">
+        update chat_context
+        set
+            context_max_byte = #{contextMaxByte},
+            context_usage_byte = #{contextUsageByte},
+            updated_by = #{updatedBy},
+            updated_time = #{updatedTime}
+        where chat_id = #{chatId}
+    </update>
+
+</mapper>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.hot.table.ddl.change">
+
+    <select id="queryHotTableDdlChange" resultType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableDdlChange">
+        SELECT
+            source_table_name as sourceTableName,
+            sum(case when is_active = 1 then 1 else 0 end) as ddlChangeCnt,
+            date_format(max(created_time), '%Y-%m-%d %H:%i:%s') lastChangeTime
+        FROM ssm_hot_table_ddl_change
+        WHERE 1=1
+          and  created_time > ADDDATE(now(), -3)
+        GROUP BY source_table_name
+    </select>
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableDdlChange">
+        insert into ssm_hot_table_ddl_change
+        (
+            source_table_name,
+            is_active,
+            created_time,
+            created_by
+        )
+        values
+        (
+            #{sourceTableName},
+            #{isActive},
+            now(),
+            #{createdBy}
+        )
+
+    </insert>
+
+    <update id="update" parameterType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableDdlChange">
+        update
+            ssm_hot_table_ddl_change
+        set
+            is_active = #{isActive},
+            updated_time = now(),
+            updated_by = #{updatedBy}
+        where
+            source_table_name = #{sourceTableName}
+    </update>
+
+</mapper>

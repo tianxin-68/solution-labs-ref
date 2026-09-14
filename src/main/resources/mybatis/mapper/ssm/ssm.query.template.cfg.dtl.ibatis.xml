@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.query.template.cfg.dtl">
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.query.template.model.TemplateCfgDtlEntity">
+        insert into ssd_query_template_cfg_dtl(
+            cfg_id,
+            tpl_config_field_dim_codes,
+            tpl_config_field_measure_codes,
+            tpl_config_field_dim_asset,
+            tpl_config_field_measure_asset
+        )
+        values
+            (
+             #{cfgId},
+             #{tplConfigFieldDimCodes},
+             #{tplConfigFieldMeasureCodes},
+             #{tplConfigFieldDimAsset},
+             #{tplConfigFieldMeasureAsset}
+            )
+    </insert>
+
+    <update id="update" parameterType="com.bi.queryer.ssm.query.template.model.TemplateCfgDtlEntity">
+        update
+            ssd_query_template_cfg_dtl
+        set
+            tpl_config_field_dim_codes = #{tplConfigFieldDimCodes},
+            tpl_config_field_measure_codes = #{tplConfigFieldMeasureCodes},
+            tpl_config_field_dim_asset = #{tplConfigFieldDimAsset},
+            tpl_config_field_measure_asset = #{tplConfigFieldMeasureAsset}
+        where
+            cfg_id = #{cfgId}
+    </update>
+    
+    <select id="queryByTplId" parameterType="String" resultType="com.bi.queryer.ssm.query.template.model.TemplateCfgDtlEntity">
+        SELECT
+            t1.view_id as viewId,
+            t1.dataset_id as datasetId,
+            t1.view_status as viewStatus,
+            t2.tpl_config_field_dim_codes as tplConfigFieldDimCodes,
+            t2.tpl_config_field_measure_codes as tplConfigFieldMeasureCodes,
+            t2.tpl_config_field_dim_asset as tplConfigFieldDimAsset,
+            t2.tpl_config_field_measure_asset as tplConfigFieldMeasureAsset
+        FROM
+            ssd_query_template_view t1
+        INNER JOIN ssd_query_template_cfg_dtl t2 ON t1.cfg_id = t2.cfg_id
+        where
+            t1.tpl_id = #{tplId}
+    </select>
+
+    <select id="queryByViewId" parameterType="String" resultType="com.bi.queryer.ssm.query.template.model.TemplateCfgDtlEntity">
+        SELECT
+            t1.view_id as viewId,
+            t1.dataset_id as datasetId,
+            t2.tpl_config_field_dim_codes as tplConfigFieldDimCodes,
+            t2.tpl_config_field_measure_codes as tplConfigFieldMeasureCodes,
+            t2.tpl_config_field_dim_asset as tplConfigFieldDimAsset,
+            t2.tpl_config_field_measure_asset as tplConfigFieldMeasureAsset
+        FROM
+            ssd_query_template_view t1
+        INNER JOIN ssd_query_template_cfg_dtl t2 ON t1.cfg_id = t2.cfg_id
+        where
+            t1.view_id = #{viewId}
+        limit 0,1
+    </select>
+    
+    <select id="getTplFieldDimCodes" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.model.TemplateCfgDtlEntity">
+        SELECT
+            tpl_id as tplId,
+            MAX(t2.tpl_config_field_dim_codes) as tplConfigFieldDimCodes
+        FROM
+            ssd_query_template_view t1
+                INNER JOIN ssd_query_template_cfg_dtl t2
+                           ON t1.cfg_id = t2.cfg_id
+        WHERE t1.tpl_id IN
+            <foreach item="item" index="index" collection="tplIds" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+          AND t1.`is_active` = 1
+        GROUP BY tpl_id
+    </select>
+
+    <insert id="insertIntoTemplateCfgDtl" parameterType="java.util.HashMap">
+        insert into ssd_query_template_cfg_dtl
+        (
+            cfg_id,
+            tpl_config_field_dim_codes,
+            tpl_config_field_measure_codes,
+            tpl_config_field_dim_asset,
+            tpl_config_field_measure_asset
+        )
+        select
+            ${cfgIdCaseWhenSql} as cfg_id,
+            tpl_config_field_dim_codes as tpl_config_field_dim_codes,
+            tpl_config_field_measure_codes as tpl_config_field_measure_codes,
+            tpl_config_field_dim_asset as tpl_config_field_dim_asset,
+            tpl_config_field_measure_asset as tpl_config_field_measure_asset
+        from
+            ssd_query_template_cfg_dtl
+        where
+            cfg_id in (
+            <foreach item="item" collection="cfgIdList" separator=",">
+                #{item}
+            </foreach>
+            )
+    </insert>
+
+    <delete id="delete" parameterType="String">
+        delete from
+            ssd_query_template_cfg_dtl
+        where
+            cfg_id = #{cfgId}
+    </delete>
+
+    <delete id="batchDeleteByCfgIdList" parameterType="java.util.ArrayList">
+        delete from
+            ssd_query_template_cfg_dtl
+        where
+        cfg_id in
+        <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="getByTplId" parameterType="String" resultType="com.bi.queryer.ssm.query.template.model.TemplateCfgDtlEntity">
+        SELECT
+            t2.tpl_config_field_dim_codes as tplConfigFieldDimCodes,
+            t2.tpl_config_field_measure_codes as tplConfigFieldMeasureCodes,
+            t2.tpl_config_field_dim_asset as tplConfigFieldDimAsset,
+            t2.tpl_config_field_measure_asset as tplConfigFieldMeasureAsset
+        FROM
+            ssd_query_template_view t1
+                INNER JOIN ssd_query_template_cfg_dtl t2
+                           ON t1.cfg_id = t2.cfg_id
+        WHERE t1.tpl_id = #{tplId}
+          and t1.is_active = 1
+            limit 1
+    </select>
+
+</mapper>

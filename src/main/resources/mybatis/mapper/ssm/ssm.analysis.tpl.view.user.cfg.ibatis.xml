@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.analysis.tpl.view.user.cfg">
+
+    <insert id="insert" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplViewUserCfgEntity">
+        insert into ssm_analysis_tpl_view_user_cfg
+        (
+            analysis_tpl_id,
+            view_id,
+            is_default,
+            created_by,
+            created_time
+        )
+        values
+        (
+            #{analysisTplId},
+            #{viewId},
+            #{isDefault},
+            #{createdBy},
+            now()
+        )
+    </insert>
+
+    <delete id="deleteByPk" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplViewUserCfgEntity">
+        delete from ssm_analysis_tpl_view_user_cfg
+        where analysis_tpl_id = #{analysisTplId}
+          and view_id = #{viewId}
+          and created_by = #{createdBy}
+    </delete>
+
+    <select id="getByPk" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplViewUserCfgEntity"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplViewUserCfgEntity">
+        select
+            analysis_tpl_id as analysisTplId,
+            view_id as viewId,
+            is_default as isDefault,
+            created_by as createdBy,
+            created_time as createdTime
+        from ssm_analysis_tpl_view_user_cfg
+        where analysis_tpl_id = #{analysisTplId}
+          and view_id = #{viewId}
+          and created_by = #{createdBy}
+    </select>
+
+    <select id="listByCondition" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplViewUserCfgEntity">
+        select
+            analysis_tpl_id as analysisTplId,
+            view_id as viewId,
+            is_default as isDefault,
+            created_by as createdBy,
+            created_time as createdTime
+        from ssm_analysis_tpl_view_user_cfg
+        where 1 = 1
+        <if test="analysisTplId != null and analysisTplId != ''">
+            and analysis_tpl_id = #{analysisTplId}
+        </if>
+        <if test="viewId != null and viewId != ''">
+            and view_id = #{viewId}
+        </if>
+        <if test="createdBy != null and createdBy != ''">
+            and created_by = #{createdBy}
+        </if>
+        <if test="isDefault != null">
+            and is_default = #{isDefault}
+        </if>
+        order by created_time desc
+    </select>
+
+    <select id="queryUserDefaultViewId" parameterType="java.util.Map" resultType="java.lang.String">
+        select view_id
+        from ssm_analysis_tpl_view_user_cfg
+        where analysis_tpl_id = #{analysisTplId}
+          and created_by = #{createdBy}
+          and is_default = 1
+        limit 1
+    </select>
+
+    <delete id="deleteByTplAndUser" parameterType="java.util.Map">
+        delete from ssm_analysis_tpl_view_user_cfg
+        where analysis_tpl_id = #{analysisTplId}
+          and created_by = #{createdBy}
+    </delete>
+
+</mapper>

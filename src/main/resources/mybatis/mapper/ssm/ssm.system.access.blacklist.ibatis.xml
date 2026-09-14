@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.system.access.blacklist">
+
+    <select id="queryAll" resultType="String">
+        SELECT
+            user_name AS userName
+        FROM
+            ssm_system_access_blacklist
+    </select>
+
+    <!-- 按用户名列表删除系统访问黑名单 -->
+    <delete id="deleteByUserNames" parameterType="java.util.List">
+        DELETE FROM ssm_system_access_blacklist WHERE user_name IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+</mapper>

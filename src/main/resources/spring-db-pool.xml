@@ -1,0 +1,539 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+	http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx-3.2.xsd">
+
+	<bean id="defaultDataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driver}" />
+		<property name="url" value="${jdbc.url}"/>
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+		<property name="validationQuery">
+			<value>${jdbc.validation}</value>
+		</property>
+	</bean>
+
+	<bean id="olapDataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		  destroy-method="close">
+		<property name="driverClassName" value="${olap.jdbc.driver}" />
+		<property name="url" value="${olap.jdbc.url}"/>
+		<property name="username" value="${olap.jdbc.username}" />
+		<property name="password" value="${olap.jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+		<property name="validationQuery">
+			<value>${olap.jdbc.validation}</value>
+		</property>
+	</bean>
+
+	<bean id="olapUtDataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		  destroy-method="close">
+		<property name="driverClassName" value="${olap_ut.jdbc.driver}" />
+		<property name="url" value="${olap_ut.jdbc.url}"/>
+		<property name="username" value="${olap_ut.jdbc.username}" />
+		<property name="password" value="${olap_ut.jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+		<property name="validationQuery">
+			<value>${olap_ut.jdbc.validation}</value>
+		</property>
+	</bean>
+
+	<bean id="dataStudioDataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		  destroy-method="close">
+		<property name="driverClassName" value="${data_studio.jdbc.driver}" />
+		<property name="url" value="${data_studio.jdbc.url}"/>
+		<property name="username" value="${data_studio.jdbc.username}" />
+		<property name="password" value="${data_studio.jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+		<property name="validationQuery">
+			<value>${jdbc.validation}</value>
+		</property>
+	</bean>
+
+	<bean id="etlDataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${etl.jdbc.driver}" />
+		<property name="url" value="${etl.jdbc.url}"/>
+		<property name="username" value="${etl.jdbc.username}" />
+		<property name="password" value="${etl.jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+		<property name="validationQuery">
+			<value>${etl.jdbc.validation}</value>
+		</property>
+	</bean>
+
+	<bean id="agentDataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		  destroy-method="close">
+		<property name="driverClassName" value="${agent.jdbc.driver}" />
+		<property name="url" value="${agent.jdbc.url}"/>
+		<property name="username" value="${agent.jdbc.username}" />
+		<property name="password" value="${agent.jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+		<property name="validationQuery">
+			<value>${jdbc.validation}</value>
+		</property>
+	</bean>
+
+	<bean id="trinoMasterDataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		  destroy-method="close">
+		<property name="driverClassName" value="${trino_master.jdbc.driver}" />
+		<property name="url" value="${trino_master.jdbc.url}"/>
+		<property name="username" value="${trino_master.jdbc.username}" />
+		<property name="password" value="${trino_master.jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+	</bean>
+
+	<bean id="trinoSlave01DataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		  destroy-method="close">
+		<property name="driverClassName" value="${trino_slave01.jdbc.driver}" />
+		<property name="url" value="${trino_slave01.jdbc.url}"/>
+		<property name="username" value="${trino_slave01.jdbc.username}" />
+		<property name="password" value="${trino_slave01.jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+	</bean>
+
+	<bean id="trinoSlave02DataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		  destroy-method="close">
+		<property name="driverClassName" value="${trino_slave02.jdbc.driver}" />
+		<property name="url" value="${trino_slave02.jdbc.url}"/>
+		<property name="username" value="${trino_slave02.jdbc.username}" />
+		<property name="password" value="${trino_slave02.jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+	</bean>
+
+	<bean id="dorisMasterDataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		  destroy-method="close">
+		<property name="driverClassName" value="${doris_master.jdbc.driver}" />
+		<property name="url" value="${doris_master.jdbc.url}"/>
+		<property name="username" value="${doris_master.jdbc.username}" />
+		<property name="password" value="${doris_master.jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+		<property name="validationQuery">
+			<value>${doris_master.jdbc.validation}</value>
+		</property>
+	</bean>
+
+	<bean id="dorisSlave01DataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		  destroy-method="close">
+		<property name="driverClassName" value="${doris_slave01.jdbc.driver}" />
+		<property name="url" value="${doris_slave01.jdbc.url}"/>
+		<property name="username" value="${doris_slave01.jdbc.username}" />
+		<property name="password" value="${doris_slave01.jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+		<property name="validationQuery">
+			<value>${doris_slave01.jdbc.validation}</value>
+		</property>
+	</bean>
+
+	<bean id="hwDorisMasterDataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		  destroy-method="close">
+		<property name="driverClassName" value="${hw_doris_master.jdbc.driver}" />
+		<property name="url" value="${hw_doris_master.jdbc.url}"/>
+		<property name="username" value="${hw_doris_master.jdbc.username}" />
+		<property name="password" value="${hw_doris_master.jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+		<property name="validationQuery">
+			<value>${hw_doris_master.jdbc.validation}</value>
+		</property>
+	</bean>
+
+	<bean id="hwDorisSlave01DataSource" class="com.bi.queryer.sys.db.XBasicDataSource"
+		  destroy-method="close">
+		<property name="driverClassName" value="${hw_doris_slave01.jdbc.driver}" />
+		<property name="url" value="${hw_doris_slave01.jdbc.url}"/>
+		<property name="username" value="${hw_doris_slave01.jdbc.username}" />
+		<property name="password" value="${hw_doris_slave01.jdbc.password}" />
+		<property name="initialSize" value="2" />
+		<property name="maxTotal" value="500" />
+		<property name="maxIdle" value="20" />
+		<!-- 超时等待时间以毫秒为单位 6000毫秒/1000等于60秒 -->
+		<property name="maxWaitMillis" value="10000" />
+		<property name="defaultAutoCommit" value="true" />
+		<!--超时时间(以秒数为单位) removeAbandonedTimeout=180 -->
+		<property name="removeAbandonedTimeout" value="180" />
+		<property name="logAbandoned" value="true" />
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+		<property name="testOnReturn">
+			<value>true</value>
+		</property>
+		<property name="testWhileIdle">
+			<value>true</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>180000</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>360000</value>
+		</property>
+		<property name="validationQuery">
+			<value>${hw_doris_slave01.jdbc.validation}</value>
+		</property>
+	</bean>
+
+	<bean id="dynamicDataSource" class="com.bi.queryer.sys.db.DynamicDataSource">
+		<property name="targetDataSources">
+			<map key-type="java.lang.String">
+				<entry key="default" value-ref="defaultDataSource" />
+				<entry key="etl" value-ref="etlDataSource" />
+				<entry key="doris_master" value-ref="dorisMasterDataSource" />
+				<entry key="doris_slave01" value-ref="dorisSlave01DataSource" />
+				<entry key="hw_doris_master" value-ref="hwDorisMasterDataSource" />
+				<entry key="hw_doris_slave01" value-ref="hwDorisSlave01DataSource" />
+				<entry key="data_studio" value-ref="dataStudioDataSource" />
+				<entry key="trino_master" value-ref="trinoMasterDataSource" />
+				<entry key="trino_slave01" value-ref="trinoSlave01DataSource" />
+				<entry key="trino_slave02" value-ref="trinoSlave02DataSource" />
+				<entry key="olap" value-ref="olapDataSource" />
+				<entry key="olap_ut" value-ref="olapUtDataSource" />
+				<entry key="agent" value-ref="agentDataSource"/>
+			</map>
+		</property>
+		<property name="defaultTargetDataSource" ref="defaultDataSource" />
+	</bean>
+
+	<!--
+	<bean id="sqlMapClient" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation">
+			<value>classpath:ibatis-config-${jdbc.db}.xml</value>
+		</property>
+		<property name="dataSource" ref="dynamicDataSource" />
+		<property name="lobHandler" ref="oracleLobHandler"/>
+	</bean>
+	 -->
+
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dynamicDataSource" />
+	</bean>
+
+ 	<tx:advice id="transactionManagerAdivice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="delete*" rollback-for="Throwable" propagation="REQUIRED"/>
+            <tx:method name="save*" rollback-for="Throwable" />
+            <tx:method name="update*" rollback-for="Throwable" />
+            <tx:method name="add*" rollback-for="Throwable" />
+            <tx:method name="insert*" rollback-for="Throwable" />
+        </tx:attributes>
+    </tx:advice>
+
+	<bean id="transactionTemplate"
+          class="org.springframework.transaction.support.TransactionTemplate">
+        <property name="transactionManager" ref="transactionManager"/>
+    </bean>
+
+	 <!-- Activates scanning of @Autowired -->
+    <context:annotation-config/>
+    <context:component-scan base-package="com.bi.queryer.mapper"/>
+
+    <!-- scan for mappers and let them be autowired -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.bi.queryer.mapper"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+
+    <!-- define the SqlSessionFactory -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="configLocation">
+            <value>classpath:mybatis-config.xml</value>
+        </property>
+        <property name="dataSource" ref="dynamicDataSource"/>
+        <!--
+        <property name="typeAliases">
+        	<array>
+		        <value>com.bi.queryer.util.UpperCaseMap</value>
+		    </array>
+        </property>
+         -->
+        <property name="mapperLocations" value="classpath*:mybatis/**/*.xml"/>
+    </bean>
+
+</beans>

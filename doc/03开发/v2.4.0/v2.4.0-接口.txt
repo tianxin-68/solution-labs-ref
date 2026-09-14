@@ -1,0 +1,34 @@
+baseUrl:ssd/template
+
+目录树
+url：ctg/tree
+入参：无
+出参：[
+    {
+       "id" : "xx",
+       "name" : "xx",
+       "type" : "",
+       "parentId" : "",
+       "children" : [{}]
+    },{}
+]
+
+新增：
+url：ctg/add
+入参：{"name" : "xx", "parentId" : "xx", "type" : "xxx"}
+出参：{"xxx"} // 新增目录id
+
+修改：
+url：ctg/update
+入参：{"id":"xx", "name" : "xx", "parentId" : "xx", "type" : "xxx"}
+出参：{"xxx"} // 当前目录id
+
+删除：
+url：ctg/delete
+入参：{"id":"xx"}
+出参：{"xxx"} // 删除目录的上级目录id
+
+分享：
+url：ctg/share
+入参：{"id":"xx"}
+出参：{"xxx"} // 分享目录的目录id

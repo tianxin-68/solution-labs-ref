@@ -1,0 +1,42 @@
+{
+  "id" : "flow01",
+  "name": "prompt-flow",
+  "version": "1.0.0",
+  "description": "A prompt flow for testing",
+  "graph": {
+    "edges":[
+      {"id":"e1", "name": "", "type": "common", "desc": "常规边","isInIterator": false, "iteratorId": "", "source":"node1", "target": "node2", "data":{}},
+      {"id":"e2", "name": "", "type": "condition","desc": "条件边(带条件判断)", "isInIterator": false,"iteratorId": "", "source": "node2", "target": "node3","data": {"code": "hb", "name": "环比", "operator": "<", "value": ["0"]}},
+      {"id":"e2", "name": "", "type": "common","desc": "常规边(在迭代器中)", "isInIterator": true, "iteratorId": "iter01", "source": "node3", "target": "node4","data": {}}
+    ],
+    "nodes": [
+      {
+        "id" : "n0", "name": "开始", "desc" : "", "type" : "start", "processor" : ""
+      },
+      {
+        "id" : "n1", "name": "获取异常省份", "desc" : "", "type" : "process", "processor" : "llmAgent" ,
+        "input" : [{"argId": "a1", "argCode": "a1", "argName": "省份","argType":"array"}],
+        "output": [{"argId": "a2", "argCode": "a2", "argName": "归因1:门店or本仓","argType":"array"}],
+        "data":{"content": "步骤1.获取“下单到门店签收当次日达比率”、“环比”，若环比为负，则为异常"}
+      },
+      {
+        "id" : "n2", "name": "判断：门店or本仓", "desc" : "决策判断节点", "type" : "decision", "processor" : "" ,
+        "input" : [],
+        "output": [],
+        "data":{"content": "步骤1.获取“下单到门店签收当次日达比率”、“环比”，若环比为负，则为异常"}
+      },
+      {
+        "id" : "iter01", "name": "迭代：按省份迭代", "desc" : "", "type" : "iterator", "processor" : "" ,
+        "output": [{"argId": "a2", "argCode": "a2", "argName": "按省份的归因结果列表","argType":"array"}]
+      },
+      {
+        "id" : "nx01", "name": "", "desc" : "", "type" : "process", "processor" : "" , "isInIterator": true, "iteratorId": "iter01",
+        "output": [{"argId": "a2", "argCode": "a2", "argName": "按省份的归因结果列表","argType":"array"}],
+        "data":{"content": "步骤1.获取“下单到门店签收当次日达比率”、“环比”，若环比为负，则为异常"}
+      },
+      {
+        "id" : "n3", "name": "结束", "desc" : "", "type" : "end", "processor" : ""
+      }
+    ]
+  }
+}

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.olap.field.core">
+    <insert id="batchAdd" parameterType="com.bi.queryer.ssm.meta.CoreMetaField">
+        insert into ssm_olap_field_core (
+            pkid,
+            core_type,
+            field_code,
+            field_type,
+            field_title,
+            sensitive_level,
+            created_time,
+            updated_time,
+            created_by,
+            updated_by
+        ) values
+        <foreach item="item" collection="coreMetaFields" separator=",">
+            (
+                #{item.pkid},
+                #{item.coreType},
+                #{item.fieldCode},
+                #{item.fieldType},
+                #{item.fieldTitle},
+                #{item.sensitiveLevel},
+                now(),
+                now(),
+                #{item.createdBy},
+                #{item.updatedBy}
+            )
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="com.bi.queryer.ssm.meta.CoreMetaField">
+        update ssm_olap_field_core
+        set
+            sensitive_level = #{sensitiveLevel},
+            field_title = #{fieldTitle},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            pkid = #{pkId}
+    </update>
+
+    <delete id="delete">
+        delete from ssm_olap_field_core
+        where field_code in
+        <foreach item="item" collection="fieldCodeList" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+</mapper>

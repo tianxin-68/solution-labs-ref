@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.metric.expansion.field.mapping">
+
+    <delete id="deleteByViewIdAndSourceBusinessline" parameterType="java.util.HashMap">
+        DELETE FROM ssm_metric_expansion_field_mapping
+        WHERE view_id = #{viewId}
+          AND source_businessline = #{sourceBusinessline}
+    </delete>
+
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO ssm_metric_expansion_field_mapping (
+            shadow_cfg_id,
+            view_id,
+            tpl_id,
+            old_view_id,
+            old_tpl_id,
+            cfg_id,
+            source_businessline,
+            target_businessline,
+            old_field_id,
+            old_field_code,
+            old_field_title,
+            new_field_id,
+            new_field_code,
+            new_field_title,
+            source_metric_code,
+            target_metric_code,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.shadowCfgId},
+                #{item.viewId},
+                #{item.tplId},
+                #{item.oldViewId},
+                #{item.oldTplId},
+                #{item.cfgId},
+                #{item.sourceBusinessline},
+                #{item.targetBusinessline},
+                #{item.oldFieldId},
+                #{item.oldFieldCode},
+                #{item.oldFieldTitle},
+                #{item.newFieldId},
+                #{item.newFieldCode},
+                #{item.newFieldTitle},
+                #{item.sourceMetricCode},
+                #{item.targetMetricCode},
+                #{item.createdBy},
+                NOW(),
+                #{item.updatedBy},
+                NOW()
+            )
+        </foreach>
+    </insert>
+
+    <select id="listByViewId" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.migrate.bizsplit.model.MetricExpansionFieldMappingEntity">
+        SELECT
+            pkid AS pkid,
+            shadow_cfg_id AS shadowCfgId,
+            view_id AS viewId,
+            tpl_id AS tplId,
+            old_view_id AS oldViewId,
+            old_tpl_id AS oldTplId,
+            cfg_id AS cfgId,
+            source_businessline AS sourceBusinessline,
+            target_businessline AS targetBusinessline,
+            old_field_id AS oldFieldId,
+            old_field_code AS oldFieldCode,
+            old_field_title AS oldFieldTitle,
+            new_field_id AS newFieldId,
+            new_field_code AS newFieldCode,
+            new_field_title AS newFieldTitle,
+            source_metric_code AS sourceMetricCode,
+            target_metric_code AS targetMetricCode,
+            created_by AS createdBy,
+            DATE_FORMAT(created_time, '%Y-%m-%d %H:%i:%s') AS createdTime,
+            updated_by AS updatedBy,
+            DATE_FORMAT(updated_time, '%Y-%m-%d %H:%i:%s') AS updatedTime
+        FROM
+            ssm_metric_expansion_field_mapping
+        WHERE
+            view_id = #{viewId}
+        ORDER BY
+            pkid ASC
+    </select>
+
+    <!--
+      按老视图 id + 目标业务线查询字段级拆分明细，供业务线拆分失效提醒接口列出具体指标。
+    -->
+    <select id="listByOldViewIdAndTargetBusinessline" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.migrate.bizsplit.model.MetricExpansionFieldMappingEntity">
+        SELECT
+            pkid AS pkid,
+            shadow_cfg_id AS shadowCfgId,
+            view_id AS viewId,
+            tpl_id AS tplId,
+            old_view_id AS oldViewId,
+            old_tpl_id AS oldTplId,
+            cfg_id AS cfgId,
+            source_businessline AS sourceBusinessline,
+            target_businessline AS targetBusinessline,
+            old_field_id AS oldFieldId,
+            old_field_code AS oldFieldCode,
+            old_field_title AS oldFieldTitle,
+            new_field_id AS newFieldId,
+            new_field_code AS newFieldCode,
+            new_field_title AS newFieldTitle,
+            source_metric_code AS sourceMetricCode,
+            target_metric_code AS targetMetricCode,
+            created_by AS createdBy,
+            DATE_FORMAT(created_time, '%Y-%m-%d %H:%i:%s') AS createdTime,
+            updated_by AS updatedBy,
+            DATE_FORMAT(updated_time, '%Y-%m-%d %H:%i:%s') AS updatedTime
+        FROM
+            ssm_metric_expansion_field_mapping
+        WHERE
+            old_view_id = #{oldViewId}
+            AND target_businessline = #{targetBusinessline}
+        ORDER BY
+            pkid ASC
+    </select>
+
+</mapper>

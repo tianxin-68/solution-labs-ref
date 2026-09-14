@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.governance.config">
+
+    <!-- ===================== 豁免模块/目录 ===================== -->
+    <sql id="exemptColumns">
+        id           AS id,
+        object_scope AS objectScope,
+        module_name  AS moduleName,
+        ctg_id       AS ctgId,
+        ctg_name     AS ctgName,
+        reason       AS reason,
+        is_active    AS isActive,
+        created_by   AS createdBy,
+        DATE_FORMAT(created_time, '%Y-%m-%d %H:%i:%s') AS createdTime,
+        DATE_FORMAT(updated_time, '%Y-%m-%d %H:%i:%s') AS updatedTime
+    </sql>
+
+    <select id="listExempt" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.governance.entity.GovernanceExempt">
+        SELECT <include refid="exemptColumns"/>
+        FROM ssm_governance_exempt
+        <where>
+            <if test="objectScope != null and objectScope != ''">AND object_scope = #{objectScope}</if>
+        </where>
+        ORDER BY id DESC
+        LIMIT #{startNum}, #{pageSize}
+    </select>
+
+    <select id="listExemptCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM ssm_governance_exempt
+        <where>
+            <if test="objectScope != null and objectScope != ''">AND object_scope = #{objectScope}</if>
+        </where>
+    </select>
+
+    <!-- 扫描硬排除使用：生效中的豁免规则 -->
+    <select id="queryActiveExempt" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.governance.entity.GovernanceExempt">
+        SELECT <include refid="exemptColumns"/>
+        FROM ssm_governance_exempt
+        WHERE is_active = 1
+        <if test="_parameter != null and _parameter != ''">AND object_scope = #{_parameter}</if>
+    </select>
+
+    <insert id="insertExempt" parameterType="com.bi.queryer.ssm.governance.entity.GovernanceExempt"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ssm_governance_exempt (
+            object_scope, module_name, ctg_id, ctg_name, reason, is_active, created_by, created_time, updated_time
+        ) VALUES (
+            #{objectScope}, #{moduleName}, #{ctgId}, #{ctgName}, #{reason}, #{isActive}, #{createdBy}, now(), now()
+        )
+    </insert>
+
+    <update id="updateExemptActive" parameterType="java.util.Map">
+        UPDATE ssm_governance_exempt SET is_active = #{isActive}, updated_time = now() WHERE id = #{id}
+    </update>
+
+
+</mapper>

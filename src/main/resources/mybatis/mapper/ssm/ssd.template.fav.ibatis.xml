@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.template.fav">
+  <resultMap id="BaseResultMap" type="com.bi.queryer.ssm.query.template.model.TemplateFavEntity">
+    <id column="fav_id" jdbcType="VARCHAR" property="favId" />
+    <result column="tpl_id" jdbcType="VARCHAR" property="tplId" />
+    <result column="is_top" jdbcType="INTEGER" property="isTop" />
+    <result column="top_sort_id" jdbcType="DOUBLE" property="topSortId" />
+    <result column="created_by" jdbcType="VARCHAR" property="createdBy" />
+    <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+    <result column="updated_by" jdbcType="VARCHAR" property="updatedBy" />
+    <result column="updated_time" jdbcType="TIMESTAMP" property="updatedTime" />
+    <result column="ctg_id" jdbcType="VARCHAR" property="ctgId" />
+    <result column="tpl_type" jdbcType="VARCHAR" property="favTplType" />
+    <result column="is_fav" jdbcType="INTEGER" property="isFav" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    fav_id, tpl_id, is_top, top_sort_id, created_by, created_time, updated_by, updated_time, ctg_id, tpl_type, is_fav
+  </sql>
+  <select id="selectByTplIdAndUserName" parameterType="java.util.Map" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from ssd_query_template_fav
+    where created_by = #{userName}
+    and tpl_id in
+    <foreach item="item" collection="tplIdList" separator="," open="(" close=")">
+      #{item}
+    </foreach>
+  </select>
+  <select id="selectByUserName" parameterType="java.util.Map" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from ssd_query_template_fav
+    where created_by = #{userName}
+  </select>
+  <select id="selectByTplIds" parameterType="java.util.Map" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from ssd_query_template_fav
+    where tpl_id in
+    <foreach item="item" collection="tplIdList" separator="," open="(" close=")" index="">
+      #{item}
+    </foreach>
+    and created_by = #{userName}
+  </select>
+  <select id="queryTopList" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.query.template.model.TemplateFavRsp">
+    select
+      t1.fav_id as favId,
+      t1.tpl_id as tplId,
+      t1.top_sort_id as topSortId
+    from ssd_query_template_fav t1
+    where t1.is_top = 1 and t1.created_by = #{userName}
+    order by t1.top_sort_id
+  </select>
+  <select id="queryTopFavEntityList" parameterType="java.util.Map" resultMap="BaseResultMap">
+    select
+    t1.fav_id, t1.tpl_id, t1.is_top, t1.top_sort_id, t1.created_by, t1.created_time, t1.updated_by, t1.updated_time
+    from ssd_query_template_fav t1
+    inner join ssd_query_template t2 on t1.tpl_id = t2.tpl_id
+    where t1.tpl_id != #{tplId,jdbcType=VARCHAR}
+    and t1.created_by = #{userName}
+    and t1.is_top = 1
+    order by t1.top_sort_id
+  </select>
+  <delete id="deleteByTmpIdAndUserName" parameterType="java.util.Map">
+    delete from ssd_query_template_fav
+    where tpl_id in
+      <foreach item="item" collection="tplIdList" separator="," open="(" close=")" >
+        #{item}
+      </foreach>
+    and created_by = #{userName}
+  </delete>
+  <insert id="batchInsert">
+    insert into ssd_query_template_fav (fav_id,tpl_id,created_by,created_time,ctg_id,tpl_type,is_fav)
+    values
+    <foreach collection="list" item="record" separator=",">
+      (#{record.favId}, #{record.tplId},
+      #{record.createdBy},now(),#{record.ctgId},#{record.favTplType},#{record.isFav})
+    </foreach>
+  </insert>
+  <insert id="insertSelective" parameterType="com.bi.queryer.ssm.query.template.model.TemplateFavEntity">
+    insert into ssd_query_template_fav
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="favId != null">
+        fav_id,
+      </if>
+      <if test="tplId != null">
+        tpl_id,
+      </if>
+      <if test="isTop != null">
+        is_top,
+      </if>
+      <if test="topSortId != null">
+        top_sort_id,
+      </if>
+      <if test="createdBy != null">
+        created_by,
+      </if>
+        created_time,
+      <if test="updatedBy != null">
+        updated_by,
+      </if>
+      <if test="updatedTime != null">
+        updated_time,
+      </if>
+      <if test="ctgId != null">
+        ctg_id,
+      </if>
+      <if test="favTplType != null">
+        tpl_type,
+      </if>
+      <if test="isFav != null">
+        is_fav,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="favId != null">
+        #{favId,jdbcType=VARCHAR},
+      </if>
+      <if test="tplId != null">
+        #{tplId,jdbcType=VARCHAR},
+      </if>
+      <if test="isTop != null">
+        #{isTop,jdbcType=INTEGER},
+      </if>
+      <if test="topSortId != null">
+        #{topSortId,jdbcType=DOUBLE},
+      </if>
+      <if test="createdBy != null">
+        #{createdBy,jdbcType=VARCHAR},
+      </if>
+        now(),
+      <if test="updatedBy != null">
+        #{updatedBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedTime != null">
+        #{updatedTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="ctgId != null">
+        #{ctgId,jdbcType=VARCHAR},
+      </if>
+      <if test="favTplType != null">
+        #{favTplType,jdbcType=VARCHAR},
+      </if>
+      <if test="isFav != null">
+        #{isFav,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.bi.queryer.ssm.query.template.model.TemplateFavEntity">
+    update ssd_query_template_fav
+    <set>
+      <if test="tplId != null">
+        tpl_id = #{tplId,jdbcType=VARCHAR},
+      </if>
+      <if test="isTop != null">
+        is_top = #{isTop,jdbcType=INTEGER},
+      </if>
+      <if test="topSortId != null">
+        top_sort_id = #{topSortId,jdbcType=DOUBLE},
+      </if>
+      <if test="createdBy != null">
+        created_by = #{createdBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createdTime != null">
+        created_time = #{createdTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updatedBy != null">
+        updated_by = #{updatedBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updatedTime != null">
+        updated_time = #{updatedTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="ctgId != null">
+        ctg_id = #{ctgId,jdbcType=VARCHAR},
+      </if>
+      <if test="favTplType != null">
+        tpl_type = #{favTplType,jdbcType=VARCHAR},
+      </if>
+      <if test="isFav != null">
+        is_fav = #{isFav,jdbcType=INTEGER},
+      </if>
+    </set>
+    where fav_id = #{favId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.bi.queryer.ssm.query.template.model.TemplateFavEntity">
+    update ssd_query_template_fav
+    set tpl_id = #{tplId,jdbcType=VARCHAR},
+      is_top = #{isTop,jdbcType=INTEGER},
+      top_sort_id = #{topSortId,jdbcType=DOUBLE},
+      updated_by = #{updatedBy,jdbcType=VARCHAR},
+      updated_time = now(),
+      ctg_id = #{ctgId,jdbcType=VARCHAR},
+      tpl_type = #{favTplType,jdbcType=VARCHAR},
+      is_fav = #{isFav,jdbcType=INTEGER}
+    where fav_id = #{favId,jdbcType=VARCHAR}
+  </update>
+
+  <update id="updateTplCtg" parameterType="java.util.Map">
+    update ssd_query_template_fav
+    set ctg_id = #{ctgId}
+    where created_by = #{userName}
+    <if test="oldCtgId != null">
+      and ctg_id = #{oldCtgId}
+    </if>
+    <if test="favIds != null and favIds.size() > 0">
+      and fav_id in
+      <foreach item="id" collection="favIds" separator="," open="(" close=")" >
+        #{id}
+      </foreach>
+    </if>
+  </update>
+
+  <update id="updateTplTopSort" parameterType="java.util.Map">
+    update ssd_query_template_fav
+    set  top_sort_id = #{topSortId}
+    where fav_id = #{favId}
+  </update>
+
+  <update id="incTplTopSort" parameterType="java.util.Map">
+    update ssd_query_template_fav
+    set  top_sort_id = top_sort_id + #{delta}
+    where fav_id in
+    <foreach item="id" collection="favIds" separator="," open="(" close=")" >
+      #{id}
+    </foreach>
+  </update>
+</mapper>

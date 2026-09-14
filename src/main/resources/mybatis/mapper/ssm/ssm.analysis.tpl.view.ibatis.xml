@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.analysis.tpl.view">
+
+    <insert id="insert" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplViewEntity">
+        insert into ssm_analysis_tpl_view
+        (
+            view_id,
+            view_name,
+            view_type,
+            analysis_tpl_id,
+            analysis_tpl_cfg_id,
+            is_active,
+            sort_id,
+            created_by,
+            created_time
+        )
+        values
+        (
+            #{viewId},
+            #{viewName},
+            #{viewType},
+            #{analysisTplId},
+            #{analysisTplCfgId},
+            #{isActive},
+            #{sortId},
+            #{createdBy},
+            now()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplViewEntity">
+        update
+            ssm_analysis_tpl_view
+        set
+            view_name = #{viewName},
+            analysis_tpl_cfg_id = #{analysisTplCfgId},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            view_id = #{viewId}
+    </update>
+
+    <update id="rename" parameterType="java.util.Map">
+        update
+            ssm_analysis_tpl_view
+        set
+            view_name = #{viewName},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            view_id = #{viewId}
+    </update>
+
+    <delete id="deleteById" parameterType="java.lang.String">
+        update
+            ssm_analysis_tpl_view
+        set
+            is_active = 0
+        where
+            view_id = #{viewId}
+    </delete>
+
+    <update id="deletePublicByAnalysisTplId" parameterType="java.util.Map">
+        update
+            ssm_analysis_tpl_view
+        set
+            is_active = 0,
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            analysis_tpl_id = #{analysisTplId}
+            and view_type = #{viewType}
+            and is_active = 1
+    </update>
+
+    <select id="getById" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplViewEntity">
+        select
+            view_id as viewId,
+            view_name as viewName,
+            view_type as viewType,
+            analysis_tpl_id as analysisTplId,
+            analysis_tpl_cfg_id as analysisTplCfgId,
+            is_active as isActive,
+            sort_id as sortId,
+            created_by as createdBy,
+            created_time as createdTime,
+            updated_by as updatedBy,
+            updated_time as updatedTime
+        from
+            ssm_analysis_tpl_view
+        where
+            view_id = #{viewId}
+            and is_active = 1
+    </select>
+
+    <select id="listByCondition" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplViewEntity">
+        select
+            view_id as viewId,
+            view_name as viewName,
+            view_type as viewType,
+            analysis_tpl_id as analysisTplId,
+            analysis_tpl_cfg_id as analysisTplCfgId,
+            is_active as isActive,
+            sort_id as sortId,
+            created_by as createdBy,
+            created_time as createdTime,
+            updated_by as updatedBy,
+            updated_time as updatedTime
+        from ssm_analysis_tpl_view
+        where 1 = 1
+        <if test="analysisTplId != null and analysisTplId != ''">
+            and analysis_tpl_id = #{analysisTplId}
+        </if>
+        <if test="viewType != null and viewType != ''">
+            and view_type = #{viewType}
+        </if>
+        <if test="createdBy != null and createdBy != ''">
+            and created_by = #{createdBy}
+        </if>
+        and is_active = 1
+        order by sort_id asc
+    </select>
+
+    <select id="nextSortIdByAnalysisTplId" parameterType="java.lang.String" resultType="java.lang.Double">
+        select ifnull(max(sort_id), 0) + 1
+        from ssm_analysis_tpl_view
+        where analysis_tpl_id = #{analysisTplId}
+    </select>
+
+    <update id="updateViewSortId" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplViewEntity">
+        update
+            ssm_analysis_tpl_view
+        set
+            sort_id = #{sortId},
+            updated_time = now(),
+            updated_by = #{updatedBy}
+        where
+            view_id = #{viewId}
+    </update>
+
+    <update id="incrementViewSortId" parameterType="java.util.HashMap">
+        update
+            ssm_analysis_tpl_view
+        set
+            sort_id = sort_id + 1,
+            updated_time = now(),
+            updated_by = #{userName}
+        where
+            analysis_tpl_id = #{analysisTplId}
+            and is_active = 1
+        <choose>
+            <when test="'after'.toString() == dragType">
+                and sort_id > #{sortId}
+            </when>
+            <otherwise>
+                and sort_id >= #{sortId}
+            </otherwise>
+        </choose>
+    </update>
+
+</mapper>

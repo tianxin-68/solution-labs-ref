@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.inspection.table">
+    
+    <select id="queryAll" resultType="com.bi.queryer.ssm.inspection.table.entity.InspectionTableEntity">
+
+        SELECT
+            table_name AS tableName,
+            table_owner AS tableOwner
+        FROM
+            ssm_inspection_table
+        ORDER BY query_count DESC
+
+    </select>
+    
+    <insert id="insertInspectionTableResult" parameterType="com.bi.queryer.ssm.inspection.table.entity.InspectionTableResultEntity">
+        insert into ssm_inspection_table_result
+        (
+            table_name,
+            table_owner,
+            empty_partition_date,
+            max_partition_date,
+            min_partition_date,
+            created_time,
+            created_by,
+            batch_no,
+            exec_status,
+            remark,
+            ds_key
+        )
+        values
+        <foreach item="item" index="index" collection="emptyPartitionDateList" separator=",">
+           (
+            #{tableName},
+            #{tableOwner},
+            #{item},
+            #{maxPartitionDate},
+            #{minPartitionDate},
+            now(),
+            #{createdBy},
+            #{batchNo},
+            #{execStatus},
+            #{remark},
+            #{dsKey}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="insertErrorResult" parameterType="com.bi.queryer.ssm.inspection.table.entity.InspectionTableResultEntity">
+        insert into ssm_inspection_table_result
+        (
+            table_name,
+            table_owner,
+            max_partition_date,
+            min_partition_date,
+            created_time,
+            created_by,
+            batch_no,
+            exec_status,
+            remark,
+            ds_key
+        )
+        values
+        (
+            #{tableName},
+            #{tableOwner},
+            #{maxPartitionDate},
+            #{minPartitionDate},
+            now(),
+            #{createdBy},
+            #{batchNo},
+            #{execStatus},
+            #{remark},
+            #{dsKey}
+        )
+    </insert>
+
+</mapper>

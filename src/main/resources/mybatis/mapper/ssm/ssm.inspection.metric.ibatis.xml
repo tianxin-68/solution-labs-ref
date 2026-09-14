@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.inspection.metric">
+
+    <select id="queryAll" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.inspection.metric.entity.InspectionMetricEntity">
+
+        SELECT
+            table_id AS tableId,
+            table_name AS tableName,
+            field_code AS fieldCode,
+            field_title AS fieldTitle,
+            field_owner AS fieldOwner
+        FROM
+            ssm_inspection_metric
+           <if test="tableId != null and tableId != '' ">
+               WHERE  table_id = #{tableId}
+           </if>
+        ORDER BY table_id
+
+    </select>
+    
+    <insert id="batchInsert" parameterType="com.bi.queryer.ssm.inspection.metric.entity.InspectionMetricResultEntity">
+        INSERT INTO ssm_inspection_metric_result(
+            table_id,
+            table_name,
+            field_code,
+            field_title,
+            field_owner,
+            metric_empty_partition_date,
+            metric_empty_remark,
+            created_by,
+            created_time,
+            batch_no,
+            exec_status,
+            remark,
+            ds_key
+        ) VALUES
+        <foreach item="item" index="index" collection="inspectionMetricResultFieldEntityList" separator=",">
+            (
+                #{tableId},
+                #{tableName},
+                #{item.fieldCode},
+                #{item.fieldTitle},
+                #{item.fieldOwner},
+                #{item.metricEmptyPartitionDate},
+                #{item.metricEmptyRemark},
+                #{createdBy},
+                now(),
+                #{batchNo},
+                #{execStatus},
+                #{remark},
+                #{dsKey}
+            )
+        </foreach>
+    </insert>
+    
+    <insert id="insertErrorResult" parameterType="com.bi.queryer.ssm.inspection.metric.entity.InspectionMetricResultEntity">
+        INSERT INTO ssm_inspection_metric_result(
+            table_id,
+            table_name,
+            created_by,
+            created_time,
+            batch_no,
+            exec_status,
+            remark,
+            ds_key
+        ) VALUES
+              (
+                #{tableId},
+                #{tableName},
+                #{createdBy},
+                now(),
+                #{batchNo},
+                #{execStatus},
+                #{remark},
+                #{dsKey}
+            )
+    </insert>
+
+</mapper>

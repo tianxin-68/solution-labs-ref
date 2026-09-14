@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tableRel">
+
+    <sql id="sqlFilter">
+        <if test="searchTxt != null and '' != searchTxt">
+            and
+            (
+            pri.`table_name` LIKE concat('%',#{searchTxt},'%')
+            or
+            sub.`table_name` LIKE concat('%',#{searchTxt},'%')
+            or
+            priField.field_name like concat('%',#{searchTxt},'%')
+            or
+            subField.field_name like concat('%',#{searchTxt},'%')
+            or
+            subField2.field_name like concat('%',#{searchTxt},'%')
+            )
+        </if>
+    </sql>
+
+    <select id="queryTableRelList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.MetaTableRelation">
+        SELECT
+          t.`rel_id` as id,
+          t.`pri_table_id` as primaryTableId,
+          t.`sub_table_id` as subTableId,
+          pri.`table_name` as primaryTableName,
+          sub.`table_name` as subTableName,
+          t.`pri_join_field` as primaryFieldId,
+          t.`sub_join_field` as subFieldId,
+          t.`sub_join_field2` as subFieldId2,
+          priField.field_name as primaryFieldName,
+          subField.field_name as subFieldName,
+          subField2.field_name as subFieldName2,
+          t.`join_type` as joinExpression,
+          t.`join_on_type` as joinOnType,
+          t.`weight`,
+          t.is_active AS isActive,
+          DATE_FORMAT(
+            t.created_time,
+            '%Y-%m-%d %H:%i:%s'
+          ) AS createdTime,
+          DATE_FORMAT(
+            t.updated_time,
+            '%Y-%m-%d %H:%i:%s'
+          ) AS updatedTime,
+          t.created_by AS createdBy,
+          t.updated_by AS updatedBy
+        FROM
+          ssd_table_rel t
+          INNER JOIN ssd_table_def pri
+            ON t.`pri_table_id` = pri.`table_id`
+          INNER JOIN ssd_table_def sub
+            ON t.`sub_table_id` = sub.`table_id`
+          inner join ssd_field_def priField
+            on t.`pri_join_field` = priField.field_id
+          inner join ssd_field_def subField
+            on t.`sub_join_field` = subField.field_id
+          left join ssd_field_def subField2
+            on t.`sub_join_field2` = subField2.field_id
+        WHERE 1 = 1
+        <include refid="sqlFilter"/>
+        <choose>
+            <when test="sortKey != null and '' != sortKey">
+                ORDER BY ${sortKey} ${sortType}
+            </when>
+            <otherwise>
+                ORDER BY t.created_time desc
+            </otherwise>
+        </choose>
+        LIMIT ${pageRowLower}, ${prePageSize}
+    </select>
+
+    <select id="queryTableRelListCount" parameterType="java.util.HashMap" resultType="Integer">
+        SELECT
+         count(1)
+        FROM
+        ssd_table_rel t
+        INNER JOIN ssd_table_def pri
+        ON t.`pri_table_id` = pri.`table_id`
+        INNER JOIN ssd_table_def sub
+        ON t.`sub_table_id` = sub.`table_id`
+        inner join ssd_field_def priField
+        on t.`pri_join_field` = priField.field_id
+        inner join ssd_field_def subField
+        on t.`sub_join_field` = subField.field_id
+        left join ssd_field_def subField2
+        on t.`sub_join_field2` = subField2.field_id
+        WHERE 1 = 1
+        <include refid="sqlFilter"/>
+        ORDER BY t.created_time desc
+    </select>
+
+    <insert id="insertIntoTableRel" parameterType="com.bi.queryer.ssm.meta.MetaTableRelation">
+
+        insert into ssd_table_rel
+        (
+            rel_id,
+            pri_table_id,
+            sub_table_id,
+            pri_join_field,
+            sub_join_field,
+            join_type,
+            weight,
+            is_active,
+            join_on_type,
+            sub_join_field2,
+            created_time,
+            created_by
+        )
+        values
+        (
+            #{id},
+            #{primaryTableId},
+            #{subTableId},
+            #{primaryFieldId},
+            #{subFieldId},
+            #{joinExpression},
+            #{weight},
+            #{isActive},
+            #{joinOnType},
+            #{subFieldId2},
+            now(),
+            #{createdBy}
+        )
+    </insert>
+    
+    <update id="updateTableRel" parameterType="com.bi.queryer.ssm.meta.MetaTableRelation">
+
+        update ssd_table_rel t
+        set
+           t.pri_table_id = #{primaryTableId},
+           t.sub_table_id = #{subTableId},
+           t.pri_join_field = #{primaryFieldId},
+           t.sub_join_field = #{subFieldId},
+           t.join_type = #{joinExpression},
+           t.join_on_type = #{joinOnType},
+           t.sub_join_field2 = #{subFieldId2},
+           t.weight = #{weight},
+           t.is_active = #{isActive},
+           t.updated_time = now(),
+           t.updated_by = #{updatedBy}
+        where t.rel_id = #{id}
+
+    </update>
+
+    <delete id="deleteTableRelById" parameterType="String">
+        delete from ssd_table_rel where rel_id = #{id}
+    </delete>
+
+    <update id="updateTableRelActiveByTable" parameterType="java.util.HashMap">
+        update ssd_table_rel t set t.is_active = #{isActive} where t.pri_table_id = #{id} or t.sub_table_id = #{id}
+    </update>
+
+    <update id="updateTableRelActiveType" parameterType="java.util.HashMap">
+        update ssd_table_rel t set t.is_active = #{isActive} where t.rel_id = #{id}
+    </update>
+
+    <select id="checkTableRelExist" parameterType="String" resultType="Integer">
+        select count(1) from ssd_table_rel t where t.rel_id = #{id}
+    </select>
+
+    <delete id="batchDelete" parameterType="java.util.HashMap">
+        delete from ssd_table_rel where pri_table_id in
+        (
+        <foreach collection="tableIdList" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        )
+    </delete>
+
+    <insert id="batchInsert" parameterType="java.util.HashMap" >
+        insert into ssd_table_rel
+        (
+            rel_id,
+            pri_table_id,
+            sub_table_id,
+            pri_join_field,
+            sub_join_field,
+            sub_join_field2,
+            join_on_type,
+            join_type,
+            weight,
+            is_active,
+            created_time,
+            created_by
+        )
+        values
+            <foreach collection="tableRelList" index="index" item="item" separator="," >
+                (
+                md5(uuid()),
+                #{item.primaryTableId},
+                #{item.subTableId},
+                #{item.primaryFieldId},
+                #{item.subFieldId},
+                #{item.subFieldId2},
+                #{item.joinOnType},
+                #{item.joinExpression},
+                #{item.weight},
+                #{item.isActive},
+                now(),
+                #{userName}
+                )
+            </foreach>
+    </insert>
+
+</mapper>

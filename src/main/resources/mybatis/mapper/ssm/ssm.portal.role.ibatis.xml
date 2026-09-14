@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.portal.role">
+
+    <select id="queryRole" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.portal.auth.entity.PortalRole">
+        select
+            role_id as roleId,
+            role_name as roleName,
+            role_type as roleType
+        from
+            ssm_portal_role
+        where
+            portal_id = #{resId}
+            and role_type = #{roleType}
+            and is_active = 1
+    </select>
+
+    <select id="queryRoleTypesByRoleIds" parameterType="java.util.ArrayList" resultType="String">
+        select
+             distinct role_type
+        from
+             ssm_portal_role
+        where
+            is_active = 1
+            and  role_id in (
+            <foreach collection="list" index="index" item="item" separator=",">
+                 #{item}
+            </foreach>
+            )
+    </select>
+
+    <select id="queryByRoleIds" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.portal.auth.entity.PortalRole">
+        select
+            role_id as roleId,
+            role_type as roleType
+        from
+            ssm_portal_role
+        where
+            is_active = 1
+            and role_id in (
+            <foreach collection="list" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+            )
+    </select>
+
+    <select id="queryViewerRoleId" parameterType="java.util.HashMap" resultType="String">
+        select role_id
+        from ssm_portal_role
+        where portal_id = #{resId}
+          and role_type = #{roleType}
+          and is_active = 1
+        limit 1
+    </select>
+
+    <select id="queryViewerRoleIdsByResIds" parameterType="java.util.ArrayList" resultType="String">
+        select role_id
+        from ssm_portal_role
+        where portal_id in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+          and role_type = 'portal_viewer'
+          and is_active = 1
+    </select>
+
+    <insert id="insertOne" parameterType="com.bi.queryer.ssm.portal.auth.entity.PortalRole">
+        insert into ssm_portal_role
+        (role_id, role_name, role_type, portal_id, is_active, created_by, created_time)
+        values
+        (#{roleId}, #{roleName}, #{roleType}, #{portalId}, 1, #{createdBy}, now())
+    </insert>
+
+    <select id="batchAdd" parameterType="java.util.ArrayList">
+        insert into ssm_portal_role
+        (
+             role_id,
+             role_name,
+             role_type,
+             portal_id,
+             is_active,
+             created_by,
+             created_time
+        )
+        values
+
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+              #{item.roleId},
+              #{item.roleName},
+              #{item.roleType},
+              #{item.portalId},
+              1,
+              #{item.createdBy},
+              now()
+            )
+        </foreach>
+    </select>
+
+
+</mapper>

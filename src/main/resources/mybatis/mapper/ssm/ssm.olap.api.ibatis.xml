@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.olap.api">
+
+    <select id="queryCountByApiKey" parameterType="String" resultType="Integer">
+        select count(1) from bi_portal.openapi_olap_api_key where api_key = #{apiKey} and is_active = 1
+    </select>
+
+    <select id="queryByApiKey" parameterType="String" resultType="com.bi.queryer.ssm.api.entity.OlapApiKeyEntity">
+        select
+            api_key as apiKey,
+            is_check_header_username as isCheckHeaderUsername,
+            is_check_biz_id as isCheckBizId,
+            check_biz_id_type as checkBizIdType,
+            is_query_date_required as isQueryDateRequired,
+            max_query_concurrency as maxQueryConcurrency,
+            api_key_platform as apiKeyPlatform,
+            is_system as isSystem,
+            is_check_intranet_domain as isCheckIntranetDomain,
+            is_test_joint as isTestJoint
+        from
+            bi_portal.openapi_olap_api_key
+        where
+                api_key = #{apiKey}
+              and is_active = 1
+    </select>
+    
+    <select id="queryUserListByApiKey" parameterType="String" resultType="String">
+        select user_name from bi_portal.openapi_olap_api_key_user where api_key = #{apiKey}
+    </select>
+
+    <select id="queryApiKeyByUserName" parameterType="String" resultType="String">
+        select api_key from bi_portal.openapi_olap_api_key_user where user_name = #{userName} limit 1
+    </select>
+
+    <select id="queryBizIdListByApiKey" parameterType="String" resultType="String">
+        select
+            biz_id
+        from
+            bi_portal.openapi_olap_api_key_biz
+        where
+            api_key = #{apiKey}
+        and biz_type = 'ssm'
+    </select>
+
+    <select id="queryAllApiKeyUser" resultType="com.bi.queryer.ssm.api.entity.OlapApiKeyUserEntity">
+        SELECT
+            api_key as apiKey,
+            user_name as userName,
+            max_query_row_num as maxQueryRowNum
+        FROM
+            bi_portal.openapi_olap_api_key_user
+    </select>
+
+    <select id="queryAllApiKey" resultType="com.bi.queryer.ssm.api.entity.OlapApiKeyEntity">
+        select
+            api_key as apiKey,
+            is_check_header_username as isCheckHeaderUsername,
+            is_check_biz_id as isCheckBizId,
+            check_biz_id_type as checkBizIdType,
+            is_query_date_required as isQueryDateRequired,
+            max_query_concurrency as maxQueryConcurrency,
+            api_key_platform as apiKeyPlatform,
+            is_system as isSystem,
+            is_check_intranet_domain as isCheckIntranetDomain,
+            is_test_joint as isTestJoint
+        from
+            bi_portal.openapi_olap_api_key
+        where
+            is_active = 1
+    </select>
+
+    <select id="queryAllUserHostnameMapping" resultType="com.bi.queryer.ssm.api.entity.OpenapiUserHostnameMappingEntity">
+        SELECT
+            user_name AS userName,
+            hostname AS hostname
+        FROM
+            bi_portal.openapi_user_hostname_mapping
+    </select>
+    
+</mapper>

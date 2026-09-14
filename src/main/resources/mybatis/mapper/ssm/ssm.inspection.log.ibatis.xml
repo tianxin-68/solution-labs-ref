@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.inspection.log">
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.inspection.query.template.entity.InspectionLogEntity">
+        insert into ssm_inspection_log
+            (
+                inspection_subject_id,
+                inspection_subject_name,
+                inspection_subject_type,
+                inspection_subject_owner,
+                view_id,
+                view_name,
+                exec_result,
+                begin_time,
+                end_time,
+                remark,
+                created_by,
+                created_time,
+                batch_no,
+                ds_key
+            )
+        values
+            (
+                #{inspectionSubjectId},
+                #{inspectionSubjectName},
+                #{inspectionSubjectType},
+                #{inspectionSubjectOwner},
+                #{viewId},
+                #{viewName},
+                #{execResult},
+                #{beginTime},
+                #{endTime},
+                #{remark},
+                #{createdBy},
+                now(),
+                #{batchNo},
+                #{dsKey}
+            )
+    </insert>
+
+</mapper>

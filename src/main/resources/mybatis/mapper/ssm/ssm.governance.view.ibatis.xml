@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.governance.view">
+
+    <sql id="taskColumns">
+        id                  AS id,
+        view_id             AS viewId,
+        cfg_id              AS cfgId,
+        view_name           AS viewName,
+        view_type           AS viewType,
+        tpl_type            AS tplType,
+        tpl_id              AS tplId,
+        ctg_id              AS ctgId,
+        tpl_name            AS tplName,
+        view_path           AS viewPath,
+        view_owner          AS viewOwner,
+        is_public_domain    AS isPublicDomain,
+        is_portal           AS isPortal,
+        is_owner_all_left   AS isOwnerAllLeft,
+        days_no_visit       AS daysNoVisit,
+        last_visit_time     AS lastVisitTime,
+        policy_type         AS policyType,
+        policy_name         AS policyName,
+        hit_reason          AS hitReason,
+        status              AS status,
+        plan_offline_date   AS planOfflineDate,
+        notice_time         AS noticeTime,
+        offline_time        AS offlineTime,
+        protect_expire_date AS protectExpireDate,
+        exempt_time         AS exemptTime,
+        exempt_expire_date  AS exemptExpireDate,
+        rollback_time       AS rollbackTime,
+        batch_no            AS batchNo,
+        is_active           AS isActive,
+        created_time        AS createdTime,
+        updated_time        AS updatedTime
+    </sql>
+
+    <!-- ===================== 扫描数据源：上游视图打标结果（全量覆盖单日快照，表内已是 >90天 候选）
+         keyset 分页（按 view_id 游标），每次只取一页，避免一次性查出全表（5万+）入内存 ===================== -->
+    <select id="queryViewLabels" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.governance.entity.ViewLabel">
+        SELECT
+            id                AS id,
+            view_id           AS viewId,
+            cfg_id            AS cfgId,
+            view_name         AS viewName,
+            view_type         AS viewType,
+            tpl_type          AS tplType,
+            tpl_id            AS tplId,
+            ctg_id            AS ctgId,
+            tpl_name          AS tplName,
+            tpl_owner         AS tplOwner,
+            view_owner        AS viewOwner,
+            tpl_created_time  AS tplCreatedTime,
+            is_public_domain  AS isPublicDomain,
+            is_vip_owner      AS isVipOwner,
+            is_portal         AS isPortal,
+            is_owner_all_left AS isOwnerAllLeft,
+            days_no_visit     AS daysNoVisit,
+            last_visit_time   AS lastVisitTime
+        FROM ssm_governance_view_label
+        <if test="lastId != null">
+            WHERE id &gt; #{lastId}
+        </if>
+        ORDER BY id
+        LIMIT #{pageSize}
+    </select>
+
+    <!-- 硬排除：在线门户看板最新配置版本依赖的查询模板ID集合
+         cfg_prod(is_latest=1) 关联看板基表(online_status='online')，
+         并取看板组件依赖的 local/prod 查询模板ID -->
+    <select id="queryOnlinePortalTplIds" resultType="java.lang.String">
+        SELECT DISTINCT rel.local_query_tpl_id AS tplId
+        FROM ssm_analysis_tpl_cfg_prod cfg
+        INNER JOIN ssm_analysis_tpl_base base ON cfg.analysis_tpl_id = base.analysis_tpl_id
+        INNER JOIN ssm_analysis_tpl_widget_query_tpl_rel rel ON cfg.analysis_tpl_cfg_id = rel.analysis_tpl_cfg_id
+        WHERE cfg.is_latest = 1 AND base.online_status = 'online'
+          AND rel.local_query_tpl_id IS NOT NULL AND rel.local_query_tpl_id != ''
+        UNION
+        SELECT DISTINCT rel.prod_query_tpl_id AS tplId
+        FROM ssm_analysis_tpl_cfg_prod cfg
+        INNER JOIN ssm_analysis_tpl_base base ON cfg.analysis_tpl_id = base.analysis_tpl_id
+        INNER JOIN ssm_analysis_tpl_widget_query_tpl_rel rel ON cfg.analysis_tpl_cfg_id = rel.analysis_tpl_cfg_id
+        WHERE cfg.is_latest = 1 AND base.online_status = 'online'
+          AND rel.prod_query_tpl_id IS NOT NULL AND rel.prod_query_tpl_id != ''
+    </select>
+
+    <!-- ===================== 任务表 CRUD ===================== -->
+    <select id="getByViewId" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.governance.entity.GovernanceViewTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_view_task
+        WHERE view_id = #{viewId}
+    </select>
+
+    <select id="getById" parameterType="java.lang.Long"
+            resultType="com.bi.queryer.ssm.governance.entity.GovernanceViewTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_view_task
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.bi.queryer.ssm.governance.entity.GovernanceViewTask"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ssm_governance_view_task (
+            view_id, cfg_id, view_name, view_type, tpl_type, tpl_id, ctg_id, tpl_name, view_path, view_owner,
+            is_public_domain, is_portal, is_owner_all_left, days_no_visit, last_visit_time,
+            policy_type, policy_name, hit_reason, status, plan_offline_date, notice_time, offline_time,
+            protect_expire_date, exempt_time, exempt_expire_date, batch_no, is_active,
+            created_time, updated_time
+        ) VALUES (
+            #{viewId}, #{cfgId}, #{viewName}, #{viewType}, #{tplType}, #{tplId}, #{ctgId}, #{tplName}, #{viewPath}, #{viewOwner},
+            #{isPublicDomain}, #{isPortal}, #{isOwnerAllLeft}, #{daysNoVisit}, #{lastVisitTime},
+            #{policyType}, #{policyName}, #{hitReason}, #{status}, #{planOfflineDate}, #{noticeTime}, #{offlineTime},
+            #{protectExpireDate}, #{exemptTime}, #{exemptExpireDate}, #{batchNo},
+            #{isActive}, now(), now()
+        )
+    </insert>
+
+    <!-- 物理删除治理任务行（视图彻底删除时连带删除） -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM ssm_governance_view_task WHERE id = #{id}
+    </delete>
+
+    <!-- 批量加载存量任务的关键字段（id/viewId/status），扫描时在内存比对，避免逐行查询 -->
+    <select id="queryAllTaskKeys" resultType="com.bi.queryer.ssm.governance.entity.GovernanceViewTask">
+        SELECT id AS id, view_id AS viewId, status AS status
+        FROM ssm_governance_view_task
+    </select>
+
+    <!-- 批量新增待处理任务 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO ssm_governance_view_task (
+            view_id, cfg_id, view_name, view_type, tpl_type, tpl_id, ctg_id, tpl_name, view_path, view_owner,
+            is_public_domain, is_portal, is_owner_all_left, days_no_visit, last_visit_time,
+            policy_type, policy_name, hit_reason, status, is_active, batch_no, created_time, updated_time
+        ) VALUES
+        <foreach collection="list" item="t" separator=",">
+            (
+                #{t.viewId}, #{t.cfgId}, #{t.viewName}, #{t.viewType}, #{t.tplType}, #{t.tplId}, #{t.ctgId}, #{t.tplName},
+                #{t.viewPath}, #{t.viewOwner}, #{t.isPublicDomain}, #{t.isPortal}, #{t.isOwnerAllLeft},
+                #{t.daysNoVisit}, #{t.lastVisitTime}, #{t.policyType}, #{t.policyName}, #{t.hitReason},
+                #{t.status}, #{t.isActive}, #{t.batchNo}, now(), now()
+            )
+        </foreach>
+    </insert>
+
+    <!-- 重新命中已有任务（仍处于 pending）：刷新打标信息与命中策略 -->
+    <update id="refreshScan" parameterType="com.bi.queryer.ssm.governance.entity.GovernanceViewTask">
+        UPDATE ssm_governance_view_task
+        SET view_name        = #{viewName},
+            view_type        = #{viewType},
+            tpl_type         = #{tplType},
+            tpl_id           = #{tplId},
+            ctg_id           = #{ctgId},
+            tpl_name         = #{tplName},
+            view_path        = #{viewPath},
+            view_owner       = #{viewOwner},
+            is_public_domain = #{isPublicDomain},
+            is_portal        = #{isPortal},
+            is_owner_all_left= #{isOwnerAllLeft},
+            days_no_visit    = #{daysNoVisit},
+            last_visit_time  = #{lastVisitTime},
+            policy_type      = #{policyType},
+            policy_name      = #{policyName},
+            hit_reason       = #{hitReason},
+            batch_no         = #{batchNo},
+            updated_time     = now()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 状态流转通用更新 -->
+    <update id="updateById" parameterType="com.bi.queryer.ssm.governance.entity.GovernanceViewTask">
+        UPDATE ssm_governance_view_task
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="planOfflineDate != null">plan_offline_date = #{planOfflineDate},</if>
+            <if test="noticeTime != null">notice_time = #{noticeTime},</if>
+            <if test="offlineTime != null">offline_time = #{offlineTime},</if>
+            <if test="protectExpireDate != null">protect_expire_date = #{protectExpireDate},</if>
+            <if test="exemptTime != null">exempt_time = #{exemptTime},</if>
+            <if test="exemptExpireDate != null">exempt_expire_date = #{exemptExpireDate},</if>
+            <if test="rollbackTime != null">rollback_time = #{rollbackTime},</if>
+            <if test="isActive != null">is_active = #{isActive},</if>
+            updated_time = now()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- ===================== Job 查询 ===================== -->
+    <select id="queryByStatus" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.governance.entity.GovernanceViewTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_view_task
+        WHERE status = #{status}
+    </select>
+
+    <!-- 已通知且到达计划下线日期，待自动下线 -->
+    <select id="queryNoticedDue" resultType="com.bi.queryer.ssm.governance.entity.GovernanceViewTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_view_task
+        WHERE status = 'noticed' AND plan_offline_date IS NOT NULL AND plan_offline_date &lt;= CURDATE()
+    </select>
+
+    <!-- 已下线且保护期满，待物理删除 -->
+    <select id="queryProtectExpired" resultType="com.bi.queryer.ssm.governance.entity.GovernanceViewTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_view_task
+        WHERE status = 'offline' AND protect_expire_date IS NOT NULL AND protect_expire_date &lt; CURDATE()
+    </select>
+
+    <!-- 豁免到期，待重入 pending -->
+    <select id="queryExemptExpired" resultType="com.bi.queryer.ssm.governance.entity.GovernanceViewTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_view_task
+        WHERE status = 'exempted' AND exempt_expire_date IS NOT NULL AND exempt_expire_date &lt;= CURDATE()
+    </select>
+
+    <!-- ===================== 后台分页列表 ===================== -->
+    <sql id="listWhere">
+        <where>
+            <if test="status != null and status != ''">AND status = #{status}</if>
+            <if test="owner != null and owner != ''">AND FIND_IN_SET(#{owner}, view_owner) &gt; 0</if>
+            <if test="keyword != null and keyword != ''">
+                AND (view_name LIKE CONCAT('%', #{keyword}, '%')
+                  OR view_id LIKE CONCAT('%', #{keyword}, '%')
+                  OR tpl_name LIKE CONCAT('%', #{keyword}, '%')
+                  OR tpl_id LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <!-- 数据范围：非超管仅能看到自己负责的（view_owner 多人逗号分隔，FIND_IN_SET 任一匹配） -->
+            <if test="currentOwner != null and currentOwner != ''">
+                AND FIND_IN_SET(#{currentOwner}, REPLACE(view_owner, ' ', '')) &gt; 0
+            </if>
+        </where>
+    </sql>
+
+    <select id="list" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.governance.entity.GovernanceViewTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_view_task
+        <include refid="listWhere"/>
+        ORDER BY id DESC
+        LIMIT #{startNum}, #{pageSize}
+    </select>
+
+    <select id="listCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM ssm_governance_view_task
+        <include refid="listWhere"/>
+    </select>
+
+</mapper>

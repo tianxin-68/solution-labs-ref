@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="common">
+    <!-- 过滤器-年周数据 -->
+    <select id="queryWeekByYear" parameterType="java.util.HashMap" resultType="com.bi.queryer.util.BIMap">
+            SELECT
+                 min(t.day_short_desc) as startDateStr,
+                 max(t.day_short_desc) as endDateStr,
+                 t.week_id as weekId,
+                 concat(t.week_long_desc,'(',substr(min(t.day_short_desc),6),'~',  substr(max(t.day_short_desc),6),')') as fullName,
+                 t.year_id as yearId
+            from  bi_portal.sys_date t
+            where 1=1
+              and t.year_id = '${year}'
+            group by t.week_id, t.week_long_desc, t.year_id
+            order by  weekId
+    </select>
+    <!-- 过滤器-通过日期获取年周 -->
+    <select id="queryWeekByDay" parameterType="java.util.HashMap" resultType="com.bi.queryer.util.period.Week">
+            SELECT
+                 min(t.day_short_desc) as startDateStr,
+                 max(t.day_short_desc) as endDateStr,
+                 t.week_id as weekId,
+                 concat(t.week_long_desc,'(',substr(min(t.day_short_desc),6),'~',  substr(max(t.day_short_desc),6),')') as fullName,
+                 t.year_id as yearId
+            from  bi_portal.sys_date t
+            where 1=1
+              and t.day_short_desc = '${dateStr}'
+            group by t.week_id, t.week_long_desc, t.year_id
+            order by  weekId
+    </select>
+</mapper>

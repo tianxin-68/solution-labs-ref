@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="datasource">
+
+	<select id="queryAllDataSource" parameterType="java.util.HashMap" resultType="com.bi.queryer.sys.db.DataSourceBean">
+	SELECT
+		 t.`ds_id` AS id,
+		 t.`ds_name` AS name,
+		 t.`ds_title` as title,
+		 t.`ds_desc` AS description,
+		 t.db_type as dbType,
+		 t.`db_ip` AS dbIp,
+		 t.`db_port` AS dbPort,
+		 t.`db_name` AS dbName,
+		 t.`db_user` AS dbUser,
+		 t.`db_password` AS dbPassword,
+		 t.`created_by` AS createdBy,
+		 t.`updated_by` AS updatedBy,
+		 DATE_FORMAT(t.`created_time`,'%Y-%m-%d %H:%i:%s') AS createdTime,
+		 DATE_FORMAT(t.`updated_time`,'%Y-%m-%d %H:%i:%s') AS updatedTime,
+		 t.db_short_name as dbShortName,
+		 t.db_platform as dbPlatform
+		FROM bi_portal.sys_datasource t
+		WHERE 1=1
+		  AND t.`is_active` = 1
+		  <if test="type != null and '' != type">
+			and concat(t.db_platform,',') like concat('%',#{type},',%')
+		  </if>
+	</select>
+
+</mapper>

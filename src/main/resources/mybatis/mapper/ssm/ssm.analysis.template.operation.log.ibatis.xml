@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.analysis.template.operation.log">
+
+    <insert id="addOperationLog" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplOperationLogEntity">
+        insert into ssm_analysis_tpl_operation_log
+        (
+            analysis_tpl_id,
+            analysis_tpl_cfg_id,
+            portal_id,
+            operation_type,
+            operation_reason,
+            created_by,
+            created_time
+        )
+        values
+        (
+            #{analysisTplId},
+            #{analysisTplCfgId},
+            #{portalId},
+            #{operationType},
+            #{operationReason},
+            #{createdBy},
+            now()
+        )
+    </insert>
+</mapper>

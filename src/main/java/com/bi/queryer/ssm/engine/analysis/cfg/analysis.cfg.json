@@ -1,0 +1,119 @@
+{
+  "filter": [
+    {
+      "id": "405f24f8135e44c08278a43a9d13c986",
+      "code": "dt",
+      "name": "order_date",
+      "title": "日期",
+      "filterValueType": "include",
+      "filterQueryRule": "default",
+      "filterValueMode": "",
+      "valuesTitle": "昨天 到 前7天",
+      "values": [
+        {
+          "levelFieldName": "",
+          "levelFieldId": "",
+          "id": "${CurrentDay-1}",
+          "title": "昨天",
+          "realId": ""
+        },
+        {
+          "levelFieldName": "",
+          "levelFieldId": "",
+          "id": "${CurrentDay-7}",
+          "title": "前7天",
+          "realId": ""
+        }
+      ],
+      "showOrder": 2
+    }
+  ],
+  "result": {
+    "rowDimensions": [
+      {
+        "id": "405f24f8135e44c08278a43a9d13c986",
+        "code": "dt",
+        "name": "order_date",
+        "title": "日期",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "aggExpression": "",
+        "showOrder": 0
+      },
+      {
+        "id": "bb44cbcd82a24e1d9975c1f8685a512f",
+        "code": "dim_vehicleid",
+        "name": "dim_vehicleid",
+        "title": "二级车型id",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "aggExpression": "",
+        "showOrder": 1
+      }
+    ],
+    "colDimensions": [],
+    "measures": [
+      {
+        "id": "b58ffeb98ce14b039a6686a79ed62a19",
+        "code": "finish_order_0day",
+        "name": "finish_order_0day",
+        "title": "当日履约订单数",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "aggExpression": "",
+        "showOrder": 1,
+        "isAnalysis": 0
+      },
+      {
+        "id": "finish_order_0day_hb",
+        "code": "finish_order_0day_hb",
+        "name": "finish_order_0day_hb",
+        "title": "当日履约订单数环比",
+        "displayTitle": "",
+        "sortType": "DESC",
+        "aggExpression": "",
+        "showOrder": 2,
+        "isAnalysis": 1,
+        "analysisConfig" : {
+           "dateFieldCode" : "dt",
+           "dateGranularity" : "d",
+           "measureCode" : "finish_order_0day",
+           "calcMode" : "hb" ,
+           "calcType" : "ratio"
+        }
+      }
+    ]
+  },
+  "analysis": {
+    "active": ["thb","zb","total"],
+    "thb": [{
+      "title" : "环比1",
+      "dateFieldCode" : "order_date",
+      "analysisMeasureCode" : "all,finish_order_0day",
+      "calcMode" : "tb/hb/zb" ,
+      "calcType" : "ratio/value"
+    }],
+    "zb" : [{
+      "title" : "",
+      "analysisMeasureCode" : "all,finish_order_0day",
+      "calcMode" : "zb"
+    }],
+    "total": {
+        "isActive" : 1,
+        "items" : [
+          {
+            "calcMode" : "col_total",
+            "dimIdList" : []
+          },
+          {
+            "calcMode" : "col_subtotal",
+            "dimIdList" : ["dim1", "dim2"]
+          }
+        ]
+    }
+  },
+  "setting": {
+    "queryRowLimit": 500
+  },
+  "sessionId": ""
+}

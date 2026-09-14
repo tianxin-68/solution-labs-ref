@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tableDef">
+
+    <sql id="sqlFilter">
+        <if test="searchTxt != null and '' != searchTxt">
+            and (t.`table_name` LIKE concat('%',#{searchTxt},'%')
+             or t.`table_desc` LIKE concat('%',#{searchTxt},'%')
+            )
+
+        </if>
+        <if test="type != null and '' != type">
+            and t.is_active = 1
+        </if>
+    </sql>
+
+    <select id="queryTableDefList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.MetaTable">
+          SELECT
+      t.table_id as id,
+      t.table_schema as tableSchema,
+      t.table_name as `name`,
+      t.table_desc as tableDesc,
+      t.is_fact_table as isFactTable,
+      t.support_query_engines as supportQueryEngines,
+      t.granularity,
+      t.orig_table_name as origTableName,
+      t.is_active as isActive,
+      DATE_FORMAT(
+        t.created_time,
+        '%Y-%m-%d %H:%i:%s'
+      ) AS createdTime,
+      DATE_FORMAT(
+        t.updated_time,
+        '%Y-%m-%d %H:%i:%s'
+      ) AS updatedTime,
+      t.created_by as createdBy,
+      t.updated_by as updatedBy,
+      t.table_owner as tableOwner,
+      t.is_kpi_table as isKpiTable
+    FROM
+      ssd_table_def t
+      where 1=1
+      <include refid="sqlFilter"/>
+      <choose>
+          <when test="sortKey != null and '' != sortKey">
+              ORDER BY ${sortKey} ${sortType}
+          </when>
+          <otherwise>
+              ORDER BY t.created_time desc
+          </otherwise>
+      </choose>
+      LIMIT ${pageRowLower}, ${prePageSize}
+  </select>
+
+    <select id="queryTableDefListCount" parameterType="java.util.HashMap" resultType="Integer">
+       SELECT
+         count(1)
+       FROM
+       ssd_table_def t
+       where 1=1
+       <include refid="sqlFilter"/>
+   </select>
+    
+    <insert id="insertIntoTableDef" parameterType="com.bi.queryer.ssm.meta.MetaTable">
+        insert into ssd_table_def
+        (
+            table_id,
+            table_schema,
+            `table_name`,
+            table_desc,
+            is_fact_table,
+            granularity,
+            orig_table_name,
+            is_active,
+            created_time,
+            created_by,
+            table_owner,
+            is_kpi_table,
+            support_query_engines
+        )
+        values
+        (
+            #{id},
+            #{tableSchema},
+            #{name},
+            #{tableDesc},
+            #{isFactTable},
+            #{granularity},
+            #{origTableName},
+            #{isActive},
+            now(),
+            #{createdBy},
+            #{tableOwner},
+            #{isKpiTable},
+            #{supportQueryEngines}
+        )
+    </insert>
+
+    <update id="updateTableDef" parameterType="com.bi.queryer.ssm.meta.MetaTable">
+        update ssd_table_def t
+        set
+            t.table_schema = #{tableSchema},
+            t.table_name = #{name},
+            t.table_desc = #{tableDesc},
+            t.is_fact_table = #{isFactTable},
+            t.granularity = #{granularity},
+            t.orig_table_name = #{origTableName},
+            t.is_active = #{isActive},
+            t.updated_time = now(),
+            t.updated_by = #{updatedBy},
+            t.table_owner = #{tableOwner},
+            t.is_kpi_table = #{isKpiTable},
+            t.support_query_engines = #{supportQueryEngines}
+        where t.table_id = #{id}
+    </update>
+
+    <delete id="deleteTableDefByTableId" parameterType="String">
+        delete from ssd_table_def where table_id = #{tableId}
+    </delete>
+
+    <update id="updateTableDefActiveType" parameterType="java.util.HashMap">
+        update ssd_table_def t set t.is_active = #{isActive} where t.table_id = #{tableId}
+    </update>
+
+    <select id="queryAllTableActive" resultType="com.bi.queryer.ssm.meta.TreeNode">
+                SELECT
+          t.`table_id` AS id,
+          CONCAT(
+            t.`table_schema`,
+            '.',
+            t.`table_name`
+          )  AS label
+        FROM
+          ssd_table_def t
+        WHERE t.is_active = 1
+        ORDER BY t.`created_time`
+    </select>
+
+    <select id="checkTableExist" parameterType="String" resultType="Integer">
+        select count(1) from ssd_table_def t where t.table_id = #{id}
+    </select>
+
+    <!--查询etl任务列表-->
+    <select id="queryEtljobsList" parameterType="java.util.HashMap" resultType="String">
+       SELECT
+                  ETL_JOB AS jobName
+                FROM etl_job t
+                WHERE 1 = 1 AND t.ENABLE = '1'
+                <if test="jobName!='' and jobName != null">
+                    and ETL_JOB LIKE concat('%',#{jobName},'%')
+                </if>
+                  ORDER BY create_time DESC
+                  limit 0,30
+    </select>
+
+    <!--删除表关联的etl作业-->
+    <delete id="deleteEtlJobByTableId" parameterType="String">
+        delete from ssd_table_etl_job where table_id = #{tableId}
+    </delete>
+
+    <!--查询表关联的etl作业-->
+    <select id="selectEtlJobByTableId" parameterType="String" resultType="String">
+        select etl_job from ssd_table_etl_job where table_id = #{tableId}
+    </select>
+
+    <!--通过表id集合查询表关联的etl作业-->
+    <select id="selectEtlJobByTableIdList" parameterType="list" resultType="String">
+         select  distinct etl_job from ssd_table_etl_job where table_id in (
+        <foreach collection="list" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        )
+    </select>
+
+    <!--查询仍被有效表引用的etl作业（inner join 排除引用表已被删除的记录）-->
+    <select id="selectReferencedEtlJobs" parameterType="list" resultType="String">
+        select distinct j.etl_job
+        from ssd_table_etl_job j
+        inner join ssd_table_def t on t.table_id = j.table_id
+        where t.is_active = 1 and j.etl_job in (
+        <foreach collection="list" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        )
+    </select>
+
+    <!--插入表关联的etl作业-->
+    <insert id="insertIntoEtlJob" parameterType="java.util.HashMap">
+        insert into ssd_table_etl_job (table_id,etl_job,created_time,created_by)
+        VALUES
+        <foreach collection="etlJobList" index="index" item="item" separator="," >
+            (#{tableId}, #{item},now(),#{createdBy})
+        </foreach>
+    </insert>
+
+    <delete id="batchDelete" parameterType="java.util.HashMap">
+        delete from ssd_table_def where
+           table_id in (
+            <foreach collection="tableIdList" index="index" item="item" separator="," >
+                #{item}
+            </foreach>
+            )
+    </delete>
+
+    <insert id="batchInsert" parameterType="java.util.HashMap">
+        insert into ssd_table_def
+        (
+            table_id,
+            table_schema,
+            `table_name`,
+            table_desc,
+            is_fact_table,
+            granularity,
+            orig_table_name,
+            is_active,
+            created_time,
+            created_by,
+            table_owner,
+            is_kpi_table,
+            support_query_engines,
+            data_process_type,
+            data_update_time_field,
+            data_slice_cfg,
+            view_depend_tables
+        )
+        values
+            <foreach collection="tableList" index="index" item="item" separator="," >
+                (
+                #{item.id},
+                #{item.tableSchema},
+                #{item.name},
+                #{item.tableDesc},
+                #{item.isFactTable},
+                #{item.granularity},
+                #{item.origTableName},
+                #{item.isActive},
+                now(),
+                #{userName},
+                #{item.tableOwner},
+                #{item.isKpiTable},
+                #{item.supportQueryEngines},
+                #{item.dataProcessType},
+                #{item.dataUpdateTimeField},
+                #{item.dataSliceCfg},
+                #{item.viewDependTables}
+                )
+            </foreach>
+    </insert>
+
+    <delete id="batchDeleteTableEtljob" parameterType="java.util.HashMap">
+         delete from ssd_table_etl_job where table_id in (
+            <foreach collection="tableIdList" index="index" item="item" separator="," >
+                #{item}
+            </foreach>
+            )
+    </delete>
+
+    <insert id="batchInsertTableEtljob" parameterType="java.util.HashMap">
+        insert into ssd_table_etl_job
+        (
+            table_id,
+            etl_job,
+            created_time,
+            created_by
+        )
+        values
+            <foreach collection="etlJobList" index="index" item="item" separator="," >
+                (
+                #{item.tableId},
+                #{item.etlJob},
+                now(),
+                #{userName}
+                )
+            </foreach>
+    </insert>
+
+    <delete id="batchDeleteTablePriSubCfg" parameterType="java.util.HashMap">
+        delete from ssm_table_pri_sub_cfg where sub_table_id in (
+        <foreach collection="tableIdList" index="index" item="item" separator="," >
+            #{item}
+        </foreach>
+        )
+    </delete>
+
+    <insert id="batchInsertTablePriSubCfg" parameterType="java.util.HashMap">
+        insert into ssm_table_pri_sub_cfg
+        (
+            sub_table_id,
+            sub_table_name,
+            pri_table_id,
+            pri_table_name,
+            created_time,
+            created_by
+        )
+        values
+        <foreach collection="tablePriSubList" index="index" item="item" separator="," >
+            (
+                #{item.subTableId},
+                #{item.subTableName},
+                #{item.priTableId},
+                #{item.priTableName},
+                now(),
+                #{userName}
+            )
+        </foreach>
+    </insert>
+
+</mapper>

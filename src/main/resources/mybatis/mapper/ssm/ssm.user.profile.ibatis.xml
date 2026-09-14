@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.user.profile">
+    <insert id="add" parameterType="com.bi.queryer.ssm.portal.template.entity.UserProfileEntity">
+        insert into ssm_user_profile
+        (
+            user_name,
+            entity_type,
+            entity_id,
+            entity_name,
+            created_by,
+            created_time
+        )
+        values
+        (
+            #{userName},
+            #{entityType},
+            #{entityId},
+            #{entityName},
+            #{createdBy},
+            now()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.bi.queryer.ssm.portal.template.entity.UserProfileEntity">
+        update ssm_user_profile
+        set
+            entity_id = #{entityId},
+            entity_name = #{entityName},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            pkid = #{pkId}
+    </update>
+
+    <select id="get" resultType="com.bi.queryer.ssm.portal.template.entity.UserProfileEntity">
+        SELECT
+          pkid as pkId,
+          user_name as userName,
+          entity_type as entityType,
+          entity_id as entityId,
+          entity_name as entityName,
+          created_by as createdBy,
+          created_time as createdTime,
+          updated_by as updatedBy,
+          updated_time as updatedTime
+        FROM
+          ssm_user_profile
+        WHERE
+          user_name = #{userName}
+          and entity_type = #{entityType}
+        limit 1;
+    </select>
+
+</mapper>

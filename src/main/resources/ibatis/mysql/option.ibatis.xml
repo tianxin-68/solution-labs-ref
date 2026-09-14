@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap
+PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="option">
+	<typeAlias alias="UpperCaseMap" type="com.bi.queryer.util.UpperCaseMap" />
+	<typeAlias alias="SystemOption" type="com.bi.queryer.sys.config.SystemOption" />
+	
+	<select id="queryAll" parameterClass="java.util.HashMap" resultClass="SystemOption">
+		SELECT 
+		   t.OPT_CODE AS code,
+		   t.OPT_NAME AS name,
+		   t.OPT_TYPE AS type,
+		   t.PARENT_OPT_CODE parentCode,
+		   t.OPT_VALUE value,
+		   t.OPT_VALUE_SHOW_TYPE showType,
+		   t.SHOW_INDEX showIndex,
+		   t.OPT_SELECT_VALUES selectValues,
+		   t.REMARK
+		FROM ssm_option t
+		order by t.OPT_CODE
+	</select>
+	<select id="queryAllOption" parameterClass="java.util.HashMap" resultClass="UpperCaseMap">
+		SELECT 
+		   t.OPT_CODE AS code,
+		   t.OPT_NAME AS name,
+		   t.OPT_VALUE value
+		FROM ssm_option t
+	</select>
+	<update id="saveOption" parameterClass="java.util.HashMap">
+		update ssm_option set OPT_VALUE = '$value$' where OPT_CODE = #code#
+	</update>
+</sqlMap>	

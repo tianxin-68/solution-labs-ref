@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.template.asset.change.apply">
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.query.template.asset.change.apply.model.TemplateAssetChangeApplyEntity" useGeneratedKeys="true" keyProperty="applyId" keyColumn="apply_id">
+        insert into ssd_query_template_asset_change_apply
+        (
+            tpl_id,
+            view_id,
+            apply_remark,
+            approval_status,
+            approval_remark,
+            is_active,
+            created_by,
+            created_time
+        )
+        values
+        (
+            #{tplId},
+            #{viewId},
+            #{applyRemark},
+            #{approvalStatus},
+            #{approvalRemark},
+            1,
+            #{createdBy},
+            now()
+        )
+    </insert>
+
+    <select id="getUnfinishedApplyCountByViewId" parameterType="String" resultType="Integer">
+        select
+            count(1)
+        from
+            ssd_query_template_asset_change_apply
+        where
+            view_id = #{viewId}
+            and approval_status = 'apply'
+    </select>
+
+    <update id="approval" parameterType="com.bi.queryer.ssm.query.template.asset.change.apply.model.TemplateAssetChangeApplyEntity">
+        update
+            ssd_query_template_asset_change_apply
+        set
+            approval_status = #{approvalStatus},
+            approval_remark = #{approvalRemark},
+            approved_by = #{approvedBy},
+            approved_time = now(),
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            apply_id = #{applyId}
+    </update>
+
+    <update id="revoke" parameterType="java.util.HashMap">
+        update
+            ssd_query_template_asset_change_apply
+        set
+            approval_status = 'revoke',
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            apply_id = #{applyId}
+    </update>
+
+    <select id="get" parameterType="Long" resultType="com.bi.queryer.ssm.query.template.asset.change.apply.model.TemplateAssetChangeApplyEntity">
+        select
+            apply_id as applyId,
+            tpl_id as tplId,
+            view_id as viewId,
+            apply_remark as applyRemark,
+            approval_status as approvalStatus,
+            approval_remark as approvalRemark,
+            approved_by as approvedBy,
+            DATE_FORMAT(
+                    approved_time,
+                    '%Y-%m-%d %H:%i:%s'
+            )  as approvedTime,
+            created_by as createdBy,
+            DATE_FORMAT(
+                    created_time,
+                    '%Y-%m-%d %H:%i:%s'
+            )  as createdTime,
+            concat(ROUND(
+                    (
+                      UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(created_time)
+                    ) / 3600
+            ,1) ,'h') AS applyPendingTime
+        from
+            ssd_query_template_asset_change_apply
+        where
+            apply_id = #{applyId}
+    </select>
+    
+    <select id="getUnfinishedApplyListByTplId" parameterType="String" resultType="com.bi.queryer.ssm.query.template.asset.change.apply.model.TemplateAssetChangeApplyRsp">
+        select
+            apply_id as applyId,
+            tpl_id as tplId,
+            view_id as viewId,
+            apply_remark as applyRemark,
+            approval_status as approvalStatus,
+            approval_remark as approvalRemark,
+            approved_by as approvedBy,
+            created_by as applyUser,
+            DATE_FORMAT(
+                    created_time,
+                    '%Y-%m-%d %H:%i:%s'
+            )  as applyTime,
+            DATE_FORMAT(
+                    approved_time,
+                    '%Y-%m-%d %H:%i:%s'
+            )  as approvedTime,
+            concat(ROUND(
+                           (
+                               UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(created_time)
+                               ) / 3600
+                       ,1) ,'h') AS applyPendingTime
+        from
+            ssd_query_template_asset_change_apply
+        where
+            tpl_id = #{tplId}
+            and approval_status = 'apply'
+        order by
+            created_time desc
+    </select>
+
+    <select id="getApplyByIdList" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.query.template.asset.change.apply.model.TemplateAssetChangeApplyEntity">
+        select
+            apply_id as applyId,
+            tpl_id as tplId,
+            view_id as viewId,
+            apply_remark as applyRemark,
+            approval_status as approvalStatus,
+            approval_remark as approvalRemark,
+            approved_by as approvedBy,
+            approved_time as approvedTime
+        from
+            ssd_query_template_asset_change_apply
+        where
+            apply_id in
+            <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+
+</mapper>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="chat.session.user.config">
+
+    <insert id="insertChatUserConfig" parameterType="com.bi.queryer.ssm.llm.chatSession.entity.ChatUserConfig">
+        insert into chat_user_config (
+            user_name,
+            last_used_ai_model,
+            created_by,
+            created_time
+        ) values (
+            #{userName},
+            #{lastUsedAiModel},
+            #{createdBy},
+            #{createdTime}
+        )
+    </insert>
+
+    <select id="getChatUserConfigByUserName" parameterType="map"
+            resultType="com.bi.queryer.ssm.llm.chatSession.entity.ChatUserConfig">
+        select
+            pkid,
+            user_name as userName,
+            last_used_ai_model as lastUsedAiModel,
+            created_by as createdBy,
+            created_time as createdTime
+        from chat_user_config
+        where user_name = #{userName}
+        order by pkid desc
+        limit 1
+    </select>
+
+    <update id="updateLastUsedAiModel" parameterType="map">
+        update chat_user_config
+        set
+            last_used_ai_model = #{lastUsedAiModel}
+        where
+            user_name = #{userName}
+    </update>
+
+</mapper>

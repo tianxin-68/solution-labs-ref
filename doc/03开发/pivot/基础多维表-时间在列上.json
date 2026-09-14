@@ -1,0 +1,66 @@
+{
+  "data": {
+    "rows": [
+      {
+        "dim_analysis_business": "洗美",
+        "pay_orderid_c__d_0_0": "68,359",
+        "pay_gmv_c__d_0_0": "2,230,261.81",
+        "pay_orderid_c__d_0_1": "64,570",
+        "pay_gmv_c__d_0_1": "2,178,092.67"
+      },
+      {
+        "dim_analysis_business": "保养",
+        "pay_orderid_c__d_0_0": "64,247",
+        "pay_gmv_c__d_0_0": "25,126,676.93",
+        "pay_orderid_c__d_0_1": "62,397",
+        "pay_gmv_c__d_0_1": "24,828,219.51"
+      }
+    ],
+    "columns": [
+      {
+        "code": "dim_analysis_business",
+        "title": "分析业务线",
+        "parentCode": "",
+        "children": []
+      },
+      {
+        "code": "_c__d_0_0",
+        "title": "2024-05-13",
+        "parentCode": "",
+        "children": [
+          {
+            "code": "pay_gmv_c__d_0_0",
+            "title": "支付GMV",
+            "parentCode": "_c__d_0_0",
+            "children": []
+          },
+          {
+            "code": "pay_orderid",
+            "title": "支付订单数",
+            "parentCode": "_c__d_0_0",
+            "children": []
+          }
+        ]
+      },
+      {
+        "code": "_c__d_0_1",
+        "title": "2024-05-14",
+        "parentCode": "",
+        "children": [
+          {
+            "code": "pay_gmv_c__d_0_1",
+            "title": "支付GMV",
+            "parentCode": "_c__d_0_1",
+            "children": []
+          },
+          {
+            "code": "pay_orderid_c__d_0_1",
+            "title": "支付订单数",
+            "parentCode": "_c__d_0_1",
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}

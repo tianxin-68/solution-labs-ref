@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.hot.source">
+
+    <!-- 查询所有可用热表信息：用于缓存(不分页) -->
+    <select id="queryAllHotTableSource" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableSource">
+        select
+            t1.source_id as sourceId,
+            t1.source_table_name as sourceTableName,
+            t1.source_table_desc as sourceTableDesc,
+            t1.source_db_engine as sourceDbEngine,
+            t1.support_hot_db_engine as supportHotDbEngine,
+            t1.hot_data_init_days as hotDataInitDays,
+            t1.hot_data_max_days as hotDataMaxDays,
+            t1.is_active as isActive,
+            t1.created_by as createdBy,
+            date_format(t1.created_time, '%Y-%m-%d %H:%i:%s') as createdTime,
+            t1.updated_by as updatedBy,
+            date_format(t1.updated_time, '%Y-%m-%d %H:%i:%s') as updatedTime,
+            t1.data_update_mode as dataUpdateMode,
+            t1.data_incremental_days as dataIncrementalDays,
+            t1.is_need_partition as isNeedPartition,
+            t1.date_granularity as dateGranularity,
+            t1.date_format_type as dateFormatType,
+            t1.hot_data_require_days as hotDataRequireDays,
+            t1.repair_data_batch_days as repairDataBatchDays,
+            t1.is_auto_repair_data as isAutoRepairData,
+            t1.partition_by as partitionBy
+        from bi_ssm.ssm_hot_table_source t1
+        where 1=1
+          and t1.is_active = 1
+    </select>
+</mapper>

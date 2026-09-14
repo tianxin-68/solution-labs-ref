@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="option">
+
+    <!--插入系统选项-->
+    <insert id="insertOption" parameterType="com.bi.queryer.sys.config.SystemOption">
+		insert INTO ssm_option(
+			OPT_CODE,
+			OPT_NAME,
+			OPT_VALUE,
+			REMARK
+		)
+		VALUES
+			(#{code}, #{name}, #{value}, #{remark})
+	</insert>
+
+    <!--修改系统选项-->
+    <update id="updateOption" parameterType="com.bi.queryer.sys.config.SystemOption">
+        update ssm_option
+        set OPT_NAME = #{name},
+        OPT_VALUE = #{value},
+        REMARK = #{remark}
+        where OPT_CODE = #{code}
+    </update>
+
+    <!--删除系统选项-->
+    <delete id="deleteOptionByCode" parameterType="String">
+        delete from ssm_option where OPT_CODE = #{code}
+    </delete>
+
+    <select id="queryOptionList" parameterType="java.util.HashMap" resultType="com.bi.queryer.util.UpperCaseMap">
+
+        SELECT t.OPT_CODE,t.OPT_NAME,
+        CASE WHEN t.opt_code = 'login.super.pwd' THEN  PASSWORD(t.`OPT_VALUE`) ELSE t.`OPT_VALUE` END as OPT_VALUE,
+        t.REMARK
+            FROM ssm_option t
+            WHERE 1=1
+            <if test="searchName != null and '' != searchName">
+                AND (
+                t.OPT_CODE LIKE concat('%',#{searchName},'%')
+                OR t.OPT_NAME LIKE concat('%' , #{searchName} , '%')
+                )
+            </if>
+
+            and t.opt_code not in ('login.super.pwd','app.getTokenUrl')
+            ORDER BY t.OPT_CODE
+            LIMIT ${pageRowLower}, ${prePageSize}
+
+    </select>
+    
+    <select id="queryOptionListCount" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+        select COUNT(1) from ssm_option t
+        WHERE 1=1
+        <if test="searchName != null and '' != searchName">
+            AND (
+            t.OPT_CODE LIKE concat('%',#{searchName},'%')
+            OR t.OPT_NAME LIKE concat('%' , #{searchName} , '%')
+            )
+        </if>
+        and t.opt_code not in ('login.super.pwd','app.getTokenUrl')
+    </select>
+
+    <select id="checkOptionCodeValidate" parameterType="String" resultType="Integer">
+        select count(1) from ssm_option where OPT_CODE = #{code}
+    </select>
+
+    <!--查询所有系统选项-->
+    <select id="getAllSystemOption" resultType="com.bi.queryer.sys.config.SystemOption">
+        select OPT_CODE as code,OPT_VALUE as value from ssm_option
+    </select>
+
+    <select id="querySuperPassWord" resultType="String">
+        select t.OPT_VALUE from ssm_option t where t.OPT_CODE = 'login.super.pwd'
+    </select>
+
+</mapper>

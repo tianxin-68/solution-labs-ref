@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.analysis.tpl.share.rel">
+
+    <!-- 插入单条看板分享关系（快照场景：源看板 -> 新生成的目标看板） -->
+    <insert id="insert" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplShareRelEntity">
+        insert into ssm_analysis_tpl_share_rel (
+            source_analysis_tpl_id,
+            target_analysis_tpl_id,
+            root_analysis_tpl_id,
+            created_time,
+            created_by
+        )
+        values (
+            #{sourceAnalysisTplId},
+            #{targetAnalysisTplId},
+            #{rootAnalysisTplId},
+            now(),
+            #{createdBy}
+        )
+    </insert>
+
+    <!-- 通过目标看板 id 查询其所在分享链上的根看板 id（对齐 ssd_query_template_share_rel 用法） -->
+    <select id="queryRootAnalysisTplIdByTargetAnalysisTplId" parameterType="String" resultType="String">
+        select root_analysis_tpl_id
+        from ssm_analysis_tpl_share_rel
+        where target_analysis_tpl_id = #{targetAnalysisTplId}
+        limit 1
+    </select>
+
+</mapper>

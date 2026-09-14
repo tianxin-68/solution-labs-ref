@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cache">
+	<insert id="setCache" parameterType="com.bi.queryer.sys.cache.CacheItem">
+		insert into bi_portal.sys_cache(cache_type, cache_key, cache_value, remark, LAST_MODIFY_TIME)
+		values(#{type}, #{key}, #{value}, #{remark}, now())
+		on duplicate key 
+		update cache_value = #{value},
+			   LAST_MODIFY_TIME = now()
+	</insert>
+	
+	<select id="getCache" parameterType="java.util.HashMap" resultType="java.lang.String">
+		select cache_value 
+		from bi_portal.sys_cache t
+		where 1=1
+		  and t.cache_type = #{type}
+		  and t.cache_key = #{key}
+		  and t.last_modify_time > DATE_ADD(NOW(), INTERVAL -${cacheDuration} MINUTE)
+	</select>
+	
+	<delete id="removeCache" parameterType="java.util.HashMap">
+		delete from bi_portal.sys_cache
+		where 1=1
+		 <if test="type != null and type != '' ">
+		 	and cache_type = #{type}
+		 </if>
+		 <if test="key != null and key != '' ">
+		 	and cache_key = #{key}
+		 </if>
+	</delete>
+</mapper>	

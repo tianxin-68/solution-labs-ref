@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.migrate.bizsplit">
+
+    <!-- 新增一条新旧id映射记录（表结构见 docs/ssm_migrate_bizsplit_schema.sql） -->
+    <insert id="addMapping" parameterType="com.bi.queryer.ssm.migrate.bizsplit.model.MetricMigrateMappingEntity">
+        insert into ssm_migrate_bizsplit_mapping
+        (
+            object_type, old_id, old_name, new_id, new_name,
+            old_biz_line, new_biz_line, portal_id, is_reused, created_by, created_time
+        )
+        values
+        (
+            #{objectType}, #{oldId}, #{oldName}, #{newId}, #{newName},
+            #{oldBizLine}, #{newBizLine}, #{portalId}, #{isReused}, #{createdBy}, now()
+        )
+    </insert>
+
+    <!-- 幂等判断依据：查某老对象在目标业务线下是否已经处理过 -->
+    <select id="getMapping" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.migrate.bizsplit.model.MetricMigrateMappingEntity">
+        select
+            id, object_type as objectType, old_id as oldId, old_name as oldName,
+            new_id as newId, new_name as newName, old_biz_line as oldBizLine, new_biz_line as newBizLine,
+            portal_id as portalId, is_reused as isReused, created_by as createdBy,
+            date_format(created_time , '%Y-%m-%d %H:%i:%s') as createdTime
+        from ssm_migrate_bizsplit_mapping
+        where object_type = #{objectType}
+          and old_id = #{oldId}
+          and new_biz_line = #{newBizLine}
+        limit 1
+    </select>
+
+    <!-- 同名复用检查：门户目录节点（普通目录/专题报告/AI技能目录/共享空间菜单/看板菜单等，均落在 ssm_portal_menu） -->
+    <select id="getPortalMenuByParentAndName" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        select
+            menu_id as menuId,
+            portal_id as portalId,
+            menu_name as menuName,
+            menu_type as menuType,
+            parent_menu_id as parentMenuId,
+            menu_desc as menuDesc,
+            content_ref_id as contentRefId,
+            sort_id as sortId
+        from ssm_portal_menu
+        where is_active = 1
+          and parent_menu_id = #{parentMenuId}
+          and menu_type = #{menuType}
+          and menu_name = #{menuName}
+        limit 1
+    </select>
+
+    <!-- 同名复用检查：共享空间/查询模板目录树节点（ssd_query_template_ctg） -->
+    <select id="getCtgByParentAndName" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.query.ctg.model.QueryTemplateCategory">
+        select
+            ctg_id as id,
+            ctg_name as name,
+            ctg_type as type,
+            ctg_desc as description,
+            sort_id as sortId,
+            ctg_parent_id as parentId,
+            created_by as createdBy
+        from ssd_query_template_ctg
+        where is_active = 1
+          and ctg_parent_id = #{parentId}
+          and ctg_name = #{name}
+        limit 1
+    </select>
+
+    <!-- 同名复用检查：门户本身（ssm_portal），门户名称全局唯一判定，不区分归属哪个老门户 -->
+    <select id="getPortalByName" parameterType="String" resultType="com.bi.queryer.ssm.portal.entity.Portal">
+        select
+            portal_id as portalId,
+            portal_name as portalName,
+            portal_desc as portalDesc,
+            sort_id as sortId,
+            is_active as isActive
+        from ssm_portal
+        where is_active = 1
+          and portal_name = #{portalName}
+        limit 1
+    </select>
+
+    <!-- 同名复用检查：查询模板（ssd_query_template） -->
+    <select id="getTemplateByCtgAndName" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.query.template.model.TemplateEntity">
+        select
+            tpl_id as tplId,
+            tpl_name as tplName,
+            tpl_desc as tplDesc,
+            tpl_type as tplType,
+            cfg_id as cfgId,
+            tpl_owner as tplOwner,
+            ctg_id as ctgId,
+            dataset_id as datasetId
+        from ssd_query_template
+        where ctg_id = #{ctgId}
+          and tpl_name = #{tplName}
+        limit 1
+    </select>
+
+    <!-- 看板复制：按 analysisTplId 读取老看板基础信息 -->
+    <select id="getAnalysisTemplateById" parameterType="String" resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTemplateEntity">
+        select
+            analysis_tpl_id as analysisTplId,
+            analysis_tpl_name as analysisTplName,
+            analysis_tpl_owner as analysisTplOwner,
+            analysis_tpl_desc as analysisTplDesc,
+            draft_status as draftStatus,
+            online_status as onlineStatus,
+            is_active as isActive,
+            source_data_type as sourceDataType,
+            has_ai_summary as hasAiSummary,
+            analysis_tpl_type as analysisTplType
+        from ssm_analysis_tpl_base
+        where analysis_tpl_id = #{analysisTplId}
+          and is_active = 1
+        limit 1
+    </select>
+
+    <!-- 看板/查询模板复制：按来源+目标业务线查指标 code 映射（表结构见 docs/ssm_metric_expansion_field_mapping_schema.sql） -->
+    <select id="queryMetricCodeMapping" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.migrate.bizsplit.model.MetricCodeMappingEntity">
+        select
+            pkid,
+            shadow_cfg_id as shadowCfgId,
+            old_view_id as viewId,
+            old_tpl_id as tplId,
+            cfg_id as cfgId,
+            source_businessline as sourceBusinessline,
+            target_businessline as targetBusinessline,
+            old_field_id as oldFieldId,
+            old_field_code as oldFieldCode,
+            old_field_title as oldFieldTitle,
+            new_field_id as newFieldId,
+            new_field_code as newFieldCode,
+            new_field_title as newFieldTitle
+        from ssm_metric_expansion_field_mapping
+        where source_businessline = #{sourceBusinessline}
+          and target_businessline = #{targetBusinessline}
+          <if test="tplId != null and tplId != ''">
+              and old_tpl_id = #{tplId}
+          </if>
+          <if test="viewId != null and viewId != ''">
+              and old_view_id = #{viewId}
+          </if>
+    </select>
+
+</mapper>

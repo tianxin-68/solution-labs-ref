@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.query.template.cfg.shadow">
+
+    <!-- 按正式 cfg_id 查询影子 -->
+    <select id="getCfgByCfgId" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.migrate.bizsplit.model.MetricExpansionCfgShadowEntity">
+        SELECT
+            shadow_cfg_id AS shadowCfgId,
+            cfg_id AS cfgId,
+            view_id AS viewId,
+            tpl_id AS tplId,
+            tpl_config AS tplConfig,
+            source_businessline AS sourceBusinessline,
+            target_businessline AS targetBusinessline,
+            created_by AS createdBy,
+            DATE_FORMAT(created_time, '%Y-%m-%d %H:%i:%s') AS createdTime,
+            updated_by AS updatedBy,
+            DATE_FORMAT(updated_time, '%Y-%m-%d %H:%i:%s') AS updatedTime
+        FROM
+            ssm_query_template_cfg_shadow
+        WHERE
+            cfg_id = #{cfgId}
+        LIMIT 1
+    </select>
+
+    <!-- 按 view_id 查询影子 -->
+    <select id="getCfgByViewId" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.migrate.bizsplit.model.MetricExpansionCfgShadowEntity">
+        SELECT
+            shadow_cfg_id AS shadowCfgId,
+            cfg_id AS cfgId,
+            view_id AS viewId,
+            tpl_id AS tplId,
+            tpl_config AS tplConfig,
+            source_businessline AS sourceBusinessline,
+            target_businessline AS targetBusinessline,
+            created_by AS createdBy,
+            DATE_FORMAT(created_time, '%Y-%m-%d %H:%i:%s') AS createdTime,
+            updated_by AS updatedBy,
+            DATE_FORMAT(updated_time, '%Y-%m-%d %H:%i:%s') AS updatedTime
+        FROM
+            ssm_query_template_cfg_shadow
+        WHERE
+            view_id = #{viewId}
+        LIMIT 1
+    </select>
+
+    <select id="countByCfgId" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM ssm_query_template_cfg_shadow
+        WHERE cfg_id = #{cfgId}
+    </select>
+
+    <select id="countByViewId" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM ssm_query_template_cfg_shadow
+        WHERE view_id = #{viewId}
+    </select>
+
+    <!-- 查询全部有影子记录的 view_id（promote 未传 viewIds 时使用） -->
+    <select id="listAllViewIds" resultType="java.lang.String">
+        SELECT view_id
+        FROM ssm_query_template_cfg_shadow
+        WHERE view_id IS NOT NULL AND view_id != ''
+        ORDER BY created_time
+    </select>
+
+    <insert id="insertCfg" parameterType="com.bi.queryer.ssm.migrate.bizsplit.model.MetricExpansionCfgShadowEntity">
+        INSERT INTO ssm_query_template_cfg_shadow (
+            shadow_cfg_id, cfg_id, view_id, tpl_id, tpl_config,
+            source_businessline, target_businessline,
+            created_by, created_time, updated_by, updated_time
+        ) VALUES (
+            #{shadowCfgId}, #{cfgId}, #{viewId}, #{tplId}, #{tplConfig},
+            #{sourceBusinessline}, #{targetBusinessline},
+            #{createdBy}, NOW(), #{updatedBy}, NOW()
+        )
+    </insert>
+
+    <delete id="deleteCfgByCfgId" parameterType="java.lang.String">
+        DELETE FROM ssm_query_template_cfg_shadow WHERE cfg_id = #{cfgId}
+    </delete>
+
+    <select id="getDtlByCfgId" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.migrate.bizsplit.model.MetricExpansionCfgDtlShadowEntity">
+        SELECT
+            shadow_cfg_id AS shadowCfgId,
+            cfg_id AS cfgId,
+            tpl_config_field_dim_codes AS tplConfigFieldDimCodes,
+            tpl_config_field_measure_codes AS tplConfigFieldMeasureCodes,
+            tpl_config_field_dim_asset AS tplConfigFieldDimAsset,
+            tpl_config_field_measure_asset AS tplConfigFieldMeasureAsset,
+            created_by AS createdBy,
+            DATE_FORMAT(created_time, '%Y-%m-%d %H:%i:%s') AS createdTime,
+            updated_by AS updatedBy,
+            DATE_FORMAT(updated_time, '%Y-%m-%d %H:%i:%s') AS updatedTime
+        FROM
+            ssm_query_template_cfg_dtl_shadow
+        WHERE
+            cfg_id = #{cfgId}
+        LIMIT 1
+    </select>
+
+    <insert id="insertDtl" parameterType="com.bi.queryer.ssm.migrate.bizsplit.model.MetricExpansionCfgDtlShadowEntity">
+        INSERT INTO ssm_query_template_cfg_dtl_shadow (
+            shadow_cfg_id,
+            cfg_id,
+            tpl_config_field_dim_codes,
+            tpl_config_field_measure_codes,
+            tpl_config_field_dim_asset,
+            tpl_config_field_measure_asset,
+            created_by, created_time, updated_by, updated_time
+        ) VALUES (
+            #{shadowCfgId},
+            #{cfgId},
+            #{tplConfigFieldDimCodes},
+            #{tplConfigFieldMeasureCodes},
+            #{tplConfigFieldDimAsset},
+            #{tplConfigFieldMeasureAsset},
+            #{createdBy}, NOW(), #{updatedBy}, NOW()
+        )
+    </insert>
+
+    <delete id="deleteDtlByCfgId" parameterType="java.lang.String">
+        DELETE FROM ssm_query_template_cfg_dtl_shadow WHERE cfg_id = #{cfgId}
+    </delete>
+
+</mapper>

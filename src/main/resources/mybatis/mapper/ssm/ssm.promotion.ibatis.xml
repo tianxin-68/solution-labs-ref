@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.promotion">
+
+
+    <select id="queryAll" resultType="com.bi.queryer.ssm.promotion.model.PromotionCfg">
+        SELECT
+            promo_year AS promoYear,
+            promo_name AS promoName,
+            promo_phase AS promoPhase,
+            promo_identifier AS promoIdentifier,
+            promo_name_sort_id AS promoNameSortId,
+            promo_phase_sort_id AS promoPhaseSortId,
+            start_date AS startDate,
+            end_date AS endDate,
+            duration_days AS durationDays
+        FROM
+            ssm_promotion_cfg
+        ORDER BY promo_year,
+                 promo_name_sort_id,
+                 promo_phase_sort_id
+    </select>
+
+    <insert id="batchInsert" parameterType="java.util.HashMap">
+        insert into ssm_promotion_cfg
+        (
+            promo_year,
+            promo_name,
+            promo_phase,
+            promo_identifier,
+            promo_name_sort_id,
+            promo_phase_sort_id,
+            start_date,
+            end_date,
+            duration_days
+        )
+        values
+            <foreach item="item" index="index" collection="list" separator=",">
+                (
+                #{item.promoYear},
+                #{item.promoName},
+                #{item.promoPhase},
+                #{item.promoIdentifier},
+                #{item.promoNameSortId},
+                #{item.promoPhaseSortId},
+                #{item.startDate},
+                #{item.endDate},
+                #{item.durationDays}
+                )
+            </foreach>
+    </insert>
+
+    <delete id="delete">
+        delete from ssm_promotion_cfg
+    </delete>
+
+    <select id="getMgpPromotionConfig" resultType="com.bi.queryer.ssm.promotion.model.PromotionCfg">
+        SELECT
+            t1.activity_year AS promoYear,
+            t2.`activity_name` AS promoName,
+            t1.`activity_stage` AS promoPhase,
+            CONCAT(t1.activity_year,'-',t2.`activity_name`,'-',t1.`activity_stage`) AS promoIdentifier,
+            t1.`start_date` AS startDate ,
+            t1.`end_date` AS endDate,
+            IFNULL(t2.`sort_id`,0) AS promoNameSortId,
+            IFNULL(t1.`sort_id`,0) AS promoPhaseSortId,
+            DATEDIFF(end_date, start_date) + 1 AS durationDays
+        FROM
+            bi_mgp.mgp_entity_biz_calendar t1
+                INNER JOIN bi_mgp.mgp_entity_biz_activity t2
+                           ON t1.`activity_id` = t2.`id`
+        WHERE t1.`is_active` = 1
+          AND t1.`start_date` IS NOT NULL
+          AND t1.`end_date` IS NOT NULL
+    </select>
+</mapper>

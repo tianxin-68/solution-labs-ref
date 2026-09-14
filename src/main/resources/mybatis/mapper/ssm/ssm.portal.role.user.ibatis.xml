@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.portal.role.user">
+
+    <delete id="deleteRoleUserByRoleId" parameterType="String">
+        delete from
+            ssm_portal_role_user
+        where
+            role_id = #{roleId}
+    </delete>
+
+    <insert id="insertRoleUser" parameterType="java.util.ArrayList">
+        insert into ssm_portal_role_user
+        (
+        role_id,
+        user_name,
+        created_by,
+        created_time
+        )
+        values
+        <foreach  collection="list" index="index" item="item" separator="," >
+            (
+            #{item.roleId},
+            #{item.userName},
+            #{item.createdBy},
+            now()
+            )
+        </foreach>
+    </insert>
+
+    <select id="queryRoleUserByRoleId" parameterType="String" resultType="String">
+        select
+            user_name
+        from
+            ssm_portal_role_user
+        where
+            role_id = #{roleId}
+    </select>
+
+    <select id="queryUsersByRoleIds" parameterType="java.util.ArrayList" resultType="String">
+        select distinct user_name
+        from ssm_portal_role_user
+        where role_id in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <!-- 批量查询多个角色的用户列表（含部门信息）。返回 roleId 供 Java 侧映射 authSource。 -->
+    <select id="queryUserListBatch" parameterType="java.util.HashMap"
+            resultType="com.bi.queryer.ssm.portal.auth.vo.rsp.PortalAuthUserItem">
+        select
+            ru.user_name    as userName,
+            hr.dept_name    as deptName,
+            ru.role_id      as roleId,
+            date_format(ru.created_time, '%Y-%m-%d %H:%i:%s') as authStartTime,
+            null            as authEndTime
+        from ssm_portal_role_user ru
+        left join bi_portal.hr_employee hr on hr.user_name = ru.user_name
+        where ru.role_id in
+        <foreach collection="roleIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="keyword != null and keyword != ''">
+            and (ru.user_name like concat('%', #{keyword}, '%')
+              or hr.dept_name  like concat('%', #{keyword}, '%'))
+        </if>
+        <if test="deptId != null and deptId != ''">
+            and concat(hr.dept_id, '/') like concat('%', #{deptId}, '/%')
+        </if>
+    </select>
+</mapper>

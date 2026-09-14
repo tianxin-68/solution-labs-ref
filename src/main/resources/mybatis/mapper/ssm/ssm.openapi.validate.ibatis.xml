@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.openapi.validate">
+
+    <insert id="insertFailLog"
+            parameterType="com.bi.queryer.ssm.api.entity.SsmOpenapiValidateFailLog"
+            useGeneratedKeys="true" keyProperty="pkid">
+        insert into ssm_openapi_validate_fail_log
+            (validate_type, request_value, actual_value, remark, created_by, created_time)
+        values
+            (#{validateType}, #{requestValue}, #{actualValue}, #{remark}, #{createdBy}, now())
+    </insert>
+
+</mapper>

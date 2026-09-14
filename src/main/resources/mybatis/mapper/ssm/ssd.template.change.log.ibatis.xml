@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.template.change.log">
+
+
+    <select id="list" parameterType="String" resultType="com.bi.queryer.ssm.query.template.change.log.model.TemplateChangeLogEntity">
+        SELECT
+            tpl_id AS tplId,
+            change_type AS changeType,
+            change_name AS changeName,
+            change_content as changeContent,
+            DATE_FORMAT(
+                    created_time,
+                    '%Y-%m-%d %H:%i:%s'
+            ) AS createdTime,
+            created_by AS createdBy
+        FROM
+            ssd_query_template_change_log
+        WHERE tpl_id = #{tplId}
+        ORDER BY created_time DESC
+            LIMIT 5
+    </select>
+
+    <select id="getTemplateLastChangeTimeByTplId" parameterType="String" resultType="String">
+        SELECT
+            DATE_FORMAT(
+                    created_time,
+                    '%Y-%m-%d %H:%i:%s'
+            ) AS createdTime
+        FROM
+            ssd_query_template_change_log
+        WHERE tpl_id = #{tplId}
+        ORDER BY created_time DESC
+            LIMIT 1
+    </select>
+
+    <select id="getRecentTemplateLastChangeTime" resultType="com.bi.queryer.ssm.query.template.change.log.model.TemplateChangeLogEntity">
+        SELECT
+            tpl_id as tplId,
+            DATE_FORMAT(
+                    MAX(created_time),
+                    '%Y-%m-%d %H:%i:%s'
+            ) AS createdTime
+        FROM
+            ssd_query_template_change_log
+        WHERE created_time > DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        GROUP BY tpl_id
+    </select>
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.query.template.change.log.model.TemplateChangeLogEntity">
+        insert into ssd_query_template_change_log
+            (
+             tpl_id,
+             change_type,
+             change_name,
+             change_content,
+             created_time,
+             created_by
+            )
+        values
+            (
+             #{tplId},
+             #{changeType},
+             #{changeName},
+             #{changeContent},
+             now(),
+             #{createdBy}
+            )
+    </insert>
+
+</mapper>

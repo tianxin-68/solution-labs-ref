@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.portal.role.auth">
+
+    <select id="queryUserResourceRoleIds" parameterType="java.util.HashMap" resultType="String">
+        SELECT DISTINCT
+          m1.role_id
+        FROM
+          (SELECT
+            role_id
+          FROM
+            `ssm_portal_role_user`
+          WHERE user_name = #{userName}
+          UNION
+          ALL
+          SELECT
+            role_id
+          FROM
+            ssm_portal_role_dept
+          WHERE CONCAT(#{deptId}, '/') LIKE CONCAT('%', dept_id, '/%')) m1
+          INNER JOIN ssm_portal_role_auth m2
+            ON m1.role_id = m2.role_id
+        WHERE m2.res_id = #{resId}
+          AND m2.res_type = #{resType}
+          AND m2.created_time > DATE_ADD(
+            CURDATE(),
+            INTERVAL - 1 * m2.active_duration_days DAY
+          )
+    </select>
+
+    <insert id="batchAdd" parameterType="java.util.ArrayList">
+        insert into ssm_portal_role_auth
+        (
+            role_id,
+            res_id,
+            res_type,
+            active_duration_days,
+            created_time
+        )
+        values
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+            #{item.roleId},
+            #{item.resId},
+            #{item.resType},
+            #{item.activeDurationDays},
+            now()
+            )
+        </foreach>
+
+    </insert>
+
+    <select id="queryUserAllRoleAuth" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.portal.auth.entity.PortalRoleAuth">
+        SELECT DISTINCT
+          m1.role_id as roleId,
+          m2.res_id as resId,
+          m2.res_type as resType
+        FROM
+          (SELECT
+            role_id
+          FROM
+            `ssm_portal_role_user`
+          WHERE user_name = #{userName}
+          UNION
+          ALL
+          SELECT
+            role_id
+          FROM
+            ssm_portal_role_dept
+          WHERE CONCAT(#{deptId}, '/') LIKE CONCAT('%', dept_id, '/%')) m1
+          INNER JOIN ssm_portal_role_auth m2
+            ON m1.role_id = m2.role_id
+    </select>
+
+</mapper>

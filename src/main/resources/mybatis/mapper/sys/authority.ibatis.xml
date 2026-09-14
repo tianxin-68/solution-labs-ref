@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="authority">
+	<!--权限资源管理-->
+
+	<select id="getDataItems" parameterType="java.util.HashMap" resultType="com.bi.queryer.sys.common.KeyValuePair">
+		SELECT
+		    DISTINCT
+			m.item_code as `key`,
+			m.item_value as `value`
+		FROM
+		(
+		    SELECT
+				t.`owner_id` AS userName,
+				t.`module_code`,
+				t.`dim_code`,
+				t.`item_code`,
+				t.`item_value`
+			FROM bi_portal.sys_data_auth t
+			WHERE t.`owner_type` = 'User'
+			  AND t.`module_code` = #{moduleCode}
+			  AND t.owner_id = #{userName}
+			  AND t.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t.active_duration_days DAY)
+			<if test="dimCode != null and '' != dimCode">
+				AND t.`dim_code` = #{dimCode}
+			</if>
+			UNION ALL
+			SELECT
+				sur.USER_NAME AS userName,
+				t1.`module_code`,
+				t1.`dim_code`,
+				t1.`item_code`,
+				t1.`item_value`
+			FROM bi_portal.sys_data_auth t1
+			INNER JOIN bi_portal.sys_user_role sur
+			ON t1.`owner_id` = sur.ROLE_ID
+			WHERE t1.`owner_type` = 'Role'
+			  AND t1.`module_code` = #{moduleCode}
+			  AND sur.USER_NAME = #{userName}
+			<if test="dimCode != null and '' != dimCode">
+				AND t1.`dim_code` = #{dimCode}
+			</if>
+			AND sur.created_time > DATE_ADD(CURDATE(), INTERVAL -1* sur.active_duration_days DAY)
+
+			UNION ALL
+
+			SELECT
+			'${userName}' as userName,
+			t1.`module_code`,
+			t1.`dim_code`,
+			t1.`item_code`,
+			t1.`item_value`
+			FROM
+			bi_portal.sys_data_auth t1
+			WHERE
+			t1.owner_type= 'Dept'
+		    AND t1.`module_code` = #{moduleCode}
+			<if test="dimCode != null and '' != dimCode">
+				AND t1.`dim_code` = #{dimCode}
+			</if>
+			AND CONCAT(#{deptId}, '/') LIKE CONCAT('%', t1.owner_id, '/%')
+			AND t1.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t1.active_duration_days DAY)
+		) m
+		ORDER BY
+			m.item_code
+	</select>
+
+	<select id="getDataItemsWithAuthEndDate" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.mgr.fieldCtg.model.CtgAuthAcl">
+		SELECT
+			m.item_code as ctgId,
+			MAX(m.authEndDate) as authEndDate
+		FROM
+		(
+			SELECT
+				t.`item_code`,
+				DATE_FORMAT(DATE_ADD(t.created_time, INTERVAL t.active_duration_days DAY), '%Y-%m-%d') as authEndDate
+			FROM bi_portal.sys_data_auth t
+			WHERE t.`owner_type` = 'User'
+			  AND t.`module_code` = #{moduleCode}
+			  AND t.owner_id = #{userName}
+			  AND t.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t.active_duration_days DAY)
+			<if test="dimCode != null and '' != dimCode">
+				AND t.`dim_code` = #{dimCode}
+			</if>
+			UNION ALL
+			SELECT
+				t1.`item_code`,
+				DATE_FORMAT(DATE_ADD(t1.created_time, INTERVAL t1.active_duration_days DAY), '%Y-%m-%d') as authEndDate
+			FROM bi_portal.sys_data_auth t1
+			INNER JOIN bi_portal.sys_user_role sur
+			ON t1.`owner_id` = sur.ROLE_ID
+			WHERE t1.`owner_type` = 'Role'
+			  AND t1.`module_code` = #{moduleCode}
+			  AND sur.USER_NAME = #{userName}
+			<if test="dimCode != null and '' != dimCode">
+				AND t1.`dim_code` = #{dimCode}
+			</if>
+			AND sur.created_time > DATE_ADD(CURDATE(), INTERVAL -1* sur.active_duration_days DAY)
+
+			UNION ALL
+
+			SELECT
+				t1.`item_code`,
+				DATE_FORMAT(DATE_ADD(t1.created_time, INTERVAL t1.active_duration_days DAY), '%Y-%m-%d') as authEndDate
+			FROM
+			bi_portal.sys_data_auth t1
+			WHERE
+			t1.owner_type= 'Dept'
+		    AND t1.`module_code` = #{moduleCode}
+			<if test="dimCode != null and '' != dimCode">
+				AND t1.`dim_code` = #{dimCode}
+			</if>
+			AND CONCAT(#{deptId}, '/') LIKE CONCAT('%', t1.owner_id, '/%')
+			AND t1.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t1.active_duration_days DAY)
+		) m
+		GROUP BY m.item_code
+		ORDER BY m.item_code
+	</select>
+	<!--报表-->
+	<!--插入多维目录权限-->
+	<insert id="insertCtgDataAuth" parameterType="java.util.List">
+		insert into bi_portal.sys_data_auth
+			(
+			auth_id,
+			owner_type,
+			owner_id,
+			module_code,
+			module_name,
+			dim_code,
+			dim_name,
+			item_code,
+			item_value,
+			dim_display_name,
+			remark,
+			created_time,
+			created_by
+			)
+		values
+		<foreach collection="list" index="index" item="item" separator=",">
+			(
+			#{item.authId},
+			#{item.ownerType},
+			#{item.ownerId},
+			#{item.moduleCode},
+			#{item.moduleName},
+			#{item.dimCode},
+			#{item.dimName},
+			#{item.itemCode},
+			#{item.itemValue},
+			#{item.dimDisplayName},
+			#{item.remark},
+			now(),
+			#{item.createdBy}
+			)
+		</foreach>
+		ON DUPLICATE KEY UPDATE active_duration_days = active_duration_days
+	</insert>
+
+	<delete id="deleteCtgDataAuth" parameterType="com.bi.queryer.ssm.meta.MetaFieldCategory">
+		delete from
+			bi_portal.sys_data_auth
+		where
+			auth_id like 'ctg_manual_auth_%' and item_code = #{id}
+	</delete>
+
+	<delete id="disableDataAuth" parameterType="java.util.HashMap">
+		update
+			bi_portal.sys_data_auth
+		set
+			active_duration_days = -360,
+			remark = #{remark}
+		where
+			auth_id in
+			(
+			<foreach collection="deleteDataAuthIdList" item="item" separator=",">
+				#{item}
+			</foreach>
+			)
+	</delete>
+
+	<select id="queryDataCtgAuth" parameterType="String" resultType="com.bi.queryer.ssm.api.vo.rsp.DataCtgAuthDetailRsp">
+		select
+			t2.USER_NAME as userName,
+			t2.USER_REALNAME as userRealName,
+			t2.DEPT_NAME as deptName,
+			'用户工单申请' as authSource,
+			'用户工单申请' as authSourceDetail,
+			DATE_FORMAT(t1.created_time, '%Y-%m-%d') as authBeginDate,
+			DATE_FORMAT(
+					DATE_ADD(
+							t1.created_time,
+							INTERVAL t1.active_duration_days DAY
+        ),
+					'%Y-%m-%d'
+			) as authEndDate,
+			1 as isCanDelete,
+			t1.auth_id as authId
+		from
+			bi_portal.sys_data_auth t1
+				inner join bi_portal.hr_employee t2 on t1.owner_id = t2.USER_NAME
+		where
+			module_code = 'ssd_ctg'
+		  and dim_code = 'ssm_ctg'
+		  and item_code = #{ctgId}
+		  and owner_type = 'User'
+		  AND t1.created_time > DATE_ADD(CURDATE(), INTERVAL -1 * t1.active_duration_days DAY)
+		union all
+		select
+			t3.USER_NAME as userName,
+			t3.USER_REALNAME as userRealName,
+			t3.DEPT_NAME as deptName,
+			'主动授权' as authSource,
+			concat('主动授权-数据门户-角色-', t4.ROLE_NAME) as authSourceDetail,
+			DATE_FORMAT(t1.created_time, '%Y-%m-%d') as authBeginDate,
+			DATE_FORMAT(
+					DATE_ADD(
+							t1.created_time,
+							INTERVAL t1.active_duration_days DAY
+        ),
+					'%Y-%m-%d'
+			) as authEndDate,
+			0 as isCanDelete,
+			t1.auth_id as authId
+		from
+			bi_portal.sys_data_auth t1
+				inner join bi_portal.sys_user_role t2 on t1.owner_id = t2.ROLE_ID
+				inner join bi_portal.hr_employee t3 on t2.USER_NAME = t3.USER_NAME
+				inner join bi_portal.sys_role t4 on t1.owner_id = t4.ROLE_ID
+		where
+			module_code = 'ssd_ctg'
+		  and dim_code = 'ssm_ctg'
+		  and item_code = #{ctgId}
+		  and owner_type = 'Role'
+		  AND t1.created_time > DATE_ADD(CURDATE(), INTERVAL -1 * t1.active_duration_days DAY)
+		union all
+		select
+			t2.USER_NAME as userName,
+			t2.USER_REALNAME as userRealName,
+			t2.DEPT_NAME as deptName,
+			'主动授权' as authSource,
+			concat('主动授权-数据门户-部门-', t3.dept_path_name) as authSourceDetail,
+			DATE_FORMAT(t1.created_time, '%Y-%m-%d') as authBeginDate,
+			DATE_FORMAT(
+					DATE_ADD(
+							t1.created_time,
+							INTERVAL t1.active_duration_days DAY
+        ),
+					'%Y-%m-%d'
+			) as authEndDate,
+			0 as isCanDelete,
+			t1.auth_id as authId
+		from
+			bi_portal.sys_data_auth t1
+				inner join bi_portal.hr_employee t2 ON CONCAT(t2.dept_id, '/') LIKE CONCAT('%', t1.owner_id, '/%')
+				inner join bi_portal.sys_dept t3 on t1.owner_id = t3.dept_id
+		where
+			module_code = 'ssd_ctg'
+		  and dim_code = 'ssm_ctg'
+		  and item_code = #{ctgId}
+		  and owner_type = 'Dept'
+		  AND t1.created_time > DATE_ADD(CURDATE(), INTERVAL -1 * t1.active_duration_days DAY)
+	</select>
+
+	<resultMap id="AuthApplyRecordMap" type="com.bi.queryer.sys.user.model.SysAuthApplyRecord">
+		<id column="apply_id" jdbcType="VARCHAR" property="applyId"/>
+		<result column="task_id" jdbcType="VARCHAR" property="taskId"/>
+		<result column="auth_type" jdbcType="VARCHAR" property="authType"/>
+		<result column="auth_info" jdbcType="LONGVARCHAR" property="authInfo"/>
+		<result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+		<result column="created_by" jdbcType="VARCHAR" property="createdBy"/>
+		<result column="approve_finish_time" jdbcType="TIMESTAMP" property="approveFinishTime"/>
+	</resultMap>
+
+	<insert id="batchInsertAuthApplyRecord">
+		insert into bi_portal.sys_auth_apply_record
+		(apply_id, task_id, auth_type, auth_info, create_time, created_by)
+		values
+		<foreach collection="list" item="record" separator=",">
+			(#{record.applyId,jdbcType=VARCHAR},
+			#{record.taskId,jdbcType=VARCHAR},
+			#{record.authType,jdbcType=VARCHAR},
+			#{record.authInfo,jdbcType=LONGVARCHAR},
+			#{record.createTime,jdbcType=TIMESTAMP},
+			#{record.createdBy,jdbcType=VARCHAR})
+		</foreach>
+	</insert>
+
+	<select id="queryApplyRecordByTaskId" resultMap="AuthApplyRecordMap">
+		SELECT apply_id, task_id, auth_type, auth_info, create_time, created_by, approve_finish_time
+		FROM bi_portal.sys_auth_apply_record
+		WHERE task_id = #{taskId}
+	</select>
+
+	<update id="updateApplyFinishTime">
+		UPDATE bi_portal.sys_auth_apply_record
+		SET approve_finish_time = NOW()
+		WHERE apply_id = #{applyId}
+	</update>
+
+	<select id="queryLatestSsmApplyRecordByUser" parameterType="String" resultMap="AuthApplyRecordMap">
+		SELECT apply_id, task_id, auth_type, auth_info, create_time, created_by, approve_finish_time
+		FROM bi_portal.sys_auth_apply_record
+		WHERE created_by = #{userName}
+		  AND auth_type = 'ssm'
+		  AND auth_info IS NOT NULL
+		  AND auth_info != ''
+		ORDER BY create_time DESC
+		LIMIT 1
+	</select>
+
+	<select id="countUserSsmCtgAuth" parameterType="String" resultType="int">
+		SELECT COUNT(1)
+		FROM (
+			SELECT t.item_code
+			FROM bi_portal.sys_data_auth t
+			WHERE t.owner_type = 'User'
+			  AND t.owner_id = #{userName}
+			  AND t.module_code = 'ssd_ctg'
+			  AND t.dim_code = 'ssm_ctg'
+			  AND t.created_time > DATE_ADD(CURDATE(), INTERVAL -1 * t.active_duration_days DAY)
+			UNION
+			SELECT t1.item_code
+			FROM bi_portal.sys_data_auth t1
+			INNER JOIN bi_portal.sys_user_role sur ON t1.owner_id = sur.ROLE_ID
+			WHERE t1.owner_type = 'Role'
+			  AND sur.USER_NAME = #{userName}
+			  AND t1.module_code = 'ssd_ctg'
+			  AND t1.dim_code = 'ssm_ctg'
+			  AND sur.created_time > DATE_ADD(CURDATE(), INTERVAL -1 * sur.active_duration_days DAY)
+			UNION
+			SELECT t1.item_code
+			FROM bi_portal.sys_data_auth t1
+			INNER JOIN bi_portal.hr_employee hr ON CONCAT(hr.dept_id, '/') LIKE CONCAT('%', t1.owner_id, '/%')
+			WHERE t1.owner_type = 'Dept'
+			  AND hr.USER_NAME = #{userName}
+			  AND t1.module_code = 'ssd_ctg'
+			  AND t1.dim_code = 'ssm_ctg'
+			  AND t1.created_time > DATE_ADD(CURDATE(), INTERVAL -1 * t1.active_duration_days DAY)
+		) m
+	</select>
+
+	<select id="queryLatestUserSsmCtgAuth" parameterType="String" resultType="com.bi.queryer.sys.user.vo.SsdDataAuthVo">
+		SELECT
+			m.module_code AS moduleCode,
+			m.module_name AS moduleName,
+			m.dim_code AS dimCode,
+			m.dim_name AS dimName,
+			m.item_code AS itemCode,
+			m.item_value AS itemValue
+		FROM (
+			SELECT
+				t.module_code,
+				t.module_name,
+				t.dim_code,
+				t.dim_name,
+				t.item_code,
+				t.item_value,
+				t.created_time
+			FROM bi_portal.sys_data_auth t
+			WHERE t.owner_type = 'User'
+			  AND t.owner_id = #{userName}
+			  AND t.module_code = 'ssd_ctg'
+			  AND t.dim_code = 'ssm_ctg'
+			  AND t.created_time > DATE_ADD(CURDATE(), INTERVAL -1 * t.active_duration_days DAY)
+			UNION ALL
+			SELECT
+				t1.module_code,
+				t1.module_name,
+				t1.dim_code,
+				t1.dim_name,
+				t1.item_code,
+				t1.item_value,
+				t1.created_time
+			FROM bi_portal.sys_data_auth t1
+			INNER JOIN bi_portal.sys_user_role sur ON t1.owner_id = sur.ROLE_ID
+			WHERE t1.owner_type = 'Role'
+			  AND sur.USER_NAME = #{userName}
+			  AND t1.module_code = 'ssd_ctg'
+			  AND t1.dim_code = 'ssm_ctg'
+			  AND sur.created_time > DATE_ADD(CURDATE(), INTERVAL -1 * sur.active_duration_days DAY)
+			UNION ALL
+			SELECT
+				t1.module_code,
+				t1.module_name,
+				t1.dim_code,
+				t1.dim_name,
+				t1.item_code,
+				t1.item_value,
+				t1.created_time
+			FROM bi_portal.sys_data_auth t1
+			INNER JOIN bi_portal.hr_employee hr ON CONCAT(hr.dept_id, '/') LIKE CONCAT('%', t1.owner_id, '/%')
+			WHERE t1.owner_type = 'Dept'
+			  AND hr.USER_NAME = #{userName}
+			  AND t1.module_code = 'ssd_ctg'
+			  AND t1.dim_code = 'ssm_ctg'
+			  AND t1.created_time > DATE_ADD(CURDATE(), INTERVAL -1 * t1.active_duration_days DAY)
+		) m
+		ORDER BY m.created_time DESC
+		LIMIT 1
+	</select>
+
+</mapper>

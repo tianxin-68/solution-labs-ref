@@ -1,0 +1,14 @@
+/target/
+/logs/
+/.mvn/
+/.idea/
+/.settings/
+.idea
+*.iml
+out
+gen
+.DS_Store
+.cursor/
+.genx/
+.vscode
+.ai-review-report.json

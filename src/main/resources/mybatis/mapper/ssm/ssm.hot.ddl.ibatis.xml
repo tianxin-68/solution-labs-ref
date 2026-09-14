@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.hot.ddl">
+
+    <delete id="delete" parameterType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableDdl" >
+        delete from ssm_hot_table_ddl where hot_table_name = #{hotTableName} and db_engine = #{dbEngine}
+    </delete>
+
+    <insert id="insert" parameterType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableDdl">
+        insert into ssm_hot_table_ddl(
+            hot_table_name,
+            db_engine,
+            source_table_name,
+            field_list,
+            partition_by,
+            ddl_etl_content,
+            ddl_etl_mode,
+            log_content,
+            created_by,
+            created_time
+            )
+        values(
+            #{hotTableName},
+            #{dbEngine},
+            #{sourceTableName},
+            #{fieldList},
+            #{partitionBy},
+            #{ddlEtlContent},
+            #{ddlEtlMode},
+            #{logContent},
+            #{createdBy},
+            now()
+        )
+    </insert>
+
+    <select id="get" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableDdl">
+        select
+            hot_table_name as hotTableName,
+            db_engine as dbEngine,
+            field_list as fieldList,
+            partition_by as partitionBy
+        from ssm_hot_table_ddl
+        where hot_table_name = #{hotTableName} and db_engine = #{dbEngine}
+    </select>
+
+    <select id="getAll" resultType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableDdl">
+        select
+             hot_table_name as hotTableName,
+             db_engine as dbEngine,
+             source_table_name as sourceTableName,
+             partition_by as partitionBy,
+             ddl_etl_mode as ddlEtlMode
+         from
+             ssm_hot_table_ddl
+    </select>
+
+</mapper>

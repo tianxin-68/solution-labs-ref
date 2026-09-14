@@ -1,0 +1,24 @@
+{
+  "setting": {
+      "style" : {
+         "sort" : {
+            "isActive" : 0,
+            "sortBy" : [
+              {"id":"", "code" :  "", "sortType" : "ASC/DESC", "showOrder" : 0}
+            ]
+         },
+        "layout": "",
+        "mergeCell" : ""
+      },
+      "analysis" : {},
+      "autoSearch" : true
+  },
+  "filter": {},
+  "result": [
+    {
+      "id" : "xx",
+      "code" : "xx",
+      "isShow" : 1
+    }
+  ]
+}

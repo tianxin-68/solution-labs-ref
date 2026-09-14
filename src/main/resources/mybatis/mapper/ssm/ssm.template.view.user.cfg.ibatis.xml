@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.template.view.user.cfg">
+
+    <delete id="delete" parameterType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        delete from
+            ssd_query_template_view_user_cfg
+        where
+            tpl_id = #{tplId}
+          and created_by = #{createdBy}
+    </delete>
+
+    <delete id="batchDeleteByTplIdList" parameterType="java.util.ArrayList">
+        delete from
+            ssd_query_template_view_user_cfg
+        where
+            tpl_id in
+            <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </delete>
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        insert into
+            ssd_query_template_view_user_cfg(
+                tpl_id,
+                view_id,
+                created_by,
+                is_default,
+                created_time
+            )
+        values(
+            #{tplId},
+            #{viewId},
+            #{createdBy},
+            #{isDefault},
+            now()
+        )
+    </insert>
+
+    <insert id="batchAdd" parameterType="java.util.HashMap">
+        insert into
+                ssd_query_template_view_user_cfg(
+                tpl_id,
+                view_id,
+                created_by,
+                is_default,
+                created_time
+            )
+        values
+            <foreach item="item" index="index" collection="defaultTemplateViewList" separator=",">
+                (
+                    #{item.tplId},
+                    #{item.viewId},
+                    #{item.createdBy},
+                    #{item.isDefault},
+                    now()
+                )
+            </foreach>
+    </insert>
+
+    <select id="queryUserDefaultView" parameterType="java.util.HashMap" resultType="String">
+        select
+            view_id
+        from
+            ssd_query_template_view_user_cfg
+        where
+            tpl_id = #{tplId}
+          and created_by = #{userName}
+          and is_default = 1
+        limit 1
+    </select>
+
+    <update id="updateDefaultViewId" parameterType="java.util.HashMap">
+        update
+            ssd_query_template_view_user_cfg
+        set
+            view_id = #{defaultViewId}
+        where
+            tpl_id = #{tplId}
+          and view_id = #{oldDefaultViewId}
+          and is_default = 1
+    </update>
+
+    <select id="queryUserDefaultViewByTplIdList" parameterType="java.util.HashMap" resultType="String">
+        select
+            view_id
+        from
+            ssd_query_template_view_user_cfg
+        where
+            tpl_id in
+                <foreach item="item" index="index" collection="tplIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+          and created_by = #{userName}
+          and is_default = 1
+    </select>
+
+
+</mapper>

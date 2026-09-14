@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap
+PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="base">
+	<typeAlias alias="UpperCaseMap" type="com.bi.queryer.util.UpperCaseMap" />
+	
+	<select id="queryMapListBySQL" resultClass="UpperCaseMap" parameterClass="java.lang.String" remapResults="true">
+	<![CDATA[
+		$sql$
+	]]>
+	</select>
+	
+	<select id="queryObjectListBySQL" resultClass="java.lang.Object" parameterClass="java.lang.String" remapResults="true">
+	<![CDATA[
+		$sql$
+	]]>
+	</select>
+	
+	<select id="queryObjectBySQL" resultClass="java.lang.Object" parameterClass="java.lang.String" remapResults="true">
+	<![CDATA[
+		$sql$
+	]]>
+	</select>
+	<select id="queryMapBySQL" resultClass="UpperCaseMap" parameterClass="java.lang.String" remapResults="true">
+	<![CDATA[
+		$sql$
+	]]>
+	</select>
+
+	<!-- 查询列表数据行数的语句 -->
+	<select id="queryCountBySQL" parameterClass="java.lang.String" resultClass="java.lang.Integer" >
+		select  count(1) f_count from (
+		<![CDATA[
+		$sql$
+		]]>
+		)
+	</select>
+
+
+
+	<!-- 执行数据操作的语句 -->
+	<update id="executeSql" parameterClass="java.lang.String">
+	<![CDATA[
+		$sql$
+	]]>
+	</update>
+</sqlMap>	

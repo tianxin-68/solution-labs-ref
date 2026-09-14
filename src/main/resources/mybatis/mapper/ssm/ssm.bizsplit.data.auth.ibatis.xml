@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  业务线拆分权限初始化 MyBatis 映射。
+  对应服务：BizSplitDataAuthInitService
+  目标表：bi_portal.sys_data_auth
+-->
+<mapper namespace="ssm.bizsplit.data.auth">
+
+    <!--
+      查询业务线行级权限维度配置。
+      固定 module_code=ssm_row、dim_code=ssm_dim_bizline，用于 insert 时的 module_name、dim_name。
+    -->
+    <select id="queryRowBizlineDimConfig" resultType="com.bi.queryer.util.UpperCaseMap">
+        SELECT
+            cfg.module_code AS moduleCode,
+            cfg.module_name AS moduleName,
+            cfg.dim_code AS dimCode,
+            cfg.dim_name AS dimName
+        FROM
+            bi_portal.sys_data_auth_cfg cfg
+        WHERE
+            cfg.module_code = 'ssm_row'
+            AND cfg.dim_code = 'ssm_dim_bizline'
+            AND cfg.is_active = 1
+        LIMIT 1
+    </select>
+
+    <!--
+      批量查询多个组织路径下的在职员工（一次 SQL）。
+      DEPT_ID 路径包含匹配：CONCAT(DEPT_ID, '/') LIKE CONCAT('%', deptId, '/%')
+    -->
+    <select id="listActiveEmployeesByDeptIds" parameterType="java.util.List"
+            resultType="com.bi.queryer.sys.user.model.HrEmployee">
+        SELECT
+            t.USER_NAME AS userName,
+            t.DEPT_ID AS deptId
+        FROM
+            bi_portal.hr_employee t
+        WHERE
+            t.IS_ACTIVE = 1
+            AND (
+            <foreach item="deptId" collection="list" separator=" OR ">
+                CONCAT(t.DEPT_ID, '/') LIKE CONCAT('%', #{deptId}, '/%')
+            </foreach>
+            )
+    </select>
+
+    <!--
+      查询全部已有 User 级业务线行级权限，并关联在职员工部门（INNER JOIN，仅保留有 HR 记录的用户）。
+      一次查询同时产出用户已有业务线与 DEPT_ID，供权限初始化加载上下文。
+    -->
+    <select id="listUserRowBizlineAuthWithDept"
+            resultType="com.bi.queryer.ssm.migrate.bizsplit.model.BizSplitUserRowBizlineAuthSnapshot">
+        SELECT
+            t.owner_id AS userName,
+            e.DEPT_ID AS deptId,
+            t.item_value AS itemValue
+        FROM
+            bi_portal.sys_data_auth t
+        INNER JOIN bi_portal.hr_employee e
+            ON e.USER_NAME = t.owner_id
+            AND e.IS_ACTIVE = 1
+        WHERE
+            t.owner_type = 'User'
+            AND t.module_code = 'ssm_row'
+            AND t.dim_code = 'ssm_dim_bizline'
+            AND t.created_time > DATE_ADD(CURDATE(), INTERVAL -1 * t.active_duration_days DAY)
+    </select>
+
+    <!--
+      批量 REPLACE INTO User 级业务线行级权限。
+      唯一键冲突时覆盖原记录，避免循环内逐条校验是否存在。
+    -->
+    <insert id="replaceUserRowBizlineAuth" parameterType="java.util.List">
+        REPLACE INTO bi_portal.sys_data_auth
+        (
+            auth_id, owner_type, owner_id, module_code, module_name, dim_code, dim_name,
+            item_code, item_value, dim_display_name, remark, created_time, created_by, active_duration_days
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+                #{item.authId}, #{item.ownerType}, #{item.ownerId}, #{item.moduleCode}, #{item.moduleName},
+                #{item.dimCode}, #{item.dimName}, #{item.itemCode}, #{item.itemValue}, #{item.dimDisplayName},
+                #{item.remark}, NOW(), #{item.createdBy}, #{item.activeDurationDays}
+            )
+        </foreach>
+    </insert>
+
+    <!--
+      查询多维目录权限维度配置。
+      module_code=ssd_ctg、dim_code=ssm_ctg。
+    -->
+    <select id="queryCtgDimConfig" resultType="com.bi.queryer.util.UpperCaseMap">
+        SELECT
+            cfg.module_code AS moduleCode,
+            cfg.module_name AS moduleName,
+            cfg.dim_code AS dimCode,
+            cfg.dim_name AS dimName
+        FROM
+            bi_portal.sys_data_auth_cfg cfg
+        WHERE
+            cfg.module_code = 'ssd_ctg'
+            AND cfg.dim_code = 'ssm_ctg'
+            AND cfg.is_active = 1
+        LIMIT 1
+    </select>
+
+    <!--
+      查询 Portal 侧旧目录 User 级权限（有效期内）。
+    -->
+    <select id="listPortalUserCtgAuthByOldCtgId" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.migrate.bizsplit.model.BizSplitCtgAuthSnapshot">
+        SELECT
+            t.owner_id AS ownerId,
+            t.owner_type AS ownerType,
+            t.item_value AS itemName,
+            t.created_by AS createdBy,
+            t.active_duration_days AS activeDurationDays,
+            'portal' AS source
+        FROM
+            bi_portal.sys_data_auth t
+        WHERE
+            t.owner_type = 'User'
+            AND t.module_code = 'ssd_ctg'
+            AND t.dim_code = 'ssm_ctg'
+            AND t.item_code = #{oldCtgId}
+            AND t.created_time > DATE_ADD(CURDATE(), INTERVAL -1 * t.active_duration_days DAY)
+    </select>
+
+    <!--
+      查询数据集侧旧目录权限。
+    -->
+    <select id="listDatasetCtgAuthByOldItemValue" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.migrate.bizsplit.model.BizSplitCtgAuthSnapshot">
+        SELECT
+            t.owner_id AS ownerId,
+            t.owner_type AS ownerType,
+            t.item_type AS itemType,
+            t.item_value AS itemValue,
+            t.created_by AS createdBy,
+            'dataset' AS source
+        FROM
+            ssm_data_auth_dataset_ctg t
+        WHERE
+            t.item_value = #{oldCtgId}
+    </select>
+
+    <!--
+      按 old_ctg_id 批量查询目录拆分映射（bi_mgp.mgp_ctg_biz_line_split_mapping）。
+    -->
+    <select id="listCtgSplitMappingByOldCtgIds" parameterType="java.util.List"
+            resultType="com.bi.queryer.ssm.migrate.bizsplit.model.BizSplitCtgSplitMapping">
+        SELECT
+            old_ctg_id AS oldCtgId,
+            old_ctg_name AS oldCtgName,
+            new_ctg_id AS newCtgId,
+            new_ctg_name AS newCtgName
+        FROM
+            bi_mgp.mgp_ctg_biz_line_split_mapping
+        WHERE
+            old_ctg_id IN
+            <foreach collection="list" item="oldCtgId" open="(" separator="," close=")">
+                #{oldCtgId}
+            </foreach>
+    </select>
+
+    <!--
+      按新目录 id 删除本工具写入的 Portal 多维目录权限（remark=bizsplit_init:ctg）。
+    -->
+    <delete id="deletePortalCtgAuthByNewCtgIds" parameterType="java.util.HashMap">
+        DELETE FROM bi_portal.sys_data_auth
+        WHERE module_code = #{moduleCode}
+          AND dim_code = #{dimCode}
+          AND remark = #{remark}
+          AND item_code IN
+          <foreach collection="newCtgIds" item="newCtgId" open="(" separator="," close=")">
+              #{newCtgId}
+          </foreach>
+    </delete>
+
+    <!--
+      按新目录 id 删除数据集侧多维目录权限。
+    -->
+    <delete id="deleteDatasetCtgAuthByNewCtgIds" parameterType="java.util.HashMap">
+        DELETE FROM ssm_data_auth_dataset_ctg
+        WHERE item_type = #{itemType}
+          AND item_value IN
+          <foreach collection="newCtgIds" item="newCtgId" open="(" separator="," close=")">
+              #{newCtgId}
+          </foreach>
+    </delete>
+
+    <!--
+      按新目录 id 删除 MGP 应用模块目录权限。
+    -->
+    <delete id="deleteMgpAppModuleCtgAuthByNewCtgIds" parameterType="java.util.HashMap">
+        DELETE FROM mgp_app_module_ctg_auth
+        WHERE item_type = #{itemType}
+          AND item_value IN
+          <foreach collection="newCtgIds" item="newCtgId" open="(" separator="," close=")">
+              #{newCtgId}
+          </foreach>
+    </delete>
+
+    <!--
+      批量 REPLACE INTO Portal 多维目录权限。
+    -->
+    <insert id="replacePortalCtgAuth" parameterType="java.util.List">
+        REPLACE INTO bi_portal.sys_data_auth
+        (
+            auth_id, owner_type, owner_id, module_code, module_name, dim_code, dim_name,
+            item_code, item_value, dim_display_name, remark, created_time, created_by, active_duration_days
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+                #{item.authId}, #{item.ownerType}, #{item.ownerId}, #{item.moduleCode}, #{item.moduleName},
+                #{item.dimCode}, #{item.dimName}, #{item.itemCode}, #{item.itemValue}, #{item.dimDisplayName},
+                #{item.remark}, NOW(), #{item.createdBy}, #{item.activeDurationDays}
+            )
+        </foreach>
+    </insert>
+
+    <!--
+      批量 REPLACE INTO 数据集侧多维目录权限。
+    -->
+    <insert id="replaceDatasetCtgAuth" parameterType="java.util.List">
+        REPLACE INTO ssm_data_auth_dataset_ctg
+        (
+            owner_id, owner_type, item_type, item_value, created_time, created_by
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+                #{item.ownerId}, #{item.ownerType}, #{item.itemType}, #{item.itemValue}, NOW(), #{item.createdBy}
+            )
+        </foreach>
+    </insert>
+
+    <!--
+      批量 REPLACE INTO MGP 应用模块目录权限表。
+    -->
+    <insert id="replaceMgpAppModuleCtgAuth" parameterType="java.util.List">
+        REPLACE INTO mgp_app_module_ctg_auth
+        (
+            owner_id, owner_type, item_type, item_value, created_time, created_by
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+                #{item.ownerId}, #{item.ownerType}, #{item.itemType}, #{item.itemValue}, NOW(), #{item.createdBy}
+            )
+        </foreach>
+    </insert>
+
+    <!--
+      查询旧角色下的用户授权（ssm_portal_role_user）。
+    -->
+    <select id="listPortalRoleUserByOldRoleId" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.portal.auth.entity.PortalRoleUser">
+        SELECT
+            t.role_id AS roleId,
+            t.user_name AS userName,
+            t.created_by AS createdBy
+        FROM
+            ssm_portal_role_user t
+        WHERE
+            t.role_id = #{oldRoleId}
+    </select>
+
+    <!--
+      查询旧角色下的组织授权（ssm_portal_role_dept）。
+    -->
+    <select id="listPortalRoleDeptByOldRoleId" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.portal.auth.entity.PortalRoleDept">
+        SELECT
+            t.role_id AS roleId,
+            t.dept_id AS deptId,
+            t.created_by AS createdBy
+        FROM
+            ssm_portal_role_dept t
+        WHERE
+            t.role_id = #{oldRoleId}
+    </select>
+
+    <!--
+      批量 REPLACE INTO 门户角色用户授权。
+    -->
+    <insert id="replacePortalRoleUser" parameterType="java.util.List">
+        REPLACE INTO ssm_portal_role_user
+        (
+            role_id, user_name, created_by, created_time
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+                #{item.roleId}, #{item.userName}, #{item.createdBy}, NOW()
+            )
+        </foreach>
+    </insert>
+
+    <!--
+      批量 REPLACE INTO 门户角色组织授权。
+    -->
+    <insert id="replacePortalRoleDept" parameterType="java.util.List">
+        REPLACE INTO ssm_portal_role_dept
+        (
+            role_id, dept_id, created_by, created_time
+        )
+        VALUES
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+                #{item.roleId}, #{item.deptId}, #{item.createdBy}, NOW()
+            )
+        </foreach>
+    </insert>
+
+</mapper>

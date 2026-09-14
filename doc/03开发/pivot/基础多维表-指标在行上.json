@@ -1,0 +1,80 @@
+{
+  "data": {
+    "rows": [
+      {
+        "dt": "2024-05-13",
+        "dim_analysis_business": "洗美",
+        "all_measure": "pay_gmv",
+        "_cur": "2,230,261.81"
+      },
+      {
+        "dt": "2024-05-13",
+        "dim_analysis_business": "洗美",
+        "all_measure": "pay_orderid",
+        "_cur": "68,359"
+      },
+      {
+        "dt": "2024-05-13",
+        "dim_analysis_business": "保养",
+        "all_measure": "pay_gmv",
+        "_cur": "25,126,676.93"
+      },
+      {
+        "dt": "2024-05-13",
+        "dim_analysis_business": "保养",
+        "all_measure": "pay_orderid",
+        "_cur": "64,247"
+      },
+      {
+        "dt": "2024-05-14",
+        "dim_analysis_business": "保养",
+        "all_measure": "pay_gmv",
+        "_cur": "24,828,219.51"
+      },
+      {
+        "dt": "2024-05-14",
+        "dim_analysis_business": "保养",
+        "all_measure": "pay_orderid",
+        "_cur": "62,397"
+      },
+      {
+        "dt": "2024-05-14",
+        "dim_analysis_business": "洗美",
+        "all_measure": "pay_gmv",
+        "_cur": "2,178,092.67"
+      },
+      {
+        "dt": "2024-05-14",
+        "dim_analysis_business": "洗美",
+        "all_measure": "pay_orderid",
+        "_cur": "64,570"
+      }
+    ],
+    "columns": [
+      {
+        "code": "dt",
+        "title": "日期",
+        "parentCode": "",
+        "children": []
+      },
+      {
+        "code": "dim_analysis_business",
+        "title": "分析业务线",
+        "parentCode": "",
+        "children": []
+      },
+      {
+        "code": "all_measure",
+        "title": "全部指标",
+        "parentCode": "",
+        "children": []
+      },
+      {
+        "code": "当期值",
+        "title": "_cur",
+        "parentCode": "",
+        "children": []
+      }
+    ]
+  }
+}

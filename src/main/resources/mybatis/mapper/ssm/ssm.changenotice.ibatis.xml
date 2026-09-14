@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 变更通知匹配相关 SQL：候选通知、对象明细、筛选配置 -->
+<mapper namespace="ssm.changenotice">
+
+    <!--
+      查询当前生效中的变更通知：
+      status=ACTIVE、is_active=1，且未过期（expire_time 必有值）
+    -->
+    <select id="listActiveNotice" resultType="com.bi.queryer.ssm.changenotice.entity.ChangeNotice">
+        SELECT
+            id                              AS id,
+            title                           AS title,
+            owners                          AS owners,
+            change_type                     AS changeType,
+            description                     AS description,
+            new_obj_description             AS newObjDescription,
+            trigger_scope                   AS triggerScope,
+            local_route_table_names         AS localRouteTableNames,
+            remind_targets                  AS remindTargets,
+            replace_task_id                 AS replaceTaskId,
+            DATE_FORMAT(start_time, '%Y-%m-%d') AS startTime,
+            DATE_FORMAT(expire_time, '%Y-%m-%d') AS expireTime,
+            status                          AS status,
+            DATE_FORMAT(publish_time, '%Y-%m-%d %H:%i:%s') AS publishTime,
+            is_active                       AS isActive,
+            created_by                      AS createdBy,
+            updated_by                      AS updatedBy
+        FROM bi_mgp.mgp_change_notice
+        WHERE status = 'ACTIVE'
+          AND is_active = 1
+          AND expire_time >= CURDATE()
+        ORDER BY id DESC
+    </select>
+
+    <!-- 按通知ID批量查询对象明细 -->
+    <select id="listNoticeObject" parameterType="java.util.List"
+            resultType="com.bi.queryer.ssm.changenotice.entity.ChangeNoticeObject">
+        SELECT
+            id              AS id,
+            notice_id       AS noticeId,
+            object_ctg      AS objectCtg,
+            object_id       AS objectId,
+            object_name     AS objectName,
+            object_type     AS objectType,
+            rel_object_id   AS relObjectId,
+            rel_object_name AS relObjectName,
+            rel_object_type AS relObjectType,
+            sort_id         AS sortId
+        FROM bi_mgp.mgp_change_notice_object
+        WHERE notice_id IN
+        <foreach collection="list" item="noticeId" open="(" separator="," close=")">
+            #{noticeId}
+        </foreach>
+        ORDER BY notice_id ASC, sort_id ASC, id ASC
+    </select>
+
+    <!-- 按通知ID批量查询筛选条件 -->
+    <select id="listNoticeObjectFilter" parameterType="java.util.List"
+            resultType="com.bi.queryer.ssm.changenotice.entity.ChangeNoticeObjectFilter">
+        SELECT
+            id                  AS id,
+            notice_id           AS noticeId,
+            object_ctg          AS objectCtg,
+            object_id           AS objectId,
+            object_name         AS objectName,
+            object_type         AS objectType,
+            filter_values       AS filterValues,
+            filter_type         AS filterType,
+            filter_value_mode   AS filterValueMode
+        FROM bi_mgp.mgp_change_notice_object_filter
+        WHERE notice_id IN
+        <foreach collection="list" item="noticeId" open="(" separator="," close=")">
+            #{noticeId}
+        </foreach>
+        ORDER BY notice_id ASC, id ASC
+    </select>
+
+    <!-- 按替换任务ID批量加载模板字段替换日志（新对象提醒场景） -->
+    <select id="listReplaceLogByTaskIds" parameterType="java.util.HashMap"
+            resultType="com.bi.queryer.ssm.changenotice.entity.TemplateFieldReplaceLog">
+        SELECT
+            view_id           AS viewId,
+            replace_task_id   AS replaceTaskId
+        FROM template_field_replace_log
+        WHERE replace_task_id IN
+        <foreach collection="replaceTaskIds" item="taskId" open="(" separator="," close=")">
+            #{taskId}
+        </foreach>
+        <if test="viewId != null and viewId != ''">
+            AND view_id = #{viewId}
+        </if>
+    </select>
+
+    <!--
+      查询当前用户在指定视图下已通知过的 notice_id。
+      用于 match 时剔除「通知过的规则，不再通知」。
+    -->
+    <select id="listNotifiedNoticeIds" parameterType="java.util.HashMap"
+            resultType="java.lang.Long">
+        SELECT DISTINCT notice_id
+        FROM ssm_change_notice_log
+        WHERE created_by = #{createdBy}
+          AND view_id = #{viewId}
+          AND notice_id IN
+        <foreach collection="noticeIds" item="noticeId" open="(" separator="," close=")">
+            #{noticeId}
+        </foreach>
+    </select>
+
+    <!--
+      按用户查询各通知累计通知次数（读 ssm_change_notice_user_stat）。
+      用于控制「一个通知对一个用户最多通知 N 次」。
+    -->
+    <select id="listNotifyCountByUser" parameterType="java.util.HashMap"
+            resultType="com.bi.queryer.ssm.changenotice.entity.ChangeNoticeNotifyCount">
+        SELECT
+            notice_id    AS noticeId,
+            notify_count AS notifyCount
+        FROM ssm_change_notice_user_stat
+        WHERE created_by = #{createdBy}
+          AND notice_id IN
+        <foreach collection="noticeIds" item="noticeId" open="(" separator="," close=")">
+            #{noticeId}
+        </foreach>
+    </select>
+
+    <!-- 批量写入已读日志 -->
+    <insert id="batchInsertNoticeLog" parameterType="java.util.List">
+        INSERT INTO ssm_change_notice_log
+        (
+            view_id,
+            notice_id,
+            created_by,
+            created_time
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.viewId},
+                #{item.noticeId},
+                #{item.createdBy},
+                NOW()
+            )
+        </foreach>
+    </insert>
+
+    <!--
+      批量累加用户通知次数：无则插入 count=1，有则 notify_count+1。
+      依赖 uk_user_notice (created_by, notice_id)。
+    -->
+    <insert id="batchUpsertUserStat" parameterType="java.util.List">
+        INSERT INTO ssm_change_notice_user_stat
+        (
+            notice_id,
+            notify_count,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.noticeId},
+                1,
+                #{item.createdBy},
+                NOW(),
+                #{item.updatedBy},
+                NOW()
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            notify_count = notify_count + 1,
+            updated_by = VALUES(updated_by),
+            updated_time = NOW()
+    </insert>
+
+</mapper>

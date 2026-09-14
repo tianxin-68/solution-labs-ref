@@ -1,0 +1,59 @@
+{
+  "filter": [{}],
+  "result": {
+    "rowDimensions": [{}],
+    "colDimensions": [],
+    "measures": [
+      {
+        "id": "aabfcdaebc3a4b8586484ee8fa65bf90",
+        "code": "",
+        "name": "",
+        "title": "c1",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "dataType": "cpt",
+        "customFieldConfigure": {
+          "type" : "common/lod",
+          "lodConfig" : {
+             "dateGranularity" : "auto/d/w/m/y",
+             "dimensionList": [
+               {"id":"dimId1", "code" :  "", "title" : "xx"}
+             ],
+             "measureId": "xxx",
+            "aggExpressionType" : "avg/max/min/sum"
+          },
+          "enable": 1,
+          "isMeasure": 1,
+          "expression": "[5ea9fd6cb9ba44c481599684ed1bc26d]/[6f24873d97db44848e842e460b70cd2d]",
+          "expressionIdMapping": [
+            {
+              "id": "5ea9fd6cb9ba44c481599684ed1bc26d",
+              "code": "order_gmv",
+              "title": "成单GMV"
+            },
+            {
+              "id": "6f24873d97db44848e842e460b70cd2d",
+              "code": "order_user",
+              "title": "成单用户数"
+            }
+          ],
+          "isRatio": false,
+          "decimal": 2
+        },
+        "path": [],
+        "isKpi": false,
+        "isPlaceholder": false,
+        "showOrder": 3
+      }
+    ]
+  },
+  "lodMeasures" : [
+    {
+
+    }
+  ],
+  "setting": {},
+  "sessionId": "",
+  "analysis": {},
+  "meso": []
+}

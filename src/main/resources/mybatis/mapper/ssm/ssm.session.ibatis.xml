@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.session">
+    <insert id="add" parameterType="com.bi.queryer.ssm.engine.session.QuerySession">
+		    INSERT INTO ssm_query_session(
+		                session_id ,
+		                query_id ,
+                        ds_key,
+                        server_ip,
+                        created_time,
+                        created_by,
+		                template_id,
+                        view_id,
+                        olap_api_key
+					)
+					VALUES(
+					    #{sessionId},
+                        #{queryId},
+                        #{dsKey},
+                        #{serverIp},
+                        now(),
+                        #{createdBy},
+					    #{templateId},
+                        #{viewId},
+					    #{olapApiKey}
+					)
+                on duplicate key update
+                    query_id = #{queryId},
+                    ds_key = #{dsKey},
+                    server_ip = #{serverIp},
+                    created_time = now(),
+                    created_by = #{createdBy},
+                    template_id = #{templateId},
+                    view_id = #{viewId},
+                    olap_api_key = #{olapApiKey}
+
+	</insert>
+    <update id="update" parameterType="com.bi.queryer.ssm.engine.session.QuerySession">
+        update ssm_query_session
+        set query_id = #{queryId}
+        where session_id = #{sessionId}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete" parameterType="java.lang.String">
+        delete from ssm_query_session where session_id = #{sessionId}
+    </delete>
+
+    <!-- 查询 -->
+    <select id="get" parameterType="java.lang.String" resultType="com.bi.queryer.ssm.engine.session.QuerySession">
+        SELECT
+            session_id as sessonId,
+            query_id as queryId,
+            ds_key as dsKey,
+            server_ip as serverIp,
+            created_time as createdTime,
+            created_by as createdBy,
+            template_id as templateId,
+            view_id as viewId,
+            DATE_FORMAT(created_time,'%Y-%m-%d %H:%i:%s') as createdTime,
+            olap_api_key as olapApiKey
+        FROM ssm_query_session t
+        WHERE t.session_id = #{sessionId}
+    </select>
+
+    <!-- 查询所有session(近10分钟) -->
+    <select id="getAll" resultType="com.bi.queryer.ssm.engine.session.QuerySession">
+        SELECT
+            session_id as sessionId,
+            query_id as queryId,
+            ds_key as dsKey,
+            server_ip as serverIp,
+            created_time as createdTime,
+            created_by as createdBy,
+            template_id as templateId,
+            view_id as viewId,
+            DATE_FORMAT(created_time,'%Y-%m-%d %H:%i:%s') as createdTime,
+            olap_api_key as olapApiKey
+        FROM ssm_query_session t
+        where t.created_time >= date_sub(now(), interval 10 minute)
+    </select>
+
+    <!-- 查询session设置参数 -->
+    <select id="getAllSettings" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.engine.session.QuerySessionSetting">
+        select
+            t.scope,
+            t.user_name as userName,
+            t.template_id as templateId,
+            t.option_code as optionCode,
+            t.option_value as optionValue,
+            t.option_desc as optionDesc,
+            t.support_query_engines as supportQueryEngines
+        from ssm_query_settings t
+        where 1=1
+          and t.is_active = 1
+    </select>
+
+    <!-- 限流的所有查询模板视图 -->
+    <select id="getAllRateLimitQueryTemplateView" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.engine.interceptor.rateLimit.RateLimitQueryTemplateView">
+        select
+            t1.template_id as templateId,
+            t1.view_id as viewId ,
+            t1.max_session as maxSession,
+            t1.start_time as startTime,
+            t1.end_time as endTime
+        from bi_ssm.ssm_rate_limit_template_view t1
+        where 1=1
+          and t1.is_active = 1
+    </select>
+
+    <!-- 分区数限制表 -->
+    <select id="getAllPartitionLimitTable" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.engine.interceptor.partition.PartitionLimitTable">
+        select
+            t1.table_name as tableName,
+            t1.max_partition_count as maxPartitionCount
+        from bi_ssm.ssm_partition_limit_table t1
+        where t1.is_active = 1
+    </select>
+
+    <!-- 查询集群资源 -->
+    <select id="getClusterResource" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.engine.accelerate.route.balance.TrinoClusterResource">
+        /*ssm-system.probe*/
+        select
+            coalesce(sum(t1.splits), 0)  as splitCount,
+            coalesce(count(distinct t1.query_id), 0) as queryCount
+        from system.runtime.tasks t1
+                 inner join system.runtime.queries t2
+                            on t1.query_id = t2.query_id
+        where t1.state  = 'RUNNING'
+          and t2.state  = 'RUNNING'
+          and t2.query not like '/*ssm-system.probe*/%'
+    </select>
+
+</mapper>

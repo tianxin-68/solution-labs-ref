@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.analysis.template.visit.log">
+
+    <insert id="addVisitLog" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTemplateVisitLogEntity">
+        insert into ssm_analysis_tpl_visit_log
+        (
+            analysis_tpl_id,
+            portal_id,
+            visit_type,
+            resource_version,
+            user_name,
+            visit_begin_time,
+            visit_end_time
+        )
+        values
+        (
+            #{analysisTplId},
+            #{portalId},
+            #{visitType},
+            #{resourceVersion},
+            #{userName},
+            #{visitBeginTime},
+            #{visitEndTime}
+        )
+    </insert>
+
+    <select id="getRecentVisitAnalysisTplIds" parameterType="java.util.HashMap" resultType="String">
+        SELECT
+          tmp.analysis_tpl_id
+        FROM
+          (SELECT
+            t1.analysis_tpl_id,
+            MAX(`visit_begin_time`) AS visit_begin_time
+          FROM
+            ssm_analysis_tpl_visit_log t1
+            INNER JOIN ssm_analysis_tpl_base t2
+              ON t1.analysis_tpl_id = t2.analysis_tpl_id
+          WHERE t1.visit_begin_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            AND t1.user_name = #{userName}
+            AND (t1.visit_type IS NULL OR t1.visit_type = 'analysis_template')
+            AND t2.is_active = 1
+            <if test="analysisTplType != null and analysisTplType != ''">
+                AND t2.analysis_tpl_type = #{analysisTplType}
+            </if>
+          GROUP BY analysis_tpl_id) tmp
+        ORDER BY tmp.visit_begin_time DESC
+    </select>
+
+    <!-- genAI_feature/v3.15.0_start -->
+    <select id="getRecentVisitAnalysisList" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.portal.ai.vo.AiRecentAnalysisVisitVO">
+        select
+            t.analysis_tpl_id as analysisTplId,
+            t.portal_id as portalId,
+            date_format(max(t.visit_begin_time), '%Y-%m-%d %H:%i:%s') as lastVisitTime,
+            b.analysis_tpl_name as analysisTplName,
+            b.analysis_tpl_type as analysisTplType
+        from ssm_analysis_tpl_visit_log t
+        inner join ssm_analysis_tpl_base b on t.analysis_tpl_id = b.analysis_tpl_id
+        where t.user_name = #{userName}
+          and (t.visit_type is null or t.visit_type = 'analysis_template')
+          and b.is_active = 1
+        group by t.analysis_tpl_id, t.portal_id, b.analysis_tpl_name, b.analysis_tpl_type
+        order by lastVisitTime desc
+        limit #{limit}
+    </select>
+    <!-- genAI_feature/v3.15.0_end -->
+
+</mapper>

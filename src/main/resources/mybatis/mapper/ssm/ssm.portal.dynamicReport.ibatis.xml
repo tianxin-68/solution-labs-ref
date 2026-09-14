@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.portal.dynamicReport">
+
+    <sql id="reportColumns">
+        report_id AS reportId,
+        version AS version,
+        menu_id AS menuId,
+        portal_id AS portalId,
+        parent_menu_id AS parentMenuId,
+        report_name AS reportName,
+        oss_url AS ossUrl,
+        resource_url AS resourceUrl,
+        file_ext AS fileExt,
+        report_type AS reportType,
+        index_path AS indexPath,
+        published_by AS publishedBy,
+        published_time AS publishedTime,
+        is_active AS isActive,
+        created_by AS createdBy,
+        created_time AS createdTime,
+        updated_by AS updatedBy,
+        updated_time AS updatedTime
+    </sql>
+
+    <insert id="insert" parameterType="com.bi.queryer.ssm.portal.upload.entity.PortalDynamicReportEntity">
+        INSERT INTO ssm_portal_dynamic_report (
+            report_id, version, menu_id, portal_id, parent_menu_id, report_name,
+            oss_url, resource_url, file_ext, report_type, index_path, published_by, published_time,
+            is_active, created_by, created_time
+        ) VALUES (
+            #{reportId}, #{version}, #{menuId}, #{portalId}, #{parentMenuId}, #{reportName},
+            #{ossUrl}, #{resourceUrl}, #{fileExt}, #{reportType}, #{indexPath}, #{publishedBy}, #{publishedTime},
+            1, #{createdBy}, NOW()
+        )
+    </insert>
+
+    <!-- 取指定报告当前有效最新版本 -->
+    <select id="getLatestByReportId" parameterType="string" resultType="com.bi.queryer.ssm.portal.upload.entity.PortalDynamicReportEntity">
+        SELECT <include refid="reportColumns"/>
+        FROM ssm_portal_dynamic_report
+        WHERE report_id = #{reportId}
+          AND is_active = 1
+        ORDER BY version DESC
+        LIMIT 1
+    </select>
+
+    <!-- 兼容旧 id：等同 getLatestByReportId -->
+    <select id="getByReportId" parameterType="string" resultType="com.bi.queryer.ssm.portal.upload.entity.PortalDynamicReportEntity">
+        SELECT <include refid="reportColumns"/>
+        FROM ssm_portal_dynamic_report
+        WHERE report_id = #{reportId}
+          AND is_active = 1
+        ORDER BY version DESC
+        LIMIT 1
+    </select>
+
+    <select id="getByReportIdAndVersion" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.portal.upload.entity.PortalDynamicReportEntity">
+        SELECT <include refid="reportColumns"/>
+        FROM ssm_portal_dynamic_report
+        WHERE report_id = #{reportId}
+          AND version = #{version}
+          AND is_active = 1
+        LIMIT 1
+    </select>
+
+    <select id="getNextVersion" parameterType="string" resultType="int">
+        SELECT COALESCE(MAX(version), 0) + 1
+        FROM ssm_portal_dynamic_report
+        WHERE report_id = #{reportId}
+    </select>
+
+    <!-- 门户列表：每个 report_id 仅返回最新有效版本 -->
+    <select id="listLatestByPortalId" parameterType="string" resultType="com.bi.queryer.ssm.portal.upload.entity.PortalDynamicReportEntity">
+        SELECT t.report_id AS reportId,
+               t.version AS version,
+               t.menu_id AS menuId,
+               t.portal_id AS portalId,
+               t.parent_menu_id AS parentMenuId,
+               t.report_name AS reportName,
+               t.oss_url AS ossUrl,
+               t.resource_url AS resourceUrl,
+               t.file_ext AS fileExt,
+               t.report_type AS reportType,
+               t.index_path AS indexPath,
+               t.published_by AS publishedBy,
+               t.published_time AS publishedTime,
+               t.is_active AS isActive,
+               t.created_by AS createdBy,
+               t.created_time AS createdTime,
+               t.updated_by AS updatedBy,
+               t.updated_time AS updatedTime
+        FROM ssm_portal_dynamic_report t
+        INNER JOIN (
+            SELECT report_id, MAX(version) AS max_version
+            FROM ssm_portal_dynamic_report
+            WHERE portal_id = #{portalId}
+              AND is_active = 1
+            GROUP BY report_id
+        ) lv ON t.report_id = lv.report_id AND t.version = lv.max_version
+        WHERE t.portal_id = #{portalId}
+          AND t.is_active = 1
+        ORDER BY t.published_time DESC
+    </select>
+
+    <!-- 兼容旧 id -->
+    <select id="listByPortalId" parameterType="string" resultType="com.bi.queryer.ssm.portal.upload.entity.PortalDynamicReportEntity">
+        SELECT t.report_id AS reportId,
+               t.version AS version,
+               t.menu_id AS menuId,
+               t.portal_id AS portalId,
+               t.parent_menu_id AS parentMenuId,
+               t.report_name AS reportName,
+               t.oss_url AS ossUrl,
+               t.resource_url AS resourceUrl,
+               t.file_ext AS fileExt,
+               t.report_type AS reportType,
+               t.index_path AS indexPath,
+               t.published_by AS publishedBy,
+               t.published_time AS publishedTime,
+               t.is_active AS isActive,
+               t.created_by AS createdBy,
+               t.created_time AS createdTime,
+               t.updated_by AS updatedBy,
+               t.updated_time AS updatedTime
+        FROM ssm_portal_dynamic_report t
+        INNER JOIN (
+            SELECT report_id, MAX(version) AS max_version
+            FROM ssm_portal_dynamic_report
+            WHERE portal_id = #{portalId}
+              AND is_active = 1
+            GROUP BY report_id
+        ) lv ON t.report_id = lv.report_id AND t.version = lv.max_version
+        WHERE t.portal_id = #{portalId}
+          AND t.is_active = 1
+        ORDER BY t.published_time DESC
+    </select>
+
+    <select id="listVersionsByReportId" parameterType="string" resultType="com.bi.queryer.ssm.portal.upload.entity.PortalDynamicReportEntity">
+        SELECT <include refid="reportColumns"/>
+        FROM ssm_portal_dynamic_report
+        WHERE report_id = #{reportId}
+          AND is_active = 1
+        ORDER BY version DESC
+    </select>
+
+    <update id="updateReportName" parameterType="java.util.Map">
+        UPDATE ssm_portal_dynamic_report
+        SET report_name = #{reportName},
+            updated_by = #{updatedBy},
+            updated_time = NOW()
+        WHERE report_id = #{reportId}
+          AND is_active = 1
+    </update>
+
+    <update id="softDeleteByReportId" parameterType="java.util.Map">
+        UPDATE ssm_portal_dynamic_report
+        SET is_active = 0,
+            updated_by = #{updatedBy},
+            updated_time = NOW()
+        WHERE report_id = #{reportId}
+          AND is_active = 1
+    </update>
+
+</mapper>

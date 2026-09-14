@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.user.ctg.auth.dtl">
+
+    <delete id="delete" >
+        TRUNCATE TABLE ssm_user_ctg_auth_dtl
+    </delete>
+
+    <!-- 按用户名列表删除目录权限明细 -->
+    <delete id="deleteByUserNames" parameterType="java.util.List">
+        DELETE FROM ssm_user_ctg_auth_dtl WHERE user_name IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <insert id="batchAdd" parameterType="java.util.HashMap">
+
+    insert into ssm_user_ctg_auth_dtl
+    (
+        ctg_id,
+        ctg_name,
+        is_module,
+        user_name,
+        user_realname,
+        dept_name,
+        auth_source,
+        auth_source_detail,
+        auth_start_date,
+        auth_end_date,
+        created_time
+    )
+    values
+    <foreach collection="authList" item="item" separator=",">
+        (
+         #{item.ctgId},
+         #{item.ctgName},
+         #{item.isModule},
+         #{item.userName},
+         #{item.userRealName},
+         #{item.deptName},
+         #{item.authSource},
+         #{item.authSourceDetail},
+         #{item.authStartDate},
+         #{item.authEndDate},
+         now()
+        )
+    </foreach>
+
+    </insert>
+
+    <!-- 查询临期（7/3/1天）目录权限清单；目录全路径由 Java 层通过 SSDMetaCacheManager 解析（兼容老多维与 OLAP） -->
+    <select id="queryExpiringAuth" resultType="com.bi.queryer.ssm.api.vo.rsp.UserCtgAuthExpiringRsp">
+        SELECT
+            d.user_name AS userName,
+            d.user_realname AS userRealName,
+            d.ctg_id AS ctgId,
+            DATE_FORMAT(d.auth_end_date, '%Y-%m-%d') AS authEndDate,
+            DATEDIFF(d.auth_end_date, CURDATE()) AS expireDay
+        FROM ssm_user_ctg_auth_dtl d
+        WHERE DATEDIFF(d.auth_end_date, CURDATE()) IN (7, 3, 1)
+          AND d.auth_source != '权限继承'
+        ORDER BY d.user_name, d.ctg_id
+    </select>
+
+    <!-- 按ctgId+用户名列表，查每个用户对该目录的授权明细（同一人同一ctgId可能有多条不同auth_source的记录，含权限继承；
+         不在SQL里GROUP BY+MAX聚合，是因为authSource/authStartDate要跟"最晚authEndDate"那一行保持对应，
+         取最晚一条的逻辑放在Java里按每个user_name比较auth_end_date来做 -->
+    <select id="queryAuthDetailByCtgIdAndUserNames" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.api.ticket.UserDeptCtgAuthDetail">
+        SELECT
+            user_name AS userName,
+            DATE_FORMAT(auth_start_date, '%Y-%m-%d') AS authStartDate,
+            DATE_FORMAT(auth_end_date, '%Y-%m-%d') AS authEndDate,
+            auth_source AS authSource
+        FROM ssm_user_ctg_auth_dtl
+        WHERE ctg_id = #{ctgId}
+          AND user_name IN
+          <foreach item="item" collection="userNames" open="(" separator="," close=")">
+              #{item}
+          </foreach>
+    </select>
+
+</mapper>

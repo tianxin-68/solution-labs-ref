@@ -1,0 +1,700 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.template.view">
+
+    <select id="getPublicViewByTplId" parameterType="String" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+            view_id AS viewId,
+            view_name AS viewName,
+            view_type as viewType,
+            view_status as viewStatus,
+            tpl_id AS tplId,
+            cfg_id AS cfgId,
+            sort_id AS sortId,
+            dataset_id AS datasetId,
+            is_active AS isActive,
+            last_asset_change_apply_id as lastAssetChangeApplyId,
+            DATEDIFF(NOW(),asset_expires_time) AS expirationDays,
+            DATE_FORMAT(
+                    asset_expires_time,
+                    '%Y-%m-%d %H:%i:%s'
+            ) as assetExpiresTime
+        FROM
+            ssd_query_template_view
+        WHERE tpl_id = #{tplId}
+        and view_type = 'public'
+        ORDER BY
+            sort_id
+    </select>
+
+    <select id="getPersonalViewByTplId" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+            view_id AS viewId,
+            view_name AS viewName,
+            view_type as viewType,
+            view_status as viewStatus,
+            tpl_id AS tplId,
+            cfg_id AS cfgId,
+            sort_id AS sortId,
+            dataset_id AS datasetId,
+            is_active AS isActive,
+            last_asset_change_apply_id as lastAssetChangeApplyId,
+            DATEDIFF(NOW(),asset_expires_time) AS expirationDays,
+            DATE_FORMAT(
+                    asset_expires_time,
+                    '%Y-%m-%d %H:%i:%s'
+            ) as assetExpiresTime
+        FROM
+            ssd_query_template_view
+        WHERE tpl_id = #{tplId}
+          and view_type = 'personal'
+          and created_by = #{userName}
+        ORDER BY
+            sort_id
+    </select>
+
+    <select id="getAllPersonalViewByTplId" parameterType="String" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+            view_id AS viewId,
+            view_name AS viewName,
+            view_type as viewType,
+            view_status as viewStatus,
+            tpl_id AS tplId,
+            cfg_id AS cfgId,
+            sort_id AS sortId,
+            dataset_id AS datasetId,
+            is_active AS isActive,
+            created_by AS createdBy,
+            last_asset_change_apply_id as lastAssetChangeApplyId,
+            DATEDIFF(NOW(),asset_expires_time) AS expirationDays,
+            DATE_FORMAT(
+                    asset_expires_time,
+                    '%Y-%m-%d %H:%i:%s'
+            ) as assetExpiresTime
+        FROM
+            ssd_query_template_view
+        WHERE tpl_id = #{tplId}
+          and view_type = 'personal'
+        ORDER BY
+            sort_id
+    </select>
+
+    <select id="getByTplIdList" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+            view_id AS viewId,
+            view_name AS viewName,
+            view_type as viewType,
+            view_status as viewStatus,
+            tpl_id AS tplId,
+            cfg_id AS cfgId,
+            sort_id AS sortId,
+            dataset_id AS datasetId,
+            is_active AS isActive
+        FROM
+            ssd_query_template_view
+        WHERE
+            tpl_id IN
+            <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+
+    <select id="getPublicViewByTplIdList" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+            view_id AS viewId,
+            view_name AS viewName,
+            view_type as viewType,
+            view_status as viewStatus,
+            tpl_id AS tplId,
+            cfg_id AS cfgId,
+            sort_id AS sortId,
+            dataset_id AS datasetId,
+            is_active AS isActive
+        FROM
+            ssd_query_template_view
+        WHERE
+            tpl_id IN
+            <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+             and view_type = 'public'
+    </select>
+
+    <select id="getPersonalViewByTplIdList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+            view_id AS viewId,
+            view_name AS viewName,
+            view_type as viewType,
+            view_status as viewStatus,
+            tpl_id AS tplId,
+            cfg_id AS cfgId,
+            sort_id AS sortId,
+            dataset_id AS datasetId,
+            is_active AS isActive
+        FROM
+            ssd_query_template_view
+        WHERE
+            tpl_id IN
+            <foreach item="item" index="index" collection="tplIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            and view_type = 'personal'
+    </select>
+
+    <select id="getPersonalViewByTplIdListAndUserNameList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+        view_id AS viewId,
+        view_name AS viewName,
+        view_type as viewType,
+        view_status as viewStatus,
+        tpl_id AS tplId,
+        cfg_id AS cfgId,
+        sort_id AS sortId,
+        dataset_id AS datasetId,
+        is_active AS isActive
+        FROM
+        ssd_query_template_view
+        WHERE
+        tpl_id IN
+        <foreach item="item" index="index" collection="tplIdList" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        and view_type = 'personal'
+        and created_by in
+            <foreach item="item" index="index" collection="userNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+
+    <select id="getValidViewIdByTplIdList" parameterType="java.util.ArrayList" resultType="String">
+        SELECT
+            max(view_id) AS viewId
+        FROM
+            ssd_query_template_view
+        WHERE
+            tpl_id IN
+        <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        and is_active = 1
+        and view_type = 'public'
+        group by tpl_id
+    </select>
+
+    <select id="getByViewId" parameterType="String" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+            view_id AS viewId,
+            view_name AS viewName,
+            view_type as viewType,
+            view_status as viewStatus,
+            tpl_id AS tplId,
+            cfg_id AS cfgId,
+            sort_id AS sortId,
+            is_active AS isActive,
+            created_by as createdBy,
+            last_asset_change_apply_id as lastAssetChangeApplyId,
+            dataset_id AS datasetId,
+            DATE_FORMAT(
+                    asset_expires_time,
+                    '%Y-%m-%d %H:%i:%s'
+            ) as assetExpiresTime
+        FROM
+            ssd_query_template_view
+        WHERE
+            view_id = #{viewId}
+    </select>
+
+    <select id="getTplByViewId" parameterType="String" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+            v.view_id AS viewId,
+            v.view_name AS viewName,
+            v.view_type as viewType,
+            v.view_status as viewStatus,
+            v.tpl_id AS tplId,
+            t.tpl_name AS tplName,
+            v.cfg_id AS cfgId,
+            t.ctg_id AS ctgId,
+            v.sort_id AS sortId,
+            COALESCE(v.dataset_id, t.dataset_id) AS datasetId,
+            v.is_active AS isActive
+        FROM ssd_query_template_view v
+        LEFT JOIN ssd_query_template t ON v.tpl_id = t.tpl_id
+        WHERE view_id = #{viewId}
+    </select>
+
+
+    <select id="getFirstValidViewIdByTplId" parameterType="String" resultType="String">
+        SELECT
+            view_id AS viewId
+        FROM
+            ssd_query_template_view
+        WHERE
+            tpl_id = #{tplId}
+            and is_active = 1
+            and view_type = 'public'
+        order by
+            sort_id
+        limit 1
+    </select>
+    
+    <select id="batchGetByViewId" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+            v.view_id AS viewId,
+            v.view_name AS viewName,
+            v.view_type as viewType,
+            v.view_status as viewStatus,
+            v.tpl_id AS tplId,
+            t.tpl_name AS tplName,
+            v.cfg_id AS cfgId,
+            t.ctg_id AS ctgId,
+            v.sort_id AS sortId,
+            COALESCE(v.dataset_id, t.dataset_id) AS datasetId,
+            v.is_active AS isActive
+        FROM
+            ssd_query_template_view v
+            LEFT JOIN ssd_query_template t ON v.tpl_id = t.tpl_id
+        WHERE
+            v.view_id IN
+            <foreach item="item" index="index" collection="viewIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+
+    <!-- 按 viewId 批量查视图基础信息（不含 tplConfig 大字段；promote/rollback 使用） -->
+    <select id="queryViewByIds" parameterType="java.util.ArrayList"
+            resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+            view_id AS viewId,
+            tpl_id AS tplId,
+            cfg_id AS cfgId
+        FROM
+            ssd_query_template_view
+        WHERE
+            view_id IN
+            <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+
+    <!--
+      按 viewId 批量查视图及其 tplConfig。
+      含 createdBy：指标膨胀个人视图以创建人为 owner 做组织过滤。
+    -->
+    <select id="queryViewWithCfgByIds" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+            t1.view_id AS viewId,
+            t1.view_name AS viewName,
+            t1.view_type as viewType,
+            t1.view_status as viewStatus,
+            t1.tpl_id AS tplId,
+            t1.cfg_id AS cfgId,
+            t1.sort_id AS sortId,
+            t1.is_active AS isActive,
+            t1.created_by AS createdBy,
+            t2.tpl_config as tplConfig,
+            t1.dataset_id as datasetId
+        FROM
+            ssd_query_template_view t1
+            inner join ssd_query_template_cfg t2 on t1.cfg_id = t2.cfg_id
+        WHERE
+            t1.view_id IN
+            <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+
+    <select id="queryViewWithCfgByTplIds" parameterType="java.util.List" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        SELECT
+            t1.view_id AS viewId,
+            t1.view_name AS viewName,
+            t1.view_type AS viewType,
+            t1.view_status AS viewStatus,
+            t1.tpl_id AS tplId,
+            t1.cfg_id AS cfgId,
+            t1.sort_id AS sortId,
+            t1.is_active AS isActive,
+            t2.tpl_config AS tplConfig,
+            t1.dataset_id as datasetId,
+            DATE_FORMAT(
+                t1.asset_expires_time,
+                '%Y-%m-%d %H:%i:%s'
+            ) as assetExpiresTime
+        FROM
+            ssd_query_template_view t1
+            INNER JOIN ssd_query_template_cfg t2 ON t1.cfg_id = t2.cfg_id
+        WHERE
+            t1.tpl_id in
+        <foreach item="item" collection="list" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="queryCfgByTplIds" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        select
+            t1.tpl_id AS tplId,
+            t2.tpl_config as tplConfig
+        from
+            ssd_query_template_view t1
+            inner join ssd_query_template_cfg t2 on t1.cfg_id = t2.cfg_id
+        where
+            t1.tpl_id IN
+            <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+           and t1.is_active = 1
+    </select>
+
+    <select id="batchGetByTplId" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        select
+            view_id AS viewId,
+            view_name AS viewName,
+            view_status as viewStatus,
+            tpl_id AS tplId,
+            cfg_id AS cfgId,
+            sort_id AS sortId,
+            dataset_id AS datasetId,
+            is_active AS isActive,
+            DATE_FORMAT(
+            asset_expires_time,
+            '%Y-%m-%d %H:%i:%s'
+            ) as assetExpiresTime
+        FROM
+            ssd_query_template_view
+        WHERE
+            tpl_id in
+            <foreach item="item" index="index" collection="tplIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        order by
+            sort_id
+    </select>
+
+    <update id="rename" parameterType="java.util.HashMap">
+        UPDATE
+            ssd_query_template_view
+        SET
+            view_name = #{viewName}
+        WHERE
+            view_id = #{viewId}
+    </update>
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        INSERT INTO
+            ssd_query_template_view(
+                view_id,
+                view_name,
+                view_type,
+                view_status,
+                asset_expires_time,
+                tpl_id,
+                cfg_id,
+                sort_id,
+                dataset_id,
+                is_active,
+                created_by,
+                created_time
+            )
+        VALUES
+            (
+                #{viewId},
+                #{viewName},
+                #{viewType},
+                #{viewStatus},
+                #{assetExpiresTime},
+                #{tplId},
+                #{cfgId},
+                #{sortId},
+                #{datasetId},
+                #{isActive},
+                #{createdBy},
+                now()
+            )
+    </insert>
+
+    <update id="update" parameterType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        update
+            ssd_query_template_view
+        set
+            view_name = #{viewName},
+            view_type = #{viewType},
+            view_status = #{viewStatus},
+            is_active = #{isActive},
+            asset_expires_time = #{assetExpiresTime},
+            dataset_id = #{datasetId},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        WHERE
+            view_id = #{viewId}
+    </update>
+
+    <!-- 指标膨胀上线：切换视图关联的正式 cfg_id（不更新 updated_by / updated_time） -->
+    <update id="updateViewCfgId" parameterType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        UPDATE
+            ssd_query_template_view
+        SET
+            cfg_id = #{cfgId}
+        WHERE
+            view_id = #{viewId}
+    </update>
+
+    <insert id="bacthAdd" parameterType="java.util.HashMap">
+        INSERT INTO
+            ssd_query_template_view(
+                view_id,
+                view_name,
+                view_type,
+                view_status,
+                tpl_id,
+                cfg_id,
+                sort_id,
+                dataset_id,
+                asset_expires_time,
+                is_active,
+                created_by,
+                created_time
+            )
+        VALUES
+            <foreach item="item" index="index" collection="viewList" separator=",">
+                (
+                    #{item.viewId},
+                    #{item.viewName},
+                    #{item.viewType},
+                    #{item.viewStatus},
+                    #{item.tplId},
+                    #{item.cfgId},
+                    #{item.sortId},
+                    #{item.datasetId},
+                    #{item.assetExpiresTime},
+                    #{item.isActive},
+                    #{item.createdBy},
+                    now()
+                )
+            </foreach>
+    </insert>
+
+    <select id="getMaxSortId" parameterType="String" resultType="Double">
+        SELECT
+            IFNULL(MAX(sort_id), 0) AS maxSortId
+        FROM
+            ssd_query_template_view
+        WHERE
+            tpl_id = #{tplId}
+    </select>
+
+    <select id="queryMaxSortIdByTplIdAndViewType" parameterType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity" resultType="Double">
+        SELECT
+            IFNULL(MAX(sort_id), 0) AS maxSortId
+        FROM
+            ssd_query_template_view
+        WHERE
+            tpl_id = #{tplId}
+            and view_type = #{viewType}
+    </select>
+    
+    <select id="batchDisabled" parameterType="java.util.HashMap">
+        UPDATE
+            ssd_query_template_view
+        SET
+            is_active = 0,
+            view_status = 'temp',
+            asset_expires_time = now(),
+            updated_time = now(),
+            updated_by = #{userName}
+        WHERE
+            view_id IN
+            <foreach item="item" index="index" collection="viewIds" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            and view_status = 'active'
+    </select>
+
+    <select id="batchEnabled" parameterType="java.util.HashMap">
+        UPDATE
+             ssd_query_template_view
+        SET
+            is_active = 1,
+            view_status = 'active',
+            asset_expires_time = null,
+            updated_time = now(),
+            updated_by = #{userName}
+        WHERE
+            view_id IN
+            <foreach item="item" index="index" collection="viewIds" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+             and view_status = 'temp'
+    </select>
+
+    <update id="updateViewActive" parameterType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        UPDATE
+            ssd_query_template_view
+        SET
+            is_active = #{isActive},
+            updated_time = now(),
+            updated_by = #{updatedBy}
+        where
+            view_id = #{viewId}
+    </update>
+
+    <update id="updateViewSortId" parameterType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        update
+            ssd_query_template_view
+        set
+            sort_id = #{sortId},
+            updated_time = now(),
+            updated_by = #{updatedBy}
+        where
+            view_id = #{viewId}
+    </update>
+
+    <update id="updateViewType" parameterType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        update
+            ssd_query_template_view
+        set
+            view_type = #{viewType},
+            updated_time = now(),
+            updated_by = #{updatedBy}
+        where
+            view_id = #{viewId}
+    </update>
+
+    <update id="incrementViewSortId" parameterType="java.util.HashMap">
+        update
+            ssd_query_template_view
+        set
+            sort_id = sort_id + 1,
+            updated_time = now(),
+            updated_by = #{userName}
+        where
+            tpl_id = #{tplId}
+        <choose>
+            <when test="'after'.toString() == dragType">
+                and sort_id > #{sortId}
+            </when>
+            <otherwise>
+                and sort_id >= #{sortId}
+            </otherwise>
+        </choose>
+
+    </update>
+    
+    <!-- 统计模板下视图总数（治理物理删除后判断是否需要连带删除模板） -->
+    <select id="countByTplId" parameterType="String" resultType="Integer">
+        SELECT COUNT(1) FROM ssd_query_template_view WHERE tpl_id = #{tplId}
+    </select>
+
+    <delete id="delete" parameterType="String">
+         delete
+         from
+             ssd_query_template_view
+         where
+             view_id = #{viewId}
+    </delete>
+
+    <delete id="batchDeleteByTplIdList" parameterType="java.util.ArrayList">
+        delete from
+             ssd_query_template_view
+         where
+             tpl_id in
+             <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                 #{item}
+             </foreach>
+    </delete>
+
+    <delete id="deleteEtlJobByViewId" parameterType="String">
+        delete from ssd_query_template_view_etl_job where view_id = #{viewId}
+    </delete>
+
+    <!-- 批量删除（saveEtlJob 使用，避免在循环中逐条删除） -->
+    <delete id="batchDeleteEtlJobByViewIds" parameterType="java.util.List">
+        DELETE FROM ssd_query_template_view_etl_job
+        WHERE view_id IN
+        <foreach item="item" collection="list" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <insert id="batchInsertEtlJob" parameterType="java.util.HashMap">
+        insert into ssd_query_template_view_etl_job
+        (
+        tpl_id,
+        view_id,
+        etl_job,
+        created_time,
+        created_by
+        )
+        values
+        <foreach item="item" index="index" collection="etlJobList" separator=",">
+            (
+             #{tplId},
+             #{viewId},
+             #{item},
+             now(),
+             #{userName}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 跨多视图批量插入，每行携带各自的 tplId/viewId（saveEtlJob 使用） -->
+    <insert id="batchInsertEtlJobList" parameterType="java.util.List">
+        INSERT INTO ssd_query_template_view_etl_job (tpl_id, view_id, etl_job, created_time, created_by)
+        VALUES
+        <foreach item="row" collection="list" separator=",">
+            (#{row.tplId}, #{row.viewId}, #{row.etlJob}, now(), #{row.userName})
+        </foreach>
+    </insert>
+
+    <select id="getEtlJobByViewId" parameterType="String" resultType="String">
+        select
+            etl_job
+        from
+            ssd_query_template_view_etl_job
+        where
+             view_id in
+            <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+
+    <update id="updateLastAssetChangeApplyId" parameterType="java.util.HashMap">
+        update
+             ssd_query_template_view
+        set
+            last_asset_change_apply_id = #{applyId},
+            updated_time = now(),
+            updated_by = #{updatedBy}
+        where
+            view_id = #{viewId}
+    </update>
+
+    <!-- genAI_feature/v3.15.0_start -->
+    <select id="listByViewIds" parameterType="map"
+            resultType="com.bi.queryer.ssm.query.template.view.model.TemplateViewEntity">
+        select
+            v.view_id as viewId,
+            v.view_name as viewName,
+            t.tpl_id as tplId,
+            t.tpl_name as tplName,
+            t.ctg_id as ctgId
+        from ssd_query_template_view v
+        left join ssd_query_template t on v.tpl_id = t.tpl_id
+        where v.view_id in
+        <foreach collection="viewIds" item="vid" open="(" separator="," close=")">
+            #{vid}
+        </foreach>
+        union all
+        select
+            null as viewId,
+            null as viewName,
+            t.tpl_id as tplId,
+            t.tpl_name as tplName,
+            t.ctg_id as ctgId
+        from ssd_query_template t
+        where t.tpl_id in
+        <foreach collection="queryTplIds" item="tid" open="(" separator="," close=")">
+            #{tid}
+        </foreach>
+    </select>
+    <!-- genAI_feature/v3.15.0_end -->
+
+</mapper>

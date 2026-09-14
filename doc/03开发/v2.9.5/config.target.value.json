@@ -1,0 +1,40 @@
+{
+  "filter": [
+
+  ],
+  "result": {
+
+  },
+  "setting": {
+
+  },
+  "sessionId": "",
+  "analysis": {
+    "thb": {
+
+    },
+    "zb": {
+      "items": [],
+      "isActive": 1
+    },
+    "total": {
+
+    },
+    "setting": {
+
+    },
+    "compare": {
+
+    },
+    "targetValue":{
+      "isActive": 1,
+      "items":[
+        {
+          "measureId": "xx",
+          "dateGranularityList": ["d","w","m","q","y"]
+        }
+      ]
+    }
+  },
+  "meso": []
+}

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- genAI_feature/v3.15.0_start -->
+<mapper namespace="ssd.tmpAnalysisTplCtgRel">
+
+    <insert id="insert" parameterType="com.bi.queryer.ssm.portal.template.entity.TmpAnalysisTplCtgRelEntity"
+            useGeneratedKeys="true" keyProperty="relId">
+        insert into ssd_tmp_analysis_tpl_ctg_rel
+        (ctg_id, analysis_tpl_id, created_time, updated_time, created_by, updated_by)
+        values
+        (#{ctgId}, #{analysisTplId}, now(), now(), #{createdBy}, #{updatedBy})
+    </insert>
+
+    <delete id="deleteByAnalysisTplId" parameterType="java.lang.String">
+        delete from ssd_tmp_analysis_tpl_ctg_rel
+        where analysis_tpl_id = #{analysisTplId}
+    </delete>
+
+    <select id="listCtgRelByAnalysisTplIds" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.portal.template.entity.TmpAnalysisTplCtgRelEntity">
+        select analysis_tpl_id as analysisTplId, ctg_id as ctgId
+        from ssd_tmp_analysis_tpl_ctg_rel
+        where analysis_tpl_id in
+        <foreach collection="analysisTplIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <!-- 当前用户在某批目录下挂载的临时看板（目录 id 与关系表、base 表关联） -->
+    <select id="listMountedTmpAnalysisByUserAndCtgIds" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.portal.template.entity.TmpAnalysisTplCtgRelEntity">
+        select
+            r.ctg_id as ctgId,
+            r.analysis_tpl_id as analysisTplId,
+            b.analysis_tpl_name as analysisTplName,
+            b.analysis_tpl_owner as analysisTplOwner,
+            b.analysis_tpl_desc as analysisTplDesc,
+            b.created_by as createdBy,
+            b.updated_by as updatedBy,
+            b.has_ai_summary as hasAiSummary,
+            date_format(b.created_time, '%Y-%m-%d %H:%i:%s') as createdTime,
+            date_format(b.updated_time, '%Y-%m-%d %H:%i:%s') as updatedTime
+        from ssd_tmp_analysis_tpl_ctg_rel r
+        inner join ssm_analysis_tpl_base b on r.analysis_tpl_id = b.analysis_tpl_id
+        where b.is_active = 1
+          and b.analysis_tpl_owner = #{userName}
+          and r.created_by = #{userName}
+          and r.ctg_id in
+        <foreach collection="ctgIds" item="cid" open="(" separator="," close=")">
+            #{cid}
+        </foreach>
+    </select>
+
+    <update id="updateTmpTplCtg" parameterType="java.util.Map">
+        update ssd_tmp_analysis_tpl_ctg_rel set ctg_id = #{ctgId}
+        where analysis_tpl_id in
+        <foreach collection="tplIdList" item="cid" open="(" separator="," close=")">
+            #{cid}
+        </foreach>
+    </update>
+
+</mapper>
+<!-- genAI_feature/v3.15.0_end -->

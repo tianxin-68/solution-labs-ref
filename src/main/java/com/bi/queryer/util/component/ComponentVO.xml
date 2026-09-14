@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<models>
+  <!-- 通用添加组件实体类信息 -->
+  
+  
+  <table id="DataGrid" class="com.bi.queryer.util.component.datagrid.xml.DataGridXmlVO" tablespace="" table="PTL_BP_datagrid_info">
+      <td name="metaInfo" column="meta_info" type="String" showable="true" editable="true">
+       <column editor="textarea" colName="元数据"/>
+      </td>
+      <include relate="Component" relateBase="true"/>
+  </table>
+  <table id="InputContainer" class="com.bi.queryer.util.component.input.xml.InputContainerXmlVO" tablespace="" table="PTL_BP_inputcontainer_info">
+      <include relate="Component" relateBase="true"/>
+  </table>
+  <table id="Portal" class="com.bi.queryer.util.rpt.designer.model.PortalXmlVO" tablespace="" table="PTL_BP_PORTAL_INFO">
+      <td name="metaInfo" column="meta_info" type="String" showable="true" editable="true">
+       		<column editor="textarea" colName="元数据信息"/>
+      </td>
+      <include relate="Component" relateBase="true"/>
+  </table>
+  <table id="Chart" class="com.bi.queryer.util.component.chart.xml.ChartXmlVO" tablespace="" table="PTL_BP_chart_info">
+      <td name="chType" column="ch_type" type="String" showable="true" editable="true">
+       <column editor="combobox" colName="图表类型" format="chtype" required="true"  onlyAdd="true"/>
+      </td>
+      <include relate="Component" relateBase="true"/>
+  </table>
+  <table id="KPINavGrid" class="com.bi.queryer.util.component.board.xml.KPINavGridXmlVO" tablespace="" table="PTL_BP_KPINav_info">
+      <td name="metaInfo" column="meta_info" type="String" showable="true" editable="true">
+       <column editor="textarea" colName="元数据信息"/>
+      </td>
+      <include relate="Component" relateBase="true"/>
+  </table>
+  <table id="KPIFitGrid" class="com.bi.queryer.util.component.board.xml.KPIFitGridXmlVO" tablespace="" table="PTL_BP_KPIFit_info">
+      <td name="metaInfo" column="meta_info" type="String" showable="true" editable="true">
+       <column editor="textarea" colName="元数据信息"/>
+      </td>
+      <include relate="Component" relateBase="true"/>
+  </table>
+  
+  <!-- 页面输入框格式化的内容 -->
+  <formatters>
+     <formatter id="yn">
+        <format value="true" text="是"/>
+        <format value="false" text="否" color="red"/>
+     </formatter>
+     <formatter id="yn2">
+        <format value="1" text="是"/>
+        <format value="0" text="否" color="red"/>
+     </formatter>
+     <formatter id="datasource">
+        <format value="xmlDataSetProvider" text="xml数据源"/>
+     </formatter>    
+     <formatter id="datatype">
+        <format value="String" text="字符串型"/>
+        <format value="Double" text="小数型"/>
+        <format value="Integer" text="整数型"/>
+     </formatter>  
+     <formatter id="align">
+        <format value="center" text="居中"/>
+        <format value="left" text="居左"/>
+        <format value="right" text="居右"/>
+     </formatter>  
+     <formatter id="drillmode">
+        <format value="SingleColumn" text="单列钻取"/>
+ <!--     <format value="SingleRow" text="单行钻取"/>  -->   
+        <format value="RedirectSelf" text="跳转-当前页面替换"/>
+        <format value="RedirectBlank" text="跳转-弹出页面替换"/>
+     </formatter> 
+     <formatter id="sorttype">
+        <format value="asc" text="升序"/>
+        <format value="dsc" text="降序"/>
+     </formatter>  
+     <formatter id="defaultcolwidth">
+        <format value="-1" text="默认自适应"/>
+     </formatter>  
+     <formatter id="defaultwidth">
+        <format value="0" text="默认宽度"/>
+     </formatter> 
+     <formatter id="defaultheight">
+        <format value="0" text="默认高度"/>
+     </formatter> 
+     <!-- 文本类型 -->
+     <formatter id="texttype">
+        <format value="normal" text="普通型"/>
+        <format value="string" text="多字符型"/>
+         <format value="number" text="多数字型"/>
+     </formatter> 
+     <formatter id="defaultinterval">
+        <format value="0" text="默认标签间隔"/>
+     </formatter>  
+     <formatter id="datetype">
+        <format value="day" text="日"/>
+        <format value="week" text="周"/>
+        <format value="month" text="月"/>
+     </formatter> 
+     <formatter id="seriestype">
+        <format value="0" text="指标序列"/>
+        <format value="1" text="维度序列"/>
+     </formatter>  
+     <formatter id="chtype">
+        <format value="XYChart" text="XY类型图表"/>
+     </formatter>  
+     <formatter id="xycharttype">
+        <format value="Line" text="折线图"/>
+        <format value="Bar" text="柱状图"/>
+     </formatter>  
+     <formatter id="linklocation">
+        <format value="self" text="自身"/>
+        <format value="blank" text="新窗口"/>
+     </formatter>  
+     <formatter id="dbuser">
+        <format value="biportal" text="biportal"/>
+        <format value="scd_rep" text="scd_rep"/>
+        <format value="etl" text="etl"/>
+        <format value="hive" text="hive"/>
+     </formatter>  
+  </formatters>
+</models>

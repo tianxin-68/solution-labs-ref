@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.query.template.cache">
+    <select id="getCacheSource" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.engine.accelerate.cache.model.QueryTemplateCacheSource">
+        select
+            t2.tpl_id as queryTplId,
+            t2.tpl_name queryTplName,
+            t5.menu_id as analysisMenuId,
+            t5.menu_name as analysisMenuName,
+            t1.analysis_tpl_id as analysisTplId,
+            t5.menu_name as analysisTplName
+        from bi_ssm.ssm_analysis_tpl_widget_query_tpl_rel t1
+                 inner join bi_ssm.ssd_query_template t2
+                            on t1.prod_query_tpl_id = t2.tpl_id
+                 inner join bi_ssm.ssm_analysis_tpl_cfg_prod t4
+                            on t1.analysis_tpl_id = t4.analysis_tpl_id and t1.analysis_tpl_cfg_id = t4.analysis_tpl_cfg_id
+                 inner join bi_ssm.ssm_portal_menu t5
+                            on t4.analysis_tpl_id = t5.content_ref_id
+                 inner join bi_ssm.ssm_analysis_tpl_cache_cfg t6
+                            on t5.menu_id = t6.analysis_tpl_menu_id
+        where 1=1
+          and t4.is_latest = 1
+          and t5.is_active = 1
+          and t6.is_active = 1
+    </select>
+
+    <select id="getCacheResult" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.engine.accelerate.cache.model.QueryTemplateCacheResult">
+        select
+            t1.query_tpl_id as queryTplId,
+            t1.query_tpl_name as queryTplName,
+            t1.analysis_menu_id as analysisMenuId,
+            t1.analysis_menu_name as analysisMenuName,
+            t1.analysis_tpl_id as analysisTplId,
+            t1.analysis_tpl_name as analysisTplName,
+            t1.etl_jobs as etlJobs,
+            t1.cache_key as cacheKey,
+            t1.remark as remark,
+            t1.is_active as isActive
+        from bi_ssm.ssm_query_tpl_cache_result t1
+        where t1.is_active = 1
+          and t1.created_time > DATE_ADD(now(), interval -2 day)
+    </select>
+
+    <insert id="addCacheResult" parameterType="com.bi.queryer.ssm.engine.accelerate.cache.model.QueryTemplateCacheResult">
+        insert into bi_ssm.ssm_query_tpl_cache_result(
+                 pkid,
+                 cache_id,
+                 query_tpl_id,
+                 query_tpl_name,
+                 analysis_menu_id,
+                 analysis_menu_name,
+                 analysis_tpl_id,
+                 analysis_tpl_name,
+                 etl_jobs,
+                 cache_sql,
+                 cache_key,
+                 cache_size,
+                 remark,
+                 is_active,
+                 created_by,
+                 created_time
+        )
+        values(
+                #{pkId},
+                #{cacheId},
+                #{queryTplId},
+                #{queryTplName},
+                #{analysisMenuId},
+                #{analysisMenuName},
+                #{analysisTplId},
+                #{analysisTplName},
+                #{etlJobs},
+                #{cacheSql},
+                #{cacheKey},
+                #{cacheSize},
+                #{remark},
+                1,
+                #{createdBy},
+                now()
+              )
+    </insert>
+
+    <delete id="deleteCacheResult" parameterType="java.util.HashMap">
+        delete from bi_ssm.ssm_query_tpl_cache_result
+        where 1=1
+
+        <if test=" cacheKeys != null and cacheKeys.size()>0 ">
+            and cache_key  in
+            (
+            <foreach  collection="cacheKeys" index="index" item="item" separator="," >
+                #{item}
+            </foreach>
+            )
+        </if>
+
+        <if test="queryTplId != '' and queryTplId != null">
+            and query_tpl_id = #{queryTplId}
+        </if>
+        <if test="analysisTplId != '' and analysisTplId != null">
+            and analysis_tpl_id = #{analysisTplId}
+        </if>
+        <if test="analysisMenuId != '' and analysisMenuId != null">
+            and analysis_menu_id = #{analysisMenuId}
+        </if>
+    </delete>
+
+    <insert id="addOperateLog" parameterType="java.util.HashMap">
+        insert into bi_ssm.ssm_query_tpl_cache_oper_log(
+                 query_tpl_id,
+                 query_tpl_name,
+                 cache_key,
+                 operate_type,
+                 operate_content,
+                 remark,
+                 operate_by,
+                 operate_time
+        )
+        values
+        <foreach item="item" index="index" collection="logList" separator=",">
+            (
+                #{item.queryTplId},
+                #{item.queryTplName},
+                #{item.cacheKey},
+                #{item.operateType},
+                #{item.operateContent},
+                #{item.remark},
+                #{item.operateBy},
+                now()
+            )
+        </foreach>
+    </insert>
+
+</mapper>

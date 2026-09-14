@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.etl.info">
+
+    <!-- 查询hive表的下游作业 -->
+    <select id="getDownstreamEtlJobByTableName" parameterType="java.lang.String" resultType="java.lang.String">
+        select
+            t1.ETL_JOB
+        from
+            etl_job_dependency t1
+        inner join etl_job t2 on t1.ETL_JOB = t2.ETL_JOB
+        inner join etl_table_mapping t3 on t1.DEPENDENCY_JOB = t3.ETL_JOB
+        where t3.TABLE_NAME = #{tableName}
+        and t2.ENABLE = 1;
+    </select>
+
+    <select id="getEtlInfo" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.SysEtlJobInfo">
+        SELECT
+            ETL_JOB AS etlJob,
+            case
+                when LAST_TXDATE = DATE_FORMAT(now(), '%Y-%m-%d')
+                    and LAST_JOBSTATUS = 'DONE' then 1
+                else 0
+                end isTodayCompleted
+        FROM
+            etl_job
+        where
+            ETL_JOB in (
+            <foreach collection="etlJobs" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+                )
+    </select>
+
+
+    <select id="queryLastJobFinishTime" parameterType="java.util.ArrayList" resultType="String">
+        select
+            DATE_FORMAT(
+            max(last_end_time),
+            '%Y-%m-%d %H:%i:%s'
+            )
+        from
+            ssm_etl_job_info
+        where
+            etl_job in
+            (
+                <foreach collection="list" index="index" item="item" separator=",">
+                    #{item}
+                </foreach>
+            )
+    </select>
+
+    <select id="batchQueryJobFinishTime" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.meta.SysEtlJobInfo">
+        select
+            etl_job as etlJob,
+            DATE_FORMAT( last_end_time,'%Y-%m-%d %H:%i:%s') lastEndTime
+        from
+            ssm_etl_job_info
+        where
+            etl_job in
+            (
+            <foreach collection="list" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+            )
+    </select>
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.meta.SysEtlJobInfo">
+        insert into ssm_etl_job_info
+        (
+            etl_job,
+            last_end_time,
+            created_time
+        )
+        values
+        (
+            #{etlJob},
+            #{lastEndTime},
+            now()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.bi.queryer.ssm.meta.SysEtlJobInfo">
+        update
+            ssm_etl_job_info
+        set
+            last_end_time = #{lastEndTime},
+            updated_time = now()
+        where
+            etl_job = #{etlJob}
+    </update>
+
+    <select id="queryEtlJobCount" parameterType="String" resultType="Integer">
+        select
+            count(1)
+        from
+            ssm_etl_job_info
+        where
+            etl_job = #{etlJob}
+    </select>
+
+</mapper>

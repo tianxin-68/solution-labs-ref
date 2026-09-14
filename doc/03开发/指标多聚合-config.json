@@ -1,0 +1,84 @@
+{
+  "result": {
+    "measures": [
+      {
+        "id": "6f24873d97db44848e842e460b70cd2d",
+        "code": "order_user",
+        "name": "order_user",
+        "title": "成单用户数",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "dataType": "nbr",
+        "isKpi": false,
+        "path": [
+          "订单交易监控",
+          "指标-成单",
+          "成单用户数"
+        ],
+        "isComputed": false,
+        "isMeasure": true,
+        "isPlaceholder": false,
+        "showOrder": 1
+      },
+      {
+        "id": "5ea9fd6cb9ba44c481599684ed1bc26d",
+        "code": "order_gmv",
+        "name": "order_gmv",
+        "title": "成单GMV",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "dataType": "nbr",
+        "isKpi": false,
+        "path": [
+          "订单交易监控",
+          "指标-成单",
+          "成单GMV"
+        ],
+        "isComputed": false,
+        "isMeasure": true,
+        "isPlaceholder": false,
+        "showOrder": 2
+      },
+      {
+        "id": "5ea9fd6cb9ba44c481599684ed1bc26d_avg_by_d", // id=原id+聚合类型code
+        "code": "order_gmv_avg_by_d", // code=原code+聚合类型code
+        "name": "order_gmv_avg",
+        "title": "成单GMV（日均）",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "dataType": "nbr",
+        "isKpi": false,
+        "path": [
+          "订单交易监控",
+          "指标-成单",
+          "成单GMV"
+        ],
+        "isComputed": false,
+        "isMeasure": true,
+        "isPlaceholder": false,
+        "showOrder": 3,
+        "aggExpressionType": "avg_by_d" // aggExpressionType=avg_by_d
+      },
+      {
+        "id": "5ea9fd6cb9ba44c481599684ed1bc26d_avg_by_d_r",
+        "code": "order_gmv_avg_by_d_r",
+        "name": "order_gmv",
+        "title": "成单GMV（非空日均）",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "dataType": "nbr",
+        "isKpi": false,
+        "path": [
+          "订单交易监控",
+          "指标-成单",
+          "成单GMV"
+        ],
+        "isComputed": false,
+        "isMeasure": true,
+        "isPlaceholder": false,
+        "showOrder": 4,
+        "aggExpressionType": "avg_by_d_r"
+      }
+    ]
+  }
+}

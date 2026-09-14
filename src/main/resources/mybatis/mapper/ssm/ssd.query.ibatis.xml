@@ -1,0 +1,1577 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.query">
+
+    <sql id="templateFragment">
+         t.`tpl_id` AS id,
+         t.`tpl_name` AS NAME,
+         t.`tpl_desc` AS description,
+         t.`tpl_config` AS config,
+         t.`ctg_id` AS ctgId,
+         t.`created_by` AS createdBy,
+         DATE_FORMAT(t.`created_time`,'%Y-%m-%d %H:%i:%s') AS createdTime,
+         t.`updated_by` AS updatedBy,
+         DATE_FORMAT(t.`updated_time`,'%Y-%m-%d %H:%i:%s') AS updatedTime,
+         t.tpl_exp_max_rows as tplExpMaxRows
+    </sql>
+
+    <!-- 查询模板所属目录（用户查自己的） -->
+    <select id="queryTemplateCtgByName" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.SSDQueryTemplateCtg">
+        select
+            t.`ctg_id` AS ctgId,
+            t.`ctg_name` AS ctgName,
+            t.`sort_id` AS sortId,
+            t.`ctg_parent_id` AS ctgParentId,
+            t.`is_active` AS isActive,
+            t.`created_by` AS createdBy,
+            DATE_FORMAT(t.`created_time`,'%Y-%m-%d %H:%i:%s') AS createdTime,
+            t.`updated_by` AS updatedBy,
+            DATE_FORMAT(t.`updated_time`,'%Y-%m-%d %H:%i:%s') AS updatedTime
+        from `ssd_query_template_ctg` t
+        where 1=1
+        <if test=" isActive != null ">
+            and  t.is_active = #{isActive}
+        </if>
+        <if test=" ctgNameSearchText != '' and ctgNameSearchText != null">
+            and t.ctg_name like concat('%', #{ctgNameSearchText},'%')
+
+        </if>
+        <if test=" ctgName != '' and ctgName != null">
+            and  t.ctg_name = #{ctgName}
+        </if>
+        <if test=" ctgParentId != '' and ctgParentId != null">
+            and  t.ctg_parent_id = #{ctgParentId}
+        </if>
+        <if test=" ctgId != '' and ctgId != null">
+            and  t.ctg_id = #{ctgId}
+        </if>
+        <if test=" userName != '' and userName != null">
+            and  t.created_by = #{userName}
+        </if>
+        order by t.`sort_id` asc
+
+    </select>
+
+    <!-- 删除模板目录 -->
+    <delete id="deleteTemplateCtg" parameterType="java.lang.String">
+        delete from ssd_query_template_ctg where ctg_id = #{ctgId}
+    </delete>
+
+    <!-- 更新模板所在目录 -->
+    <update id="updateDeleteMoveTemplateCtg" parameterType="com.bi.queryer.ssm.meta.SSDQueryTemplate">
+        update ssd_query_template
+        set ctg_id = #{ctgId},
+           updated_by = #{updatedBy},
+           updated_time = now()
+        where 1=1
+        and ctg_id = #{id}
+    </update>
+
+    <!-- 更新模板所在目录 -->
+    <update id="updateMoveTemplateCtg" parameterType="com.bi.queryer.ssm.meta.SSDQueryTemplate">
+        update ssd_query_template
+        set tpl_name = #{name},
+            ctg_id = #{ctgId},
+           updated_by = #{updatedBy},
+           updated_time = now()
+        where 1=1
+        and tpl_id = #{id}
+    </update>
+
+    <!-- 模板目录保存 -->
+    <update id="saveTemplateCtg" parameterType="com.bi.queryer.ssm.meta.SSDQueryTemplateCtg">
+        insert into ssd_query_template_ctg(ctg_id, ctg_name, sort_id, ctg_parent_id, is_active, created_by, created_time, updated_by, updated_time)
+        values(#{ctgId}, #{ctgName}, #{sortId}, #{ctgParentId}, #{isActive}, #{createdBy}, now(), null, null)
+        ON DUPLICATE KEY
+        update ctg_name = #{ctgName},
+               sort_id = #{sortId},
+               ctg_parent_id = #{ctgParentId},
+               is_active = #{isActive},
+               updated_by = #{updatedBy},
+               updated_time = now()
+    </update>
+
+    <!-- 计算排序的一个最大值 -->
+    <select id="queryTemplateCtgSort" parameterType="com.bi.queryer.ssm.meta.SSDQueryTemplate" resultType="java.lang.Integer">
+        select IFNULL(Max(sort_id),0) as sortId
+        from `ssd_query_template_ctg` t
+        where 1=1
+        <if test=" ctgParentId != '' and ctgParentId != null">
+            and  t.ctg_parent_id = #{ctgParentId}
+
+        </if>
+        <if test=" createdBy != '' and createdBy != null">
+            and  t.created_by = #{createdBy}
+
+        </if>
+    </select>
+
+    <!-- 通过ctgId获取模板目录 -->
+    <select id="queryTemplateCtgById" parameterType="java.lang.String" resultType="com.bi.queryer.ssm.meta.SSDQueryTemplateCtg">
+        select
+            t.`ctg_id` AS ctgId,
+            t.`ctg_name` AS ctgName,
+            t.`sort_id` AS sortId,
+            t.`ctg_parent_id` AS ctgParentId,
+            t.`is_active` AS isActive,
+            t.`created_by` AS createdBy,
+            DATE_FORMAT(t.`created_time`,'%Y-%m-%d %H:%i:%s') AS createdTime,
+            t.`updated_by` AS updatedBy,
+            DATE_FORMAT(t.`updated_time`,'%Y-%m-%d %H:%i:%s') AS updatedTime
+        from `ssd_query_template_ctg` t
+        where 1=1
+        and t.ctg_id = #{ctgId}
+    </select>
+
+    <!-- 更新模板目录基础信息 -->
+    <update id="updateTemplateCtgBase" parameterType="com.bi.queryer.ssm.meta.SSDQueryTemplateCtg">
+        update ssd_query_template_ctg
+        set ctg_name = #{ctgName},
+           sort_id = #{sortId},
+           ctg_parent_id = #{ctgParentId},
+           updated_by = #{updatedBy},
+           updated_time = now()
+        where 1=1
+        and ctg_id = #{ctgId}
+    </update>
+
+    <!-- 根据ctg查询所有模板（分页） -->
+    <select id="queryTemplateByCtg" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.SSDQueryTemplate">
+        select
+            t.`tpl_id` AS id,
+            t.`tpl_name` AS NAME,
+            t.`tpl_desc` AS description,
+            t.`tpl_config` AS config,
+            t.`created_by` AS createdBy,
+            DATE_FORMAT(t.`created_time`,'%Y-%m-%d %H:%i:%s') AS createdTime,
+            t.`updated_by` AS updatedBy,
+            DATE_FORMAT(t.`updated_time`,'%Y-%m-%d %H:%i:%s') AS updatedTime,
+            t.tpl_exp_max_rows as tplExpMaxRows,
+            t.`ctg_id` AS ctgId,
+            CASE WHEN t.`ctg_id` = 'my' THEN '我的模板'
+            WHEN t.`ctg_id` = 'public' THEN '公共模板'
+            ELSE c.`ctg_name` END AS ctgName
+
+        from `ssd_query_template` t
+        left join `ssd_query_template_ctg` c on t.`ctg_id` = c.`ctg_id`
+        where 1=1
+        <if test=" templateSearchText != '' and templateSearchText != null">
+            and (
+            t.tpl_name like concat('%', #{templateSearchText},'%')
+            or
+            t.created_by like concat('%', #{templateSearchText},'%')
+            or
+            t.tpl_id = #{templateSearchText}
+            )
+        </if>
+        <choose>
+            <when test=" userName != '' and userName != null and ctgId == 'share'">
+                and  #{userName} in (SELECT m.shared_user_name FROM ssd_query_template_share m where m.tpl_id = t.tpl_id AND m.is_active = 1)
+
+            </when>
+            <when test=" userName != '' and userName != null and ctgId == 'my'">
+                and  t.created_by = #{userName}
+            </when>
+            <when test=" userName != '' and userName != null ">
+                and ( t.created_by = #{userName}
+                or
+                #{userName} in (SELECT m.shared_user_name FROM ssd_query_template_share m where m.tpl_id = t.tpl_id AND m.is_active = 1)
+                or
+                (t.`ctg_id` = 'public')
+                )
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+        <if test=" ctgId != '' and ctgId != null and ctgId != '-1' and ctgId != 'share'">
+            and  t.`ctg_id` in
+            <foreach item="item" collection="ctgIdList" separator="," open="(" close=")" index="">
+                #{item}
+            </foreach>
+        </if>
+        order by t.`created_time` desc
+        LIMIT ${pageRowLower}, ${prePageSize}
+    </select>
+
+    <!-- 根据ctg查模板目录总数 -->
+    <select id="queryTemplateCountByCtg" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+        select count(1) as f_count
+        from (
+            select
+                t.`tpl_id`
+            from `ssd_query_template` t
+            left join `ssd_query_template_ctg` c on t.`ctg_id` = c.`ctg_id`
+            where 1=1
+                <if test=" templateSearchText != '' and templateSearchText != null">
+                    and (
+                    t.tpl_name like concat('%', #{templateSearchText},'%')
+                    or
+                    t.created_by like concat('%', #{templateSearchText},'%')
+                    or
+                    t.tpl_id = #{templateSearchText}
+                    )
+                </if>
+                <choose>
+                    <when test=" userName != '' and userName != null and ctgId == 'share'">
+                        and  #{userName} in (SELECT m.shared_user_name FROM ssd_query_template_share m where m.tpl_id = t.tpl_id AND m.is_active = 1)
+
+                    </when>
+                    <when test=" userName != '' and userName != null and ctgId == 'my'">
+                        and  t.created_by = #{userName}
+                    </when>
+                    <when test=" userName != '' and userName != null ">
+                        and ( t.created_by = #{userName}
+                        or
+                        #{userName} in (SELECT m.shared_user_name FROM ssd_query_template_share m where m.tpl_id = t.tpl_id AND m.is_active = 1)
+                        or
+                        (t.`ctg_id` = 'public')
+                        )
+                    </when>
+                    <otherwise>
+                    </otherwise>
+                </choose>
+                <if test=" ctgId != '' and ctgId != null and ctgId != '-1' and ctgId != 'share'">
+                    and  t.`ctg_id` in
+                    <foreach item="item" collection="ctgIdList" separator="," open="(" close=")" index="">
+                        #{item}
+                    </foreach>
+                </if>
+            ) tmp
+    </select>
+
+    <!-- 查询所有模板（分页） -->
+    <select id="queryAllTemplate" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.SSDQueryTemplate">
+        select
+        <include refid="templateFragment"/>
+        from `ssd_query_template` t
+        where 1=1
+         <if test=" templateSearchText != '' and templateSearchText != null">
+             and (
+             t.tpl_name like concat('%', #{templateSearchText},'%')
+             or
+             t.created_by like concat('%', #{templateSearchText},'%')
+             )
+         </if>
+         <if test=" userName != '' and userName != null">
+             and ( t.created_by = #{userName}
+             or
+             #{userName} in (SELECT m.shared_user_name FROM ssd_query_template_share m where m.tpl_id = t.tpl_id AND m.is_active = 1)
+             )
+         </if>
+         order by t.`created_time` desc
+        LIMIT ${pageRowLower}, ${prePageSize}
+    </select>
+
+    <!-- 模板总数 -->
+    <select id="queryAllTemplateCount" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+        select count(1) as f_count
+        from `ssd_query_template` t
+        where 1=1
+        <if test=" templateSearchText != '' and templateSearchText != null">
+            and (
+            t.tpl_name like concat('%', #{templateSearchText},'%')
+            or
+            t.created_by like concat('%', #{templateSearchText},'%')
+            )
+        </if>
+        <if test=" userName != '' and userName != null">
+            and ( t.created_by = #{userName}
+            or
+            #{userName} in (SELECT m.shared_user_name FROM ssd_query_template_share m where m.tpl_id = t.tpl_id AND m.is_active = 1)
+            )
+        </if>
+    </select>
+
+    <!-- 通过id获取模板 -->
+    <!--<select id="queryTemplateById" parameterType="java.lang.String" resultType="com.bi.queryer.ssm.meta.SSDQueryTemplate">
+        select
+        <include refid="templateFragment"/>
+        from `ssd_query_template` t
+        where 1=1
+         and t.tpl_id = #{templateId}
+    </select>-->
+
+    <!-- 模板保存 -->
+    <update id="saveTemplate" parameterType="com.bi.queryer.ssm.meta.SSDQueryTemplate">
+        insert into ssd_query_template(tpl_id, tpl_name, tpl_desc, tpl_config, ctg_id, created_by, created_time, updated_by, updated_time)
+        values(#{id}, #{name}, #{description}, #{config}, #{ctgId}, #{createdBy}, now(), null, null)
+        ON DUPLICATE KEY
+        update tpl_name = #{name},
+               tpl_desc = #{description},
+               tpl_config = #{config},
+               ctg_id = #{ctgId},
+               updated_by = #{updatedBy},
+               updated_time = now()
+    </update>
+
+    <!-- 更新模板基础信息 -->
+    <update id="updateTemplateBase" parameterType="com.bi.queryer.ssm.meta.SSDQueryTemplate">
+        update ssd_query_template
+        set tpl_name = #{name},
+           tpl_desc = #{description},
+           ctg_id = #{ctgId},
+           updated_by = #{updatedBy},
+           updated_time = now()
+    </update>
+
+    <!-- 更新模板名称 -->
+    <update id="updateTemplateTitle" parameterType="com.bi.queryer.ssm.meta.SSDQueryTemplate">
+        update ssd_query_template
+        set tpl_name = #{name},
+           updated_by = #{updatedBy},
+           updated_time = now()
+        WHERE tpl_id = #{id}
+    </update>
+
+    <!-- 删除模板 -->
+    <delete id="deleteTemplate" parameterType="java.lang.String">
+        delete from ssd_query_template where tpl_id = #{templateId}
+    </delete>
+
+    <!--设置模板-->
+    <update id="setTemplate" parameterType="java.util.HashMap">
+        update ssd_query_template t set t.tpl_exp_max_rows = #{expMaxRows} where t.tpl_id = #{id}
+    </update>
+
+    <!-- 查询问题回答表 -->
+    <select id="queryQuestionAndAnswer" parameterType="com.bi.queryer.ssm.meta.SSDQuestionAndAnswer" resultType="com.bi.queryer.ssm.meta.SSDQuestionAndAnswer">
+        select
+        q.question_id AS questionId,
+        q.object_type AS objectType,
+        q.object_id AS objectId,
+        q.object_title AS objectTitle,
+        q.question_content AS questionContent,
+        q.question_owner AS questionOwner,
+        q.answer_content AS answerContent,
+        q.answer_owner AS answerOwner,
+        q.is_answer AS isAnswer,
+        q.question_time AS questionTime,
+        q.answer_time AS answerTime,
+        q.is_active AS isActive,
+        q.sort_id AS sortId,
+        q.created_time AS createdTime,
+        q.updated_time AS updatedTime,
+        q.created_by AS createdBy,
+        q.updated_by AS updatedBy
+        from `ssd_question_answer` q
+        where 1=1
+        <if test="answerOwner != '' and answerOwner != null ">
+            and q.answer_owner like concat('%', #{answerOwner} ,'%')
+        </if>
+        <if test="questionOwner != '' and questionOwner != null ">
+            and q.question_owner like concat('%', #{questionOwner} ,'%')
+        </if>
+        <if test="objectTitle != '' and objectTitle != null ">
+            and q.object_title like concat('%', #{objectTitle} ,'%')
+        </if>
+        <if test="objectId != '' and objectId != null ">
+            and q.object_id = #{objectId}
+        </if>
+        <if test="objectType != '' and objectType != null ">
+            and q.object_type = #{objectType}
+        </if>
+        <if test="isAnswer != '' and isAnswer != null ">
+            and q.is_answer = #{isAnswer}
+        </if>
+        <if test="isActive != '' and isActive != null ">
+            and q.is_active = #{isActive}
+        </if>
+        <if test="questionTimeBegin != '' and questionTimeBegin != null ">
+            and q.question_time >= #{questionTimeBegin}
+        </if>
+        <if test="questionTimeEnd != '' and questionTimeEnd != null ">
+            and #{questionTimeEnd} >= q.question_time
+        </if>
+        <choose>
+            <when test="orderBy !=null and orderBy != ''">
+                ORDER BY ${orderBy}
+            </when>
+            <otherwise>
+                ORDER BY q.sort_id ASC,q.question_time DESC
+            </otherwise>
+        </choose>
+        <if test="pageNum != null and pageSize != null ">
+            LIMIT ${pageNum}, ${pageSize}
+        </if>
+    </select>
+
+    <!-- 查询问题回答表 -->
+    <select id="queryQuestionAndAnswerCount" parameterType="com.bi.queryer.ssm.meta.SSDQuestionAndAnswer" resultType="Integer">
+        select count(1)
+        from (
+            select
+            q.question_id AS questionId,
+            q.object_type AS objectType,
+            q.object_id AS objectId,
+            q.object_title AS objectTitle,
+            q.question_content AS questionContent,
+            q.question_owner AS questionOwner,
+            q.answer_content AS answerContent,
+            q.answer_owner AS answerOwner,
+            q.is_answer AS isAnswer,
+            q.question_time AS questionTime,
+            q.answer_time AS answerTime,
+            q.is_active AS isActive,
+            q.sort_id AS sortId,
+            q.created_time AS createdTime,
+            q.updated_time AS updatedTime,
+            q.created_by AS createdBy,
+            q.updated_by AS updatedBy
+            from `ssd_question_answer` q
+            where 1=1
+                <if test="answerOwner != '' and answerOwner != null ">and q.answer_owner like concat('%', #{answerOwner} ,'%')
+                </if>
+                <if test="
+            questionOwner != '' and questionOwner != null ">
+                    and q.question_owner like concat('%', #{questionOwner} ,'%')
+                </if>
+                <if test="objectTitle != '' and objectTitle != null ">
+                    and q.object_title like concat('%', #{objectTitle} ,'%')
+                </if>
+                <if test="objectId != '' and objectId != null ">
+                    and q.object_id = #{objectId}
+                </if>
+                <if test="objectType != '' and objectType != null ">
+                    and q.object_type = #{objectType}
+                </if>
+                <if test="isAnswer != '' and isAnswer != null ">
+                    and q.is_answer = #{isAnswer}
+                </if>
+                <if test="isActive != '' and isActive != null ">
+                    and q.is_active = #{isActive}
+                </if>
+                <if test="questionTimeBegin != '' and questionTimeBegin != null ">
+                    and q.question_time >= #{questionTimeBegin}
+                </if>
+                <if test="questionTimeEnd != '' and questionTimeEnd != null ">
+                    and #{questionTimeEnd} >= q.question_time
+                </if>
+        ) a
+    </select>
+
+
+    <!-- 插入问题回答表 -->
+    <insert id="insertQuestionAndAnswer" parameterType="com.bi.queryer.ssm.meta.SSDQuestionAndAnswer">
+		    INSERT INTO ssd_question_answer(
+		                object_type ,
+		                object_id ,
+                        object_title,
+                        question_content,
+                        question_owner,
+                        question_time,
+                        created_time,
+                        created_by
+					)
+					VALUES(
+					    #{objectType},
+                        #{objectId},
+                        #{objectTitle},
+                        #{questionContent},
+                        #{questionOwner},
+                        #{questionTime},
+                        now(),
+                        #{createdBy}
+					)
+	</insert>
+
+    <!-- 更新问题与回答 -->
+    <update id="updateQuestionAndAnswer" parameterType="com.bi.queryer.ssm.meta.SSDQuestionAndAnswer">
+        update ssd_question_answer
+        <set>
+            <if test="questionOwner!=null">question_owner=#{questionOwner},</if>
+            <if test="questionTime!=null">question_time=#{questionTime},</if>
+            <if test="questionContent!=null">question_content=#{questionContent},</if>
+            <if test="answerContent!=null">answer_content=#{answerContent},</if>
+            <if test="answerOwner!=null">answer_owner=#{answerOwner},</if>
+            <if test="answerTime!=null">answer_time=#{answerTime},</if>
+            <if test="isAnswer!=null">is_answer=#{isAnswer},</if>
+            <if test="isActive!=null">is_active=#{isActive},</if>
+            <if test="updatedBy!=null">updated_by=#{updatedBy},</if>
+            updated_time = now()
+        </set>
+        where 1=1
+        and question_id = #{questionId}
+    </update>
+
+    <!-- 删除问题与回答 -->
+    <delete id="deleteQuestionAndAnswer" parameterType="Long">
+        delete from ssd_question_answer where question_id = #{questionId}
+    </delete>
+
+    <!-- 更新问题与回答排序 -->
+    <update id="updateQuestionAndAnswerSort" parameterType="com.bi.queryer.ssm.meta.SSDQuestionAndAnswer">
+        update ssd_question_answer
+        <set>
+            <if test="sortId!=null">sort_id=#{sortId},</if>
+            updated_time = now()
+        </set>
+        where 1=1
+        and question_id = #{questionId}
+    </update>
+
+    <!-- 查询引擎SQL日志 -->
+    <insert id="insertQueryLog" parameterType="com.bi.queryer.ssm.query.log.SSDQueryLogEntity">
+		    INSERT INTO ssd_query_log(
+		                log_id,
+						template_id,
+						user_name,
+						query_config,
+						query_sql,
+						query_begin_time,
+						query_end_time,
+						query_success,
+						query_info,
+						query_rows,
+						query_param,
+		                env,
+		                ds_key,
+                        query_source,
+                        session_id,
+                        view_id,
+		                db_query_id,
+		                query_filter
+					)
+					VALUES(
+					            #{id},
+								#{templateId},
+								#{userName},
+								#{config},
+								#{querySQL},
+								#{beginTime},
+								#{endTime},
+								#{success},
+								#{info},
+								#{rows},
+								#{queryParam},
+					            #{env},
+					            #{dsKey},
+                                #{querySource},
+                                #{sessionId},
+					            #{viewId},
+					            #{dbQueryId},
+					            #{queryFilter}
+							)
+	</insert>
+
+    <update id="updateQueryLog" parameterType="com.bi.queryer.ssm.query.log.SSDQueryLogEntity">
+        update ssd_query_log
+        set
+            ui_begin_time = #{uiBeginTime},
+            ui_end_time = #{uiEndTime}
+        where log_id = #{id}
+    </update>
+
+    <!-- 查询引擎详情日志 -->
+    <insert id="insertQueryDetailLog" parameterType="com.bi.queryer.ssm.query.log.SSDQueryDetailLogEntity">
+        INSERT INTO ssd_query_log_dtl(
+            log_id,
+            template_id,
+            user_name,
+            config_begin_time,
+            query_begin_time,
+            query_end_time,
+            query_tables,
+            config_thb,
+            config_zb,
+            config_total,
+            config_ctr,
+            config_cstm_cmp,
+            common_date_query_range,
+            date_granularity,
+            data_query_range,
+            hot_query_engine,
+            is_all_query_table_hit_hot,
+            session_id,
+            view_id,
+            user_agent,
+            terminal,
+            olap_api_key,
+            hostname,
+            cache_type
+        )
+        VALUES(
+                  #{id},
+                  #{templateId},
+                  #{userName},
+                  #{configBeginTime},
+                  #{beginTime},
+                  #{endTime},
+                  #{queryTables},
+                  #{configThb},
+                  #{configZb},
+                  #{configTotal},
+                  #{configCtr},
+                  #{configCustomCompare},
+                  #{commonDateQueryRange},
+                  #{dateGranularity},
+                  #{dataQueryRange},
+                  #{hotQueryEngine},
+                  #{isAllQueryTableHitHot},
+                  #{sessionId},
+                  #{viewId},
+                  #{userAgent},
+                  #{terminal},
+                  #{olapApiKey},
+                  #{hostname},
+                  #{cacheType}
+              )
+    </insert>
+
+    <!-- 查询引擎SQL字段日志 -->
+    <insert id="insertFieldLog" parameterType="java.util.List">
+        INSERT INTO ssd_query_field_log (
+                            template_id,
+                            user_name,
+                            field_id,
+                            field_code,
+                            field_name,
+                            field_desc,
+                            query_time,
+                            field_source,
+                            log_id,
+                            is_filter,
+                            is_result,
+                            view_id,
+                            module_id,
+                            ctg_id,
+                            filter_values
+        ) VALUES
+        <foreach collection="list"  item="item" index="index" separator=",">
+            (
+            #{item.templateId},
+            #{item.userName},
+            #{item.fieldId},
+            #{item.fieldCode},
+            #{item.fieldName},
+            #{item.fieldDesc},
+            now(),
+            #{item.fieldSource},
+            #{item.sqlLogId},
+            #{item.isFilter},
+            #{item.isResult},
+            #{item.viewId},
+            #{item.moduleId},
+            #{item.ctgId},
+            #{item.filterValues}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="insertQueryTplFieldLog" parameterType="java.util.List">
+        REPLACE INTO ssm_query_template_field_log (
+            tpl_id,
+            view_id,
+            field_id,
+            field_code,
+            field_title,
+            last_query_log_id,
+            field_expr_size,
+            created_by,
+            created_time
+        ) VALUES
+        <foreach collection="list"  item="item" index="index" separator=",">
+            (
+            #{item.tplId},
+            #{item.viewId},
+            #{item.fieldId},
+            #{item.fieldCode},
+            #{item.fieldTitle},
+            #{item.lastQueryLogId},
+            #{item.fieldExprSize},
+            #{item.createdBy},
+            now()
+            )
+        </foreach>
+    </insert>
+
+    <!-- 查询前端配置字段日志 -->
+    <insert id="insertCfgFieldLog" parameterType="java.util.List">
+        INSERT INTO ssm_query_cfg_field_log (
+        template_id,
+        user_name,
+        field_id,
+        field_code,
+        field_name,
+        field_desc,
+        query_time,
+        field_source,
+        log_id,
+        is_filter,
+        is_result,
+        view_id,
+        module_id,
+        ctg_id,
+        filter_values
+        ) VALUES
+        <foreach collection="list"  item="item" index="index" separator=",">
+            (
+            #{item.templateId},
+            #{item.userName},
+            #{item.fieldId},
+            #{item.fieldCode},
+            #{item.fieldName},
+            #{item.fieldDesc},
+            now(),
+            #{item.fieldSource},
+            #{item.sqlLogId},
+            #{item.isFilter},
+            #{item.isResult},
+            #{item.viewId},
+            #{item.moduleId},
+            #{item.ctgId},
+            #{item.filterValues}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 导出日志 -->
+    <insert id="insertExportLog" parameterType="com.bi.queryer.ssm.export.log.SSDExportLogEntity">
+		    INSERT INTO ssd_query_exp_log(
+		                exp_id,
+						template_id,
+						query_config,
+						user_name,
+						exp_begin_time,
+						exp_end_time,
+						exp_mode,
+						exp_success,
+						exp_info,
+						exp_rows,
+						exp_file_ext,
+						exp_file_name,
+						exp_decode_code
+					)
+					VALUES(
+					            #{id},
+								#{templateId},
+								#{queryConfig},
+								#{userName},
+								#{beginTime},
+								#{endTime},
+								#{mode},
+								#{success},
+								#{info},
+								#{rows},
+								#{fileExt},
+								#{fileName},
+								#{expDecodeCode}
+							)
+	</insert>
+
+    <!-- 过滤条件查询引擎SQL日志 -->
+    <insert id="insertFilterQueryLog" parameterType="com.bi.queryer.ssm.query.log.SSMFilterQueryLogEntity">
+        INSERT INTO ssm_filter_query_log(
+            user_name,
+            query_field_id,
+            query_field_code,
+            query_field_title,
+            query_sql,
+            is_retry,
+            is_hit_cache,
+            query_success,
+            query_rows,
+            query_info,
+            query_begin_time,
+            query_end_time,
+            env,
+            ds_key,
+            session_id
+        )
+        VALUES(
+            #{userName},
+            #{queryFieldId},
+            #{queryFieldCode},
+            #{queryFieldTitle},
+            #{querySql},
+            #{isRetry},
+            #{isHitCache},
+            #{querySuccess},
+            #{queryRows},
+            #{queryInfo},
+            #{queryBeginTime},
+            #{queryEndTime},
+            #{env},
+            #{dsKey},
+            #{sessionId}
+        )
+    </insert>
+
+    <update id="updateFilterQueryLog" parameterType="com.bi.queryer.ssm.query.log.SSMFilterQueryLogEntity">
+        update
+            ssm_filter_query_log
+        set
+            ui_begin_time = #{uiBeginTime},
+            ui_end_time = #{uiEndTime}
+        where
+            session_id = #{sessionId}
+    </update>
+
+    <!-- 查询用户下的数据权限 -->
+    <select id="queryDataAuthByUser" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.MetaFieldDataAuth">
+        SELECT
+         ifnull(f.module_code, tmp.module_code) AS moduleCode,
+         ifnull(t2.module_name, tmp.module_name) AS moduleName,
+         f.field_code AS dimCode,
+         f.white_paper_code AS whitePaperCode,
+         f.dim_code AS dimRealCode,
+         ifnull(t2.dim_name, tmp.dim_name) AS dimName,
+        case
+        when f.data_auth_mode = 'no_cfg_all' and tmp.item_code is null or trim(tmp.item_code) = '' then
+        '-9999'
+        else tmp.item_code
+        end AS itemCode,
+
+        case
+        when f.data_auth_mode = 'no_cfg_all' and tmp.item_value is null or trim(tmp.item_value) = '' then
+        '所有'
+        else tmp.item_value
+        end AS itemValue,
+         f.data_auth_mode as authMode,
+         f.field_code as fieldCode
+        FROM ssd_field_auth_dim f
+        left join bi_portal.sys_data_auth_cfg t2
+        on f.module_code = t2.module_code and f.dim_code = t2.dim_code and t2.is_active = 1
+        left join
+        (
+                select
+                tmp1.user_name,
+                tmp1.module_code,
+                tmp1.module_name,
+                tmp1.dim_code,
+                tmp1.dim_name,
+                tmp1.item_code,
+                tmp1.item_value
+                from (
+                        SELECT
+                        t1.`owner_id` AS user_name,
+                        t1.`module_code`,
+                        t1.`module_name`,
+                        t1.dim_code,
+                        t1.dim_name,
+                        t1.item_code,
+                        t1.item_value
+                        FROM bi_portal.`sys_data_auth` t1
+                        WHERE 1=1
+                        AND t1.`owner_type` = 'User'
+                        AND t1.`owner_id` = #{userName}
+                        AND t1.`module_code` = 'ssm_row'
+                        AND t1.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t1.active_duration_days DAY)
+
+                        UNION ALL
+                        SELECT
+                        t2.user_name,
+                        t1.`module_code`,
+                        t1.`module_name`,
+                        t1.dim_code,
+                        t1.dim_name,
+                        t1.item_code,
+                        t1.item_value
+                        FROM bi_portal.`sys_data_auth` t1
+                        INNER JOIN bi_portal.sys_user_role t2
+                        ON t1.`owner_id` = t2.role_id AND t2.user_name = #{userName}
+                        WHERE 1=1
+                        AND t2.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t2.active_duration_days DAY)
+                        AND t1.`owner_type` = 'Role'
+                        AND t1.`module_code` = 'ssm_row'
+
+                        UNION ALL
+                        SELECT
+                        '${userName}' as user_name,
+                        t1.`module_code`,
+                        t1.`module_name`,
+                        t1.dim_code,
+                        t1.dim_name,
+                        t1.item_code,
+                        t1.item_value
+                        FROM
+                        bi_portal.sys_data_auth t1
+                        WHERE
+                        t1.owner_type= 'Dept'
+                        AND CONCAT(#{deptId}, '/') LIKE CONCAT('%', t1.owner_id, '/%')
+                        AND t1.`module_code` = 'ssm_row'
+                        AND t1.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t1.active_duration_days DAY)
+                ) tmp1
+                group by
+                tmp1.user_name,
+                tmp1.module_code,
+                tmp1.module_name,
+                tmp1.dim_code,
+                tmp1.dim_name,
+                tmp1.item_code,
+                tmp1.item_value
+        ) tmp
+        ON tmp.module_code = f.`module_code`
+        AND tmp.dim_code = f.`dim_code`
+        WHERE 1=1
+          AND f.`module_code` = 'ssm_row'
+        <if test="pageQuery == 'true'">
+            <if test="searchText != '' and searchText != null ">
+                and tmp.item_value like concat('%', #{searchText} ,'%')
+            </if>
+            LIMIT ${pageRowLower}, ${prePageSize}
+            order by moduleCode, dimCode, itemCode
+        </if>
+    </select>
+
+    <select id="queryDataAuthByUserCount" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+        select
+        count(1)   as f_count
+        from (
+            SELECT
+                tmp.*
+            FROM (
+                SELECT
+                t1.`owner_id` AS user_name,
+                t1.`module_code`,
+                t1.`module_name`,
+                t1.dim_code,
+                t1.dim_name,
+                t1.item_code,
+                t1.item_value
+                FROM bi_portal.`sys_data_auth` t1
+                WHERE 1=1
+                AND t1.`owner_type` = 'User'
+                AND t1.`owner_id` = #{userName}
+                AND t1.`module_code` NOT IN('ssd_field')
+                AND t1.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t1.active_duration_days DAY)
+                UNION ALL
+                SELECT
+                t2.user_name,
+                t1.`module_code`,
+                t1.`module_name`,
+                t1.dim_code,
+                t1.dim_name,
+                t1.item_code,
+                t1.item_value
+                FROM bi_portal.`sys_data_auth` t1
+                INNER JOIN bi_portal.sys_user_role t2
+                ON t1.`owner_id` = t2.role_id AND t2.user_name = #{userName}
+                WHERE 1=1
+                AND t2.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t2.active_duration_days DAY)
+                AND t1.`owner_type` = 'Role'
+                AND t1.`module_code` NOT IN('ssd_field')
+            ) tmp
+            INNER JOIN ssd_field_auth_dim f
+            ON tmp.module_code = f.`module_code`
+            AND tmp.dim_code = f.`dim_code`
+            WHERE 1=1
+            AND f.`module_code` NOT IN('ssd_field')
+            <if test="searchText != '' and searchText != null ">
+                and tmp.item_value like concat('%', #{searchText} ,'%')
+            </if>
+            LIMIT ${pageRowLower}, ${prePageSize}
+            order by moduleCode, dimCode, itemCode
+        ) tmp2
+    </select>
+
+    <select id="querySSDRowDimCode" parameterType="java.util.ArrayList" resultType="com.bi.queryer.sys.common.KeyValuePair">
+       SELECT DISTINCT
+          t.`dim_code` as  `key`,
+          cfg.`dim_name` as `value`
+        FROM
+          ssd_field_auth_dim t
+        INNER JOIN bi_portal.sys_data_auth_cfg cfg
+        ON t.`dim_code` = cfg.`dim_code`
+        WHERE t.`field_code` IN
+            <foreach item="item" collection="list" separator="," open="(" close=")" index="">
+                #{item}
+            </foreach>
+          AND t.`module_code` = 'ssm_row'
+    </select>
+
+    <select id="queryUserSSDRowRole" parameterType="java.util.HashMap" resultType="com.bi.queryer.sys.common.KeyValuePair">
+        SELECT
+            m.dim_name as  `key`,
+            GROUP_CONCAT(DISTINCT m.item_value) as `value`
+        FROM
+          (SELECT
+            t.`owner_id` AS userName,
+            t.`module_code`,
+            t.`dim_code`,
+            t.`item_code`,
+            t.`item_value`,
+            t.`dim_name`
+          FROM
+            bi_portal.sys_data_auth t
+          WHERE t.`owner_type` = 'User'
+            AND t.`module_code` = 'ssm_row'
+            AND t.`owner_id` = #{userName}
+            AND t.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t.active_duration_days DAY)
+
+            AND t.`dim_code`  in
+            <foreach item="item" collection="dimCodes" separator="," open="(" close=")" index="">
+                #{item.DIMCODE}
+            </foreach>
+          UNION all
+          SELECT
+            sur.USER_NAME AS userName,
+            t1.`module_code`,
+            t1.`dim_code`,
+            t1.`item_code`,
+            t1.`item_value`,
+            t1.`dim_name`
+          FROM
+                bi_portal.sys_data_auth t1
+            INNER JOIN bi_portal.sys_user_role sur
+              ON t1.`owner_id` = sur.ROLE_ID
+          WHERE t1.`owner_type` = 'Role'
+            AND t1.`module_code` = 'ssm_row'
+            AND sur.USER_NAME = #{userName}
+            AND sur.created_time > DATE_ADD(CURDATE(), INTERVAL -1* sur.active_duration_days DAY)
+            AND t1.`dim_code`  in
+            <foreach item="item" collection="dimCodes" separator="," open="(" close=")" index="">
+                 #{item.DIMCODE}
+            </foreach>
+          ) m
+      <!--  WHERE m.`module_code` = 'ssm_row'
+          AND m.userName = #{userName}
+          AND m.`dim_code`  in
+           <foreach item="item" collection="dimCodes" separator="," open="(" close=")" index="">
+             #{item.DIMCODE}
+            </foreach>-->
+            group by m.dim_name
+    </select>
+
+    <select id="queryFieldSSDRow" resultType="com.bi.queryer.util.UpperCaseMap">
+SELECT
+  t.`field_code` as fieldCode,
+  t.`dim_code` as dimCode,
+  m.`dim_name` as dimName,
+  t.data_auth_mode as authMode
+FROM
+  ssd_field_auth_dim t
+  INNER JOIN bi_portal.sys_data_auth_cfg m
+    ON t.`module_code` = m.`module_code`
+    AND t.`dim_code` = m.`dim_code`
+   ORDER BY t.`field_code`
+    </select>
+
+    <delete id="deleteTemplateShareByTemplateId" parameterType="String">
+        delete from ssd_query_template_share where tpl_id = #{shareTemplateId}
+    </delete>
+
+    <update id="updateTemplateShareByTemplateIdAndUser" parameterType="java.util.HashMap">
+        update ssd_query_template_share set is_active = #{isActive} where tpl_id = #{shareTemplateId} AND shared_user_name = #{sharedUserName}
+    </update>
+
+    <delete id="deleteTemplateShareByTemplateIdAndUser" parameterType="java.util.HashMap">
+        delete from ssd_query_template_share where tpl_id = #{shareTemplateId} AND shared_user_name = #{sharedUserName}
+    </delete>
+
+    <insert id="insertTemplateShare" parameterType="java.util.HashMap">
+        insert into ssd_query_template_share(tpl_id,share_user_name,shared_user_name,shared_user_realname,share_time)
+        values
+        <foreach collection ="list" item="item" index= "index" separator =",">
+            (
+            #{shareTemplateId},
+            #{shareUserName},
+            #{item.sharedUserName},
+            #{item.sharedUserRealname},
+            now()
+            )
+        </foreach>
+    </insert>
+
+    <!-- 查找所有分享的人员 -->
+    <select id="queryTemplateShareUserList" parameterType="String"  resultType="com.bi.queryer.sys.user.vo.User">
+      SELECT
+  biu.USER_NAME AS NAME,
+  biu.USER_REALNAME AS realName,
+  biu.dept_name AS deptPathName
+FROM
+  bi_portal.sys_user biu
+  INNER JOIN ssd_query_template_share s
+    ON biu.`USER_NAME` = s.`shared_user_name`
+WHERE 1 = 1
+  AND s.`tpl_id` = #{shareTemplateId}
+ORDER BY deptPathName DESC,
+  USER_NAME
+    </select>
+
+    <!--查询目录更新日志-->
+    <select id="querySsdFieldCtgChanglog" resultType="com.bi.queryer.ssm.meta.SSDFieldCtgChangLog">
+                SELECT
+          t.`ctg_id` AS ctgId,
+          MAX(t.`ctg_name`) AS ctgName,
+          DATE_FORMAT(MAX(t.`data_date`),'%Y/%m/%d') AS dataDate
+        FROM
+          ssd_field_ctg_changlog t
+        GROUP BY t.`ctg_id`
+    </select>
+
+    <!-- 查询模板所属目录（用户查自己的） -->
+    <select id="querySSDQueryFieldStatsList"  resultType="com.bi.queryer.ssm.meta.SSDQueryFieldStatsEntity">
+        select
+        t.`field_id` AS fieldId,
+        t.`field_code` AS fieldCode,
+        t.`field_name` AS fieldName,
+        t.`field_title` AS fieldTitle,
+        t.`ctg_id` AS ctgId,
+        t.`ctg_name` AS ctgName,
+        t.`query_count` AS queryCount,
+        t.`query_user_count` AS queryUserCount,
+        DATE_FORMAT(t.`min_query_time`,'%Y-%m-%d %H:%i:%s') AS minQueryTime,
+        DATE_FORMAT(t.`max_query_time`,'%Y-%m-%d %H:%i:%s') AS maxQueryTime,
+        t.`sort_id` AS sortId
+        from `ssd_query_field_stats` t
+        order by t.`ctg_id`, t.`sort_id` ASC
+
+    </select>
+
+    <!-- 导出日志 -->
+    <insert id="insertSubmitExportLog" parameterType="com.bi.queryer.ssm.export.log.SSDExportLogEntity">
+		    INSERT INTO ssd_query_exp_log(
+		                exp_id,
+						template_id,
+						query_config,
+						user_name,
+						exp_begin_time,
+						exp_mode,
+						exp_rows,
+						exp_decode_code,
+						decrypt_sensitive_field,
+						is_apply_approve,
+                        black_box,
+                        view_id,
+                        query_sql,
+                        query_filter,
+		                session_id,
+                        exp_file_ext,
+                        exp_file_name,
+                        exp_info
+					)
+					VALUES(
+					            #{id},
+								#{templateId},
+								#{queryConfig},
+								#{userName},
+								#{beginTime},
+								#{mode},
+								#{rows},
+								#{expDecodeCode},
+								#{decryptSensitiveField},
+								#{isApplyApprove},
+					            #{blackBox},
+					            #{viewId},
+					            #{querySql},
+					            #{queryFilter},
+					            #{sessionId},
+					            #{fileExt},
+					            #{fileName},
+					            #{info}
+							)
+	</insert>
+
+    <!-- 查询下载日志 -->
+    <select id="querySubmitExportLog"  parameterType="String"  resultType="com.bi.queryer.ssm.export.log.SSDExportLogEntity">
+        select
+            t.exp_id AS id,
+            t.template_id AS templateId,
+            t.query_config AS queryConfig,
+            t.user_name AS userName,
+            t.exp_begin_time AS beginTime,
+            t.exp_mode AS mode,
+            t.exp_decode_code AS expDecodeCode,
+            t.decrypt_sensitive_field AS decryptSensitiveField,
+            t.black_box as blackBox
+        from `ssd_query_exp_log` t
+        WHERE 1 = 1
+        AND t.`exp_id` = #{id}
+
+    </select>
+
+    <!-- 更新下载日志 -->
+    <update id="updateSubmitExportLog" parameterType="com.bi.queryer.ssm.export.log.SSDExportLogEntity">
+        update ssd_query_exp_log
+        <set>
+            <if test="success!=null">exp_success=#{success},</if>
+            <if test="status!=null">exp_status=#{status},</if>
+            <if test="info!=null">exp_info=#{info},</if>
+            <if test="rows!=null">exp_rows=#{rows},</if>
+            <if test="fileExt!=null">exp_file_ext=#{fileExt},</if>
+            <if test="fileName!=null">exp_file_name=#{fileName},</if>
+            exp_end_time = now()
+        </set>
+        where 1=1
+        and exp_id = #{id}
+    </update>
+
+    <!-- 查询要推送kafka的下载日志 -->
+    <select id="getKafkaExportLog"  parameterType="String"  resultType="com.bi.queryer.ssm.meta.APIKafkaLog">
+        SELECT
+            t1.exp_begin_time AS startTime,
+            t1.exp_end_time AS endTime,
+            '多维分析' AS source,
+            '下载' AS eventType,
+            t1.USER_NAME AS userName,
+            t2.dept1_name AS firstlySector,
+            t2.dept2_name AS secondarySector,
+            t2.dept3_name AS thirdSector,
+            t1.query_config AS filterInfo,
+            t1.exp_rows AS rowCount,
+            t3.field_title AS sensitiveField,
+            t3.sensitive_type AS dataType,
+            IF
+            ( t3.field_title IS NULL, '', 'C4' ) AS sensitiveLevel,
+            CASE
+                t1.exp_success
+            WHEN '1' THEN
+                'success' ELSE 'failed'
+            END AS status,
+            'bi_selfhelp_log' AS tags
+        FROM
+            bi_portal.ssd_query_exp_log t1
+            LEFT JOIN bi_portal.hr_employee t2 ON t1.USER_NAME = t2.USER_NAME
+            LEFT JOIN (
+            SELECT
+                f.log_id,
+                group_concat( d.field_title ) AS field_title,
+                group_concat( DISTINCT d.sensitive_type ) AS sensitive_type
+            FROM
+                bi_portal.ssd_query_field_log f
+                LEFT JOIN ssd_field_def d ON find_in_set( d.field_id, f.field_id )
+            WHERE
+                d.sensitive_type is not null
+                and f.log_id = #{logId}
+            GROUP BY
+                f.log_id
+            ) t3 ON t1.exp_id = t3.log_id
+        WHERE
+            t1.`exp_id` = #{logId}
+
+    </select>
+
+    <!-- 查询要推送kafka的查询日志 -->
+    <select id="getKafkaQueryLog"  parameterType="String"  resultType="com.bi.queryer.ssm.meta.APIKafkaLog">
+        SELECT
+            t1.query_begin_time AS startTime,
+	        t1.query_end_time AS endTime,
+            '多维分析' AS source,
+            '查询' AS eventType,
+            t1.USER_NAME AS userName,
+            t2.dept1_name AS firstlySector,
+            t2.dept2_name AS secondarySector,
+            t2.dept3_name AS thirdSector,
+            t1.query_config AS filterInfo,
+            t1.query_rows AS rowCount,
+            t3.field_title AS sensitiveField,
+            t3.sensitive_type AS dataType,
+            IF
+            ( t3.field_title IS NULL, '', 'C4' ) AS sensitiveLevel,
+            CASE
+                t1.query_success
+            WHEN '1' THEN
+                'success' ELSE 'failed'
+            END AS status,
+            'bi_selfhelp_log' AS tags
+        FROM
+            bi_portal.ssd_query_log t1
+            LEFT JOIN bi_portal.hr_employee t2 ON t1.USER_NAME = t2.USER_NAME
+            LEFT JOIN (
+            SELECT
+                f.log_id,
+                group_concat( d.field_title ) AS field_title,
+                group_concat( DISTINCT d.sensitive_type ) AS sensitive_type
+            FROM
+                bi_portal.ssd_query_field_log f
+                LEFT JOIN ssd_field_def d ON find_in_set( d.field_id, f.field_id )
+            WHERE
+                d.sensitive_type is not null
+                and f.log_id = #{logId}
+            GROUP BY
+                f.log_id
+            ) t3 ON t1.log_id = t3.log_id
+        WHERE
+            t1.`log_id` = #{logId}
+
+    </select>
+
+    <!-- 白名单 -->
+    <select id="getDownloadWhitelistExist" parameterType="String" resultType="Integer">
+        SELECT
+            count(*) cnt
+        FROM
+            ssd_user_download_whitelist w
+        WHERE
+            w.user_name = #{userName}
+    </select>
+
+    <select id="getDownloadUserWhiteList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.sensitive.model.DownloadWhitelist">
+        select
+            t.user_name as userName,
+            t.ctg_id as categoryId,
+            t.ctg_full_name as categoryFullName,
+            t.is_module_ctg as isModuleCategory
+        from bi_ssm.ssd_query_exp_whitelist t
+        where 1=1
+          and t.is_active = 1
+          and DATE_ADD(t.created_time, INTERVAL t.active_duration_days DAY) > now()
+          and t.user_name = #{userName}
+    </select>
+
+    <select id="getAllSensitiveRules" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.sensitive.model.SensitiveRule">
+        select
+            t.rule_code as ruleCode,
+            t.rule_expression as ruleExpression,
+            t.rule_desc as ruleDesc,
+            t.sensitive_level as sensitiveLevel,
+            t.sensitive_desc as sensitiveDesc
+        from bi_portal.sys_data_sensitive_rule t
+        where t.is_active = 1
+    </select>
+
+
+    <select id="queryTemplateCtgDataAuthByUserCount" parameterType="String" resultType="java.lang.Integer">
+        SELECT
+         count(1)   as f_count
+        FROM (
+        SELECT
+        t1.`owner_id` AS user_name,
+        t1.`module_code`,
+        t1.`module_name`,
+        t1.dim_code,
+        t1.dim_name,
+        t1.item_code,
+        t1.item_value
+        FROM bi_portal.`sys_data_auth` t1
+        WHERE 1=1
+        AND t1.`owner_type` = 'User'
+        AND t1.`owner_id` = #{userName}
+        AND t1.`module_code`  = 'ssd_auth'
+        AND t1.`dim_code`  = 'ssd_template_ctg'
+        AND t1.`item_code`  IN ('公共模板', '-9999')
+        AND t1.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t1.active_duration_days DAY)
+        UNION ALL
+        SELECT
+        t2.user_name,
+        t3.`module_code`,
+        t3.`module_name`,
+        t3.dim_code,
+        t3.dim_name,
+        t3.item_code,
+        t3.item_value
+        FROM bi_portal.`sys_data_auth` t3
+        INNER JOIN bi_portal.sys_user_role t2
+        ON t3.`owner_id` = t2.role_id AND t2.user_name = #{userName}
+        WHERE 1=1
+        AND t2.created_time > DATE_ADD(CURDATE(), INTERVAL -1* t2.active_duration_days DAY)
+        AND t3.`owner_type` = 'Role'
+        AND t3.`module_code`  = 'ssd_auth'
+        AND t3.`dim_code`  = 'ssd_template_ctg'
+        AND t3.`item_code`  IN ('公共模板', '-9999')
+        ) tmp
+
+    </select>
+
+    <!-- 查询模板名称是否存在 -->
+    <select id="queryTemplateNameExist" parameterType="java.util.HashMap" resultType="Integer">
+        select
+            count(1)
+        from `ssd_query_template` t
+        where 1=1
+        AND t.tpl_name = #{name}
+        AND t.tpl_id != #{id}
+        AND t.ctg_id = 'public'
+    </select>
+
+    <!-- 删除微信推送状态 -->
+    <delete id="deleteWeiXinPushStatus" parameterType="String">
+        delete from bi_label.label_weixin_push_status where dt = #{dt}
+    </delete>
+
+    <insert id="insertWeiXinPushStatus" parameterType="com.bi.queryer.ssm.meta.WeiXinPushVo">
+
+        insert into bi_label.label_weixin_push_status
+        (
+            status,
+            created_time,
+            dt
+        )
+        values
+        (
+            #{status},
+            #{createdTime},
+            #{dt}
+        )
+    </insert>
+
+    <!-- 查询用户当日下载数量 -->
+    <select id="queryUserExportNumDaily" parameterType="java.util.HashMap" resultType="Integer">
+        SELECT
+          ifnull(SUM( log.exp_rows ), 0)
+        FROM
+          ssd_query_exp_log log
+        WHERE
+          log.exp_begin_time >= CURDATE()
+        AND is_apply_approve = 0
+        AND log.decrypt_sensitive_field = 0
+        AND ( log.exp_status = 'success' OR log.exp_status IS NULL OR log.exp_status = '' )
+        AND log.user_name = #{userName}
+    </select>
+
+    <!--查询目录对应作业更新时间-->
+    <select id="querySysEtlJobInfo" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.meta.SysEtlJobInfo">
+        select
+	        Max(ENDTIME) as etlTime,
+	        ETL_JOB as etlJob
+        from
+	        etl_job_log
+        where
+	        RETURNCODE = 0
+	        and ENDTIME >= DATE_SUB(CURDATE(), INTERVAL 3 DAY)
+	        and ETL_JOB in (
+                <foreach collection="list" item="item" separator=",">
+                    #{item}
+                </foreach>
+                )
+        GROUP by
+	        ETL_JOB
+    </select>
+
+    <select id="queryEtlJobUpdateTime" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.meta.SysEtlJobInfo">
+        select
+          etl_job as etlJob,
+          DATE_FORMAT(LAST_ENDTIME,'%Y-%m-%d') as lastEndTime,
+          JOBTYPE as jobType
+        from
+          etl_job
+        where
+          ETL_JOB in (
+            <foreach collection="list" item="item" separator=",">
+                #{item}
+            </foreach>
+          )
+          and ENABLE = 1
+          and LAST_JOBSTATUS = 'Done'
+    </select>
+
+    <select id="getFieldValueSortNumList" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.meta.MetaFieldValueSort">
+            SELECT
+              field_code as fieldCode,
+              field_value as fieldValue,
+              field_value_sort_num as fieldValueSortNum
+            FROM
+              ssm_field_value_sort
+            WHERE field_code in
+                (
+                    <foreach collection="list" item="item" separator=",">
+                        #{item}
+                    </foreach>
+                )
+            ORDER BY
+              field_code,
+              field_value_sort_num
+    </select>
+
+    <insert id="insertQueryLogUi" parameterType="com.bi.queryer.ssm.query.log.SSDQueryLogUIEntity">
+        insert into ssd_query_log_ui
+        (
+            session_id,
+            query_filter,
+            user_name,
+            created_time
+        )
+        values
+        (
+             #{sessionId},
+             #{queryFilter},
+             #{userName},
+             now()
+        )
+    </insert>
+
+    <insert id="insertQueryTplVisitLog" parameterType="com.bi.queryer.ssm.query.log.SSMQueryTplVisitEntity">
+        insert into ssm_query_template_visit_log
+        (
+            tpl_type,
+            tpl_id,
+            view_id,
+            user_name,
+            env,
+            tree_loading_start_time,
+            tree_loading_end_time,
+            tpl_loading_start_time,
+            tpl_loading_end_time,
+            created_by,
+            created_time
+        )
+        values
+        (
+            #{tplType},
+            #{tplId},
+            #{viewId},
+            #{userName},
+            #{env},
+            #{treeLoadingStartTime},
+            #{treeLoadingEndTime},
+            #{tplLoadingStartTime},
+            #{tplLoadingEndTime},
+            #{createdBy},
+            now()
+        )
+    </insert>
+
+    <!-- genAI_feature/v3.15.0_start -->
+    <select id="getRecentVisitQueryTplList" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.portal.ai.vo.AiRecentQueryTplVisitVO">
+        SELECT
+            l.tpl_id AS tplId,
+            l.view_id AS viewId,
+            l.tpl_type AS tplType,
+            q.tpl_name AS tplName,
+            q.ctg_id AS ctgId,
+            v.view_name AS viewName,
+            DATE_FORMAT(l.last_visit_time, '%Y-%m-%d %H:%i:%s') AS lastVisitTime
+        FROM (
+            -- 子查询先聚合，减少数据量
+            SELECT
+                tpl_id,
+                view_id,
+                tpl_type,
+                MAX(created_time) AS last_visit_time
+            FROM ssm_query_template_visit_log
+            WHERE user_name = #{userName}
+            AND tpl_id IS NOT NULL
+            AND tpl_type = 'query_template'
+            GROUP BY tpl_id, view_id, tpl_type
+            ORDER BY last_visit_time DESC
+            limit #{limit}
+        ) l
+        LEFT JOIN ssd_query_template q ON l.tpl_id = q.tpl_id
+        LEFT JOIN ssd_query_template_view v ON l.tpl_id = v.tpl_id AND l.view_id = v.view_id
+        ORDER BY l.last_visit_time DESC;
+    </select>
+    <!-- genAI_feature/v3.15.0_end -->
+
+    <select id="inspectionQueryLog" parameterType="com.bi.queryer.ssm.query.log.SSMInspectionQueryLog">
+        insert into ssm_inspection_query_log
+        (
+            tpl_id,
+            view_id,
+            query_success,
+            query_rows,
+            query_begin_time,
+            query_end_time,
+            remark,
+            created_by,
+            created_time,
+            query_log_id,
+            ds_key
+        )
+        values
+        (
+            #{tplId},
+            #{viewId},
+            #{querySuccess},
+            #{queryRows},
+            #{queryBeginTime},
+            #{queryEndTime},
+            #{remark},
+            #{createdBy},
+            now(),
+            #{queryLogId},
+            #{dsKey}
+        )
+    </select>
+
+</mapper>

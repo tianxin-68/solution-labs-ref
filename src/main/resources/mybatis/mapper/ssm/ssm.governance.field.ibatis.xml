@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.governance.field">
+
+    <sql id="taskColumns">
+        id                 AS id,
+        white_paper_code   AS whitePaperCode,
+        object_type        AS objectType,
+        ctg_path           AS ctgPath,
+        wp_name            AS wpName,
+        wp_owner           AS wpOwner,
+        wp_level           AS wpLevel,
+        days_no_visit      AS daysNoVisit,
+        last_visit_time    AS lastVisitTime,
+        policy_type        AS policyType,
+        policy_name        AS policyName,
+        hit_reason         AS hitReason,
+        status             AS status,
+        notice_time        AS noticeTime,
+        last_notice_time   AS lastNoticeTime,
+        notice_count       AS noticeCount,
+        exempt_time        AS exemptTime,
+        exempt_expire_date AS exemptExpireDate,
+        batch_no           AS batchNo,
+        created_time       AS createdTime,
+        updated_time       AS updatedTime
+    </sql>
+
+    <!-- ===================== 扫描数据源：上游指标/维度打标结果（全量覆盖单日快照，表内已是 >90天 候选）
+         keyset 分页（按 white_paper_code 游标），每次只取一页，避免一次性查出全表（5万+）入内存 ===================== -->
+    <select id="queryFieldLabels" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.governance.entity.FieldLabel">
+        SELECT
+            id               AS id,
+            ctg_path         AS ctgPath,
+            white_paper_code AS whitePaperCode,
+            wp_name          AS wpName,
+            wp_type          AS wpType,
+            wp_owner         AS wpOwner,
+            wp_level         AS wpLevel,
+            last_visit_time  AS lastVisitTime,
+            days_no_visit    AS daysNoVisit
+        FROM ssm_governance_field_label
+        <if test="lastId != null">
+            WHERE id &gt; #{lastId}
+        </if>
+        ORDER BY id
+        LIMIT #{pageSize}
+    </select>
+
+    <!-- ===================== 任务表 CRUD ===================== -->
+    <select id="getByCode" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.governance.entity.GovernanceFieldTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_field_task
+        WHERE white_paper_code = #{code}
+    </select>
+
+    <select id="getById" parameterType="java.lang.Long"
+            resultType="com.bi.queryer.ssm.governance.entity.GovernanceFieldTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_field_task
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.bi.queryer.ssm.governance.entity.GovernanceFieldTask"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ssm_governance_field_task (
+            white_paper_code, object_type, ctg_path, wp_name, wp_owner, wp_level,
+            days_no_visit, last_visit_time, policy_type, policy_name, hit_reason, status,
+            notice_time, last_notice_time, notice_count, exempt_time, exempt_expire_date, batch_no,
+            created_time, updated_time
+        ) VALUES (
+            #{whitePaperCode}, #{objectType}, #{ctgPath}, #{wpName}, #{wpOwner}, #{wpLevel},
+            #{daysNoVisit}, #{lastVisitTime}, #{policyType}, #{policyName}, #{hitReason}, #{status},
+            #{noticeTime}, #{lastNoticeTime}, #{noticeCount}, #{exemptTime}, #{exemptExpireDate}, #{batchNo},
+            now(), now()
+        )
+    </insert>
+
+    <!-- 批量加载存量任务的关键字段（id/编码/status），扫描时在内存比对，避免逐行查询 -->
+    <select id="queryAllTaskKeys" resultType="com.bi.queryer.ssm.governance.entity.GovernanceFieldTask">
+        SELECT id AS id, white_paper_code AS whitePaperCode, status AS status
+        FROM ssm_governance_field_task
+    </select>
+
+    <!-- 批量新增待处理任务 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO ssm_governance_field_task (
+            white_paper_code, object_type, ctg_path, wp_name, wp_owner, wp_level,
+            days_no_visit, last_visit_time, policy_type, policy_name, hit_reason, status, notice_count,
+            batch_no, created_time, updated_time
+        ) VALUES
+        <foreach collection="list" item="t" separator=",">
+            (
+                #{t.whitePaperCode}, #{t.objectType}, #{t.ctgPath}, #{t.wpName}, #{t.wpOwner},
+                #{t.wpLevel}, #{t.daysNoVisit}, #{t.lastVisitTime}, #{t.policyType},
+                #{t.policyName}, #{t.hitReason}, #{t.status}, #{t.noticeCount}, #{t.batchNo}, now(), now()
+            )
+        </foreach>
+    </insert>
+
+    <update id="refreshScan" parameterType="com.bi.queryer.ssm.governance.entity.GovernanceFieldTask">
+        UPDATE ssm_governance_field_task
+        SET ctg_path      = #{ctgPath},
+            wp_name       = #{wpName},
+            wp_owner      = #{wpOwner},
+            wp_level      = #{wpLevel},
+            days_no_visit = #{daysNoVisit},
+            last_visit_time = #{lastVisitTime},
+            policy_type   = #{policyType},
+            policy_name   = #{policyName},
+            hit_reason    = #{hitReason},
+            batch_no      = #{batchNo},
+            updated_time  = now()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateById" parameterType="com.bi.queryer.ssm.governance.entity.GovernanceFieldTask">
+        UPDATE ssm_governance_field_task
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="noticeTime != null">notice_time = #{noticeTime},</if>
+            <if test="lastNoticeTime != null">last_notice_time = #{lastNoticeTime},</if>
+            <if test="noticeCount != null">notice_count = #{noticeCount},</if>
+            <if test="exemptTime != null">exempt_time = #{exemptTime},</if>
+            <if test="exemptExpireDate != null">exempt_expire_date = #{exemptExpireDate},</if>
+            updated_time = now()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- ===================== Job 查询 ===================== -->
+    <select id="queryByStatus" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.governance.entity.GovernanceFieldTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_field_task
+        WHERE status = #{status}
+    </select>
+
+    <!-- 待通知：pending；或 noticed 超过间隔天数需重复推送 -->
+    <select id="queryNeedNotify" parameterType="java.lang.Integer"
+            resultType="com.bi.queryer.ssm.governance.entity.GovernanceFieldTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_field_task
+        WHERE status = 'pending'
+           OR (status = 'noticed' AND last_notice_time IS NOT NULL
+               AND last_notice_time &lt;= DATE_SUB(NOW(), INTERVAL #{repeatDays} DAY))
+    </select>
+
+    <select id="queryExemptExpired" resultType="com.bi.queryer.ssm.governance.entity.GovernanceFieldTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_field_task
+        WHERE status = 'exempted' AND exempt_expire_date IS NOT NULL AND exempt_expire_date &lt;= CURDATE()
+    </select>
+
+    <!-- ===================== 后台分页列表 ===================== -->
+    <sql id="listWhere">
+        <where>
+            <if test="status != null and status != ''">AND status = #{status}</if>
+            <if test="owner != null and owner != ''">AND FIND_IN_SET(#{owner}, wp_owner) &gt; 0</if>
+            <if test="type != null and type != ''">AND object_type = #{type}</if>
+            <if test="keyword != null and keyword != ''">
+                AND (wp_name LIKE CONCAT('%', #{keyword}, '%') OR white_paper_code LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <!-- 数据范围：非超管仅能看到自己负责的 -->
+            <if test="currentOwner != null and currentOwner != ''">
+                AND FIND_IN_SET(#{currentOwner}, REPLACE(wp_owner, ' ', '')) &gt; 0
+            </if>
+        </where>
+    </sql>
+
+    <select id="list" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.governance.entity.GovernanceFieldTask">
+        SELECT <include refid="taskColumns"/>
+        FROM ssm_governance_field_task
+        <include refid="listWhere"/>
+        ORDER BY id DESC
+        LIMIT #{startNum}, #{pageSize}
+    </select>
+
+    <select id="listUsageStatsByFieldCodes" parameterType="java.util.List" resultType="java.util.Map">
+        SELECT field_code      AS fieldCode,
+               query_view_cnt  AS queryViewCnt,
+               dashboard_cnt   AS dashboardCnt,
+               skill_count     AS skillCount,
+               push_task_count AS pushTaskCount
+        FROM ssm_field_use_product
+        WHERE field_code IN
+        <foreach item="code" collection="list" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+    </select>
+
+    <select id="listCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM ssm_governance_field_task
+        <include refid="listWhere"/>
+    </select>
+
+</mapper>

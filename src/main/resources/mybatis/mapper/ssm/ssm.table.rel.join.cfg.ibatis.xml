@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.table.rel.join.cfg">
+
+    <select id="queryAll" resultType="com.bi.queryer.ssm.meta.MetaTableRelation">
+        select
+            t1.pri_table_id as primaryTableId,
+            t1.sub_table_id as subTableId,
+            t1.join_expression as joinExpression
+        from ssm_table_rel_join_cfg t1
+    </select>
+
+</mapper>

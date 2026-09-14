@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="chat.data.config">
+
+    <insert id="insertChatDataConfig" parameterType="com.bi.queryer.ssm.llm.chatSession.entity.ChatDataConfig">
+        insert into chat_data_config (
+            chat_data_id,
+            chat_id,
+            data_snapshot_type,
+            data_snapshot_id,
+            data_filter_text,
+            is_latest,
+            created_by,
+            created_time
+        ) values (
+            #{chatDataId},
+            #{chatId},
+            #{dataSnapshotType},
+            #{dataSnapshotId},
+            #{dataFilterText},
+            #{isLatest},
+            #{createdBy},
+            #{createdTime}
+        )
+    </insert>
+
+    <select id="getChatDataConfigByChatId" parameterType="long"
+            resultType="com.bi.queryer.ssm.llm.chatSession.entity.ChatDataConfig">
+        select
+            chat_data_id as chatDataId,
+            chat_id as chatId,
+            data_snapshot_type as dataSnapshotType,
+            data_snapshot_id as dataSnapshotId,
+            data_filter_text as dataFilterText,
+            is_latest as isLatest,
+            created_by as createdBy,
+            created_time as createdTime
+        from chat_data_config
+        where chat_id = #{chatId}
+          and is_latest = 1
+        order by created_time desc
+        limit 1
+    </select>
+
+    <update id="clearLatestChatDataConfigByChatId" parameterType="map">
+        update chat_data_config
+        set is_latest = 0
+        where chat_id = #{chatId}
+          and is_latest = 1
+    </update>
+
+</mapper>

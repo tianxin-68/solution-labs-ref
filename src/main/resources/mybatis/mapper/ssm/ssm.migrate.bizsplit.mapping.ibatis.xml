@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.migrate.bizsplit.mapping">
+
+    <!--
+      按老对象 id 查询业务线拆分-视图迁移映射（同一老视图可能拆分出多条，对应多个新业务线/新视图）。
+    -->
+    <select id="listViewSplitByOldId" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.migrate.bizsplit.model.SsmMigrateBizsplitMappingEntity">
+        SELECT
+            id AS id,
+            object_type AS objectType,
+            old_id AS oldId,
+            old_name AS oldName,
+            new_id AS newId,
+            new_name AS newName,
+            old_biz_line AS oldBizLine,
+            new_biz_line AS newBizLine,
+            portal_id AS portalId,
+            is_reused AS isReused,
+            created_by AS createdBy,
+            DATE_FORMAT(created_time, '%Y-%m-%d %H:%i:%s') AS createdTime
+        FROM
+            ssm_migrate_bizsplit_mapping
+        WHERE
+            object_type = 'query_tpl_view'
+            AND old_id = #{oldId}
+        ORDER BY
+            id ASC
+    </select>
+
+</mapper>

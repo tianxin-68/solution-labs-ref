@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.portal">
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.portal.entity.Portal">
+        insert into ssm_portal
+        (
+            portal_id,
+            portal_name,
+            portal_desc,
+            sort_id,
+            is_active,
+            created_by,
+            created_time
+        )
+        values
+        (
+            #{portalId},
+            #{portalName},
+            #{portalDesc},
+            #{sortId},
+            1,
+            #{createdBy},
+            now()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.bi.queryer.ssm.portal.entity.Portal">
+        update ssm_portal
+        set
+            portal_name = #{portalName},
+            portal_desc = #{portalDesc},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            portal_id = #{portalId}
+    </update>
+
+    <select id="queryMaxSortId" resultType="Double">
+        SELECT IFNULL(MAX(sort_id),0) FROM ssm_portal
+    </select>
+
+    <select id="list" resultType="com.bi.queryer.ssm.portal.vo.rsp.PortalRsp">
+        SELECT
+          portal_id as portalId,
+          portal_name as portalName,
+          portal_desc as portalDesc
+        FROM
+          ssm_portal
+        WHERE is_active = 1
+        ORDER BY sort_id
+    </select>
+
+    <select id="get" parameterType="String" resultType="com.bi.queryer.ssm.portal.entity.Portal">
+        select
+              portal_id as portalId,
+              portal_name as portalName,
+              portal_desc as portalDesc,
+              sort_id as sortId,
+              is_active as isActive
+         from
+              ssm_portal
+         where
+              portal_id = #{portalId}
+    </select>
+
+    <select id="getByContentRefId" parameterType="String" resultType="com.bi.queryer.ssm.portal.entity.Portal">
+        select
+            portal_id as portalId
+        from
+            ssm_portal_menu
+        where
+            content_ref_id = #{contentRefId}
+        limit 1
+    </select>
+
+    <select id="getPortalIdWithOnlineAnalysisTemplate" resultType="String">
+
+        SELECT
+            t1.portal_id
+        FROM
+            ssm_portal_menu t1
+                INNER JOIN ssm_analysis_tpl_base t2
+                           ON t1.content_ref_id = t2.analysis_tpl_id
+        WHERE t1.is_active = 1
+          AND t2.is_active = 1
+          AND t2.online_status = 'online'
+        GROUP BY t1.portal_id
+
+    </select>
+
+    <update id="updateMenuSortId" parameterType="com.bi.queryer.ssm.portal.entity.Portal">
+        update ssm_portal
+        set sort_id = #{sortId}
+        where portal_id = #{portalId}
+    </update>
+
+    <update id="incrementMenuSortId" parameterType="java.util.HashMap">
+        update ssm_portal
+        set sort_id = sort_id + 1
+        where is_active = 1
+        <choose>
+            <when test="'after'.toString() == dragType">
+                and sort_id > #{sortId}
+            </when>
+            <otherwise>
+                and sort_id >= #{sortId}
+            </otherwise>
+        </choose>
+
+    </update>
+
+</mapper>

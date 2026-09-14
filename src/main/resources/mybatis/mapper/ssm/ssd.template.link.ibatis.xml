@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.template.link">
+
+    <select id="queryTemplateByCtg" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.model.TemplateLinkRsp">
+        select
+            t.tpl_id AS tplId,
+            t.tpl_name AS tplName
+        from
+            ssd_query_template t
+        left join ssd_query_template_ctg c on t.ctg_id = c.ctg_id
+        where
+        (
+            (
+            c.ctg_type in ('my','share')
+            and t.created_by = #{userName}
+            )
+            or
+            (
+            c.ctg_type in ('space')
+            )
+        )
+        and t.ctg_id in
+        <foreach item="item" collection="ctgIdList" separator="," open="(" close=")" index="">
+            #{item}
+        </foreach>
+        order by t.created_time desc
+    </select>
+
+    <select id="queryLinkToOtherTemplateList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.model.TemplateLinkRsp">
+        SELECT
+          t1.link_id as linkId,
+          t1.source_tpl_id as queryTplId,
+          t1.source_tpl_view_id as queryViewId,
+          t1.target_tpl_id as tplId,
+          t1.target_tpl_view_id as viewId,
+          t2.tpl_name as tplName,
+          t2.tpl_owner as tplOwner
+        FROM
+          ssd_query_template_link t1
+          INNER JOIN ssd_query_template t2 ON t1.target_tpl_id= t2.tpl_id
+        WHERE source_tpl_id in
+        <foreach item="item" collection="tplIds" separator="," open="(" close=")" index="">
+            #{item}
+        </foreach>
+        <if test=" viewId != '' and viewId != null">
+            and t1.source_tpl_view_id = #{viewId}
+        </if>
+        ORDER BY sort_id
+    </select>
+
+    <select id="queryLinkFromOtherTemplateList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.model.TemplateLinkRsp">
+        SELECT
+          t1.link_id as linkId,
+          t1.source_tpl_id as tplId,
+          t1.source_tpl_view_id as viewId,
+          t2.tpl_name as tplName,
+          t2.tpl_owner as tplOwner
+        FROM
+          ssd_query_template_link t1
+          INNER JOIN ssd_query_template t2 ON t1.source_tpl_id= t2.tpl_id
+        WHERE target_tpl_id = #{tplId} and target_tpl_view_id = #{viewId}
+        ORDER BY sort_id
+    </select>
+
+    <delete id="deleteTemplateLinkBySourceTpIdAndViewId" parameterType="java.util.HashMap">
+        delete from ssd_query_template_link where source_tpl_id = #{tplId} and source_tpl_view_id = #{viewId}
+    </delete>
+    
+    <insert id="batchInsertTemplateLink" parameterType="java.util.HashMap">
+         insert into ssd_query_template_link
+         (
+            link_id,
+            source_tpl_id,
+            source_tpl_view_id,
+            target_tpl_id,
+            target_tpl_view_id,
+            sort_id,
+            created_time,
+            created_by
+         )
+         values
+        <foreach collection="templateLinkEntityList" item="item" separator=",">
+            (
+            #{item.linkId},
+            #{item.sourceTplId},
+            #{item.sourceTplViewId},
+            #{item.targetTplId},
+            #{item.targetTplViewId},
+            #{item.sortId},
+            now(),
+            #{item.createdBy}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteInvalidTemplateLink" parameterType="java.util.HashMap">
+        DELETE
+        FROM
+          ssd_query_template_link
+        WHERE link_id IN
+           <foreach item="item" collection="linkIdList" separator="," open="(" close=")" index="">
+                #{item}
+           </foreach>
+    </delete>
+
+    <delete id="batchDeleteTemplateLinkByTemplateIds" parameterType="com.bi.queryer.ssm.query.template.model.TemplateBatchOperateReq">
+        delete from ssd_query_template_link
+        where
+            source_tpl_id in
+             <foreach item="item" collection="tplIdList" separator="," open="(" close=")" index="">
+                #{item}
+            </foreach>
+            or
+            target_tpl_id in
+            <foreach item="item" collection="tplIdList" separator="," open="(" close=")" index="">
+                #{item}
+            </foreach>
+    </delete>
+
+    <delete id="batchDeleteByLinkId" parameterType="java.util.HashMap">
+        delete from ssd_query_template_link
+        where
+            link_id in
+            <foreach item="item" collection="linkIdList" separator="," open="(" close=")" index="">
+                #{item}
+            </foreach>
+    </delete>
+
+    <select id="queryLinkidBySourceTplIdAndViewId" parameterType="java.util.HashMap" resultType="String">
+        select
+            link_id
+        from
+            ssd_query_template_link
+        where
+            source_tpl_id = #{tplId}
+            and source_tpl_view_id = #{viewId}
+    </select>
+
+    <select id="queryLinkidBySourceTplIdOrTargetTpl" parameterType="com.bi.queryer.ssm.query.template.model.TemplateBatchOperateReq" resultType="String">
+        select
+            DISTINCT link_id
+        from ssd_query_template_link
+        where
+        source_tpl_id in
+        <foreach item="item" collection="tplIdList" separator="," open="(" close=")" index="">
+            #{item}
+        </foreach>
+        or
+        target_tpl_id in
+        <foreach item="item" collection="tplIdList" separator="," open="(" close=")" index="">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="queryLinkidByViewId" parameterType="String" resultType="String">
+        select
+            DISTINCT link_id
+        from ssd_query_template_link
+        where
+            (
+                source_tpl_view_id = #{viewId}
+                or
+                target_tpl_view_id = #{viewId}
+            )
+    </select>
+
+
+    <select id="queryInvalidLinkId" parameterType="java.util.HashMap" resultType="String">
+        SELECT DISTINCT
+            t1.link_id
+        FROM
+            ssd_query_template_link t1
+                INNER JOIN ssd_query_template_link_field t2
+                           ON t1.link_id = t2.link_id
+        WHERE t1.target_tpl_id = #{tplId}
+          AND t1.target_tpl_view_id = #{viewId}
+          AND t2.field_code IN (
+              <foreach item="item" collection="fieldCodeList" separator=",">
+                  #{item}
+              </foreach>
+            )
+    </select>
+
+</mapper>

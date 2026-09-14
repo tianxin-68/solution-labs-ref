@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="chat.session.base">
+
+    <insert id="insertChatBase" parameterType="com.bi.queryer.ssm.llm.chatSession.entity.ChatBase"
+            useGeneratedKeys="true" keyProperty="chatId" keyColumn="chat_id">
+        insert into chat_base (
+            chat_name,
+            chat_business_type,
+            chat_business_id,
+            last_chat_message_id,
+            sort_id,
+            is_active,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time
+        ) values (
+            #{chatName},
+            #{chatBusinessType},
+            #{chatBusinessId},
+            #{lastChatMessageId},
+            #{sortId},
+            #{isActive},
+            #{createdBy},
+            #{createdTime},
+            #{updatedBy},
+            #{updatedTime}
+        )
+    </insert>
+
+    <select id="getNextSortIdByBusinessId" parameterType="map" resultType="double">
+        select ifnull(max(sort_id), 0) + 1
+        from chat_base
+        where chat_business_id = #{chatBusinessId}
+          and created_by = #{createdBy}
+          and is_active = 1
+    </select>
+
+    <select id="getChatBaseById" parameterType="long" resultType="com.bi.queryer.ssm.llm.chatSession.entity.ChatBase">
+        select
+            chat_id as chatId,
+            chat_name as chatName,
+            chat_business_type as chatBusinessType,
+            chat_business_id as chatBusinessId,
+            bound_view_id as boundViewId,
+            last_chat_message_id as lastChatMessageId,
+            sort_id as sortId,
+            is_active as isActive,
+            created_by as createdBy,
+            created_time as createdTime,
+            updated_by as updatedBy,
+            updated_time as updatedTime
+        from chat_base
+        where chat_id = #{chatId}
+    </select>
+
+    <update id="renameChatBase" parameterType="map">
+        update chat_base
+        set
+            chat_name = #{chatName},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            chat_id = #{chatId}
+            and created_by = #{updatedBy}
+            and is_active = 1
+    </update>
+
+    <update id="logicDeleteChatBase" parameterType="map">
+        update chat_base
+        set
+            is_active = 0,
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            chat_id = #{chatId}
+            and created_by = #{createdBy}
+            and is_active = 1
+    </update>
+
+    <update id="bindChatBaseView" parameterType="map">
+        update chat_base
+        set
+            bound_view_id = #{boundViewId},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            chat_id = #{chatId}
+            and created_by = #{updatedBy}
+            and is_active = 1
+    </update>
+
+    <update id="unbindChatBaseView" parameterType="map">
+        update chat_base
+        set
+            bound_view_id = null,
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            chat_id = #{chatId}
+            and created_by = #{updatedBy}
+            and is_active = 1
+    </update>
+
+    <update id="updateLastChatMessageId" parameterType="map">
+        update chat_base
+        set
+            last_chat_message_id = #{lastChatMessageId},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            chat_id = #{chatId}
+            and created_by = #{updatedBy}
+            and is_active = 1
+    </update>
+
+    <select id="listChatBaseByUser" parameterType="map" resultType="com.bi.queryer.ssm.llm.chatSession.resp.ChatSessionListItemResp">
+        select
+            cb.chat_id as chatId,
+            cb.chat_name as chatName,
+            cb.chat_business_type as chatBusinessType,
+            cb.chat_business_id as chatBusinessId,
+            cb.bound_view_id as boundViewId,
+            cb.last_chat_message_id as lastChatMessageId,
+            case when fav.fav_id is null then false else true end as isFavorite,
+            fav.fav_id as favId,
+            fav.fav_sort_id as favSortId,
+            cb.created_time as createdTime,
+            cb.updated_time as updatedTime
+        from chat_base cb
+        left join ssm_ai_analysis_fav fav
+            on cast(cb.chat_id as char) = fav.chat_id
+            and fav.created_by = #{userName}
+        where
+            cb.created_by = #{userName}
+            and cb.is_active = 1
+            <if test="chatBusinessType != null and chatBusinessType != ''">
+                and cb.chat_business_type = #{chatBusinessType}
+            </if>
+            <if test="chatBusinessId != null and chatBusinessId != ''">
+                and cb.chat_business_id = #{chatBusinessId}
+            </if>
+            <if test="boundViewId != null and boundViewId != ''">
+                and cb.bound_view_id = #{boundViewId}
+            </if>
+            <if test="favorite != null and favorite == 1">
+                and fav.fav_id is not null
+            </if>
+        order by
+            case when fav.fav_id is null then 1 else 0 end asc,
+            fav.fav_sort_id asc,
+            cb.sort_id desc,
+            cb.updated_time desc
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <select id="countChatBaseByUser" parameterType="map" resultType="int">
+        select count(1)
+        from chat_base cb
+        left join ssm_ai_analysis_fav fav
+            on cast(cb.chat_id as char) = fav.chat_id
+            and fav.created_by = #{userName}
+        where
+            cb.created_by = #{userName}
+            and cb.is_active = 1
+            <if test="chatBusinessType != null and chatBusinessType != ''">
+                and cb.chat_business_type = #{chatBusinessType}
+            </if>
+            <if test="chatBusinessId != null and chatBusinessId != ''">
+                and cb.chat_business_id = #{chatBusinessId}
+            </if>
+            <if test="favorite != null and favorite == 1">
+                and fav.fav_id is not null
+            </if>
+    </select>
+
+    <!-- genAI_feature/v3.15.0_start -->
+    <select id="listChatBaseByUserForAiRecentConversation" parameterType="map"
+            resultType="com.bi.queryer.ssm.llm.chatSession.entity.ChatBase">
+        select
+            chat_id as chatId,
+            chat_name as chatName,
+            chat_business_type as chatBusinessType,
+            chat_business_id as chatBusinessId,
+            last_chat_message_id as lastChatMessageId,
+            sort_id as sortId,
+            is_active as isActive,
+            created_by as createdBy,
+            created_time as createdTime,
+            updated_by as updatedBy,
+            updated_time as updatedTime
+        from chat_base
+        where
+            created_by = #{userName}
+            and is_active = 1
+        order by
+            last_chat_message_id desc
+    </select>
+
+    <!-- 按会话 id 批量加载 chat_base（收藏列表填充） -->
+    <select id="listChatBaseByChatIdsForUser" parameterType="map"
+            resultType="com.bi.queryer.ssm.llm.chatSession.entity.ChatBase">
+        select
+            chat_id as chatId,
+            chat_name as chatName,
+            chat_business_type as chatBusinessType,
+            chat_business_id as chatBusinessId,
+            last_chat_message_id as lastChatMessageId,
+            sort_id as sortId,
+            is_active as isActive,
+            created_by as createdBy,
+            created_time as createdTime,
+            updated_by as updatedBy,
+            updated_time as updatedTime
+        from chat_base
+        where created_by = #{userName}
+          and is_active = 1
+          and chat_id in
+        <foreach collection="chatIds" item="cid" open="(" separator="," close=")">
+            #{cid}
+        </foreach>
+    </select>
+    <!-- genAI_feature/v3.15.0_end -->
+
+</mapper>

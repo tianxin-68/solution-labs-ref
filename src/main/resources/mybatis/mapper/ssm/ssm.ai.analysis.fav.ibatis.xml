@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- genAI_feature/v3.15.0_start -->
+<mapper namespace="ssm.ai.analysis.fav">
+
+    <select id="countByUserAndChat" parameterType="java.util.Map" resultType="int">
+        select count(1)
+        from ssm_ai_analysis_fav
+        where created_by = #{userName}
+          and chat_id = #{chatId}
+    </select>
+
+    <select id="selectNextFavSortId" parameterType="java.util.Map" resultType="java.lang.Double">
+        select coalesce(max(fav_sort_id), 9999) + 1
+        from ssm_ai_analysis_fav
+        where created_by = #{userName}
+    </select>
+
+    <insert id="insert" parameterType="com.bi.queryer.ssm.portal.ai.entity.AiAnalysisFavEntity"
+            useGeneratedKeys="true" keyProperty="favId">
+        insert into ssm_ai_analysis_fav
+        (chat_id, fav_sort_id, created_by, created_time, updated_by, updated_time)
+        values
+        (#{chatId}, #{favSortId}, #{createdBy}, now(), #{updatedBy}, now())
+    </insert>
+
+    <delete id="deleteByUserAndChat" parameterType="java.util.Map">
+        delete from ssm_ai_analysis_fav
+        where created_by = #{userName}
+          and chat_id = #{chatId}
+    </delete>
+
+    <select id="listByUser" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.portal.ai.entity.AiAnalysisFavEntity">
+        select
+            fav_id as favId,
+            chat_id as chatId,
+            fav_sort_id as favSortId,
+            created_by as createdBy,
+            date_format(created_time, '%Y-%m-%d %H:%i:%s') as createdTime,
+            updated_by as updatedBy,
+            date_format(updated_time, '%Y-%m-%d %H:%i:%s') as updatedTime
+        from ssm_ai_analysis_fav
+        where created_by = #{userName}
+        order by fav_sort_id asc, fav_id asc
+    </select>
+
+    <select id="getFavByChatIds" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.portal.ai.entity.AiAnalysisFavEntity">
+        select
+            fav_id as favId,
+            chat_id as chatId,
+            fav_sort_id as favSortId,
+            created_by as createdBy,
+            date_format(created_time, '%Y-%m-%d %H:%i:%s') as createdTime,
+            updated_by as updatedBy,
+            date_format(updated_time, '%Y-%m-%d %H:%i:%s') as updatedTime
+        from ssm_ai_analysis_fav
+        where created_by = #{userName}
+        and chat_id in
+        <foreach item="item" collection="chatIds" separator="," open="(" close=")" index="">
+            #{item}
+        </foreach>
+    </select>
+
+</mapper>
+<!-- genAI_feature/v3.15.0_end -->

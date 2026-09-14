@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<models>
+  <table id="Component" class="com.bi.queryer.util.component.ComponentXmlVO" tablespace="" table="">
+      <td name="infoId" column="info_id" type="Long" priKey="true" sequence="PTL_BP_XMLHELPER_SEQ"
+       cascade="true" showable="true" editable="false">
+       <column colName="资源编号"/>
+      </td>
+      <td name="infoName" column="info_name" type="String" showable="true" editable="true">
+          <column editor="textbox" colName="资源名称" width="200" required="true" default=''/>
+      </td>
+      <td name="infoType" column="info_type" type="Long" showable="true" editable="false">
+          <column colName="所属目录" relateTable="PTL_BP_RPT_TREE" relateColumn="item_id" showColumn="item_name" relateCond="AND 1=1"/>
+      </td>
+      <td name="infoConfig" column="info_config" type="Clob" showable="false" editable="false"/>
+      <td relate="Sql" name="sqlConfig" column="sql_config_id" relateBase="true" showable="false" editable="false"/>
+      <td name="isConfig" column="is_config" type="Integer" showable="true" editable="false">
+       <column colName="已配置" format="yn2"/>
+      </td>
+      <td name="createDate" column="create_date" type="Timestamp" showable="true" editable="false">
+       <column editor="datebox" colName="创建时间" format="YYYY-MM-DD HH24:MI:SS"/>
+      </td>
+      <td name="createUser" column="create_user" type="String" showable="true" editable="false">
+         <column editor="textbox" colName="创建人"/>
+      </td>
+      <td name="updateDate" column="update_date" type="Timestamp" showable="true" editable="false">
+         <column editor="datebox" colName="修改时间" format="YYYY-MM-DD HH24:MI:SS"/>
+      </td>
+      <td name="updateUser" column="update_user" type="String" showable="true" editable="false">
+          <column editor="textbox" colName="修改人"/>
+      </td>
+      <td name="isActive" column="is_active" type="Integer" showable="false" editable="false"/>
+      <td name="note" column="note" type="String" showable="true" editable="true">
+          <column editor="textarea" colName="描述" />
+      </td>
+  </table>
+  <table id="Sql" class="com.bi.queryer.util.component.SqlXmlVO" tablespace="" table="PTL_BP_sql_info">
+      <td name="infoId" column="info_id" type="Long" priKey="true" sequence="PTL_BP_XMLHELPER_SEQ" cascade="false"/>
+      <td name="infoName" column="info_name" type="String"/>
+      <td name="infoConfig" column="info_config" type="Clob"/>
+      <td name="isActive" column="is_active" type="Integer"/>
+  </table>
+</models>

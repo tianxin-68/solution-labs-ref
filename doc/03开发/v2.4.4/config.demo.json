@@ -1,0 +1,312 @@
+{
+  "filter": [
+    {
+      "id": "7ad4ed6792cc43a2b4a3fa532e1b2b66",
+      "code": "businessline",
+      "name": "businessline",
+      "title": "业务线",
+      "filterValueType": "include",
+      "filterValueMode": "",
+      "valuesTitle": "",
+      "values": [],
+      "showOrder": 1
+    },
+    {
+      "id": "405f24f8135e44c08278a43a9d13c986",
+      "code": "dt",
+      "name": "order_date",
+      "title": "日期",
+      "filterValueType": "include",
+      "filterValueMode": "",
+      "isReadOnly": true,
+      "valuesTitle": "2023-12-11到2023-12-17",
+      "values": [
+        {
+          "id": "2023-12-11",
+          "title": "2023-12-11",
+          "realId": "",
+          "levelFieldName": "",
+          "levelFieldId": ""
+        },
+        {
+          "id": "2023-12-17",
+          "title": "2023-12-17",
+          "realId": "",
+          "levelFieldName": "",
+          "levelFieldId": ""
+        }
+      ],
+      "type": "txt",
+      "isFilter": true,
+      "filterType": "date-range",
+      "filterTips": "",
+      "isPlaceholder": false,
+      "isNew": false,
+      "isAggQuery": 0,
+      "queryDateGranularity": "d"
+    }
+  ],
+  "result": {
+    "rowDimensions": [
+      {
+        "id": "405f24f8135e44c08278a43a9d13c986",
+        "code": "dt",
+        "name": "order_date",
+        "title": "日期",
+        "sortType": "NONE",
+        "dataType": "txt",
+        "isKpi": false,
+        "path": [
+          "订单交易监控",
+          "维度-时间",
+          "日期"
+        ],
+        "isComputed": false,
+        "categoryAggregation": {
+          "enable": 0,
+          "categories": []
+        },
+        "isMeasure": false,
+        "isPlaceholder": false,
+        "isShow": 1,
+        "isAggQuery": 0,
+        "queryDateGranularity": "d"
+      },
+      {
+        "id": "7ad4ed6792cc43a2b4a3fa532e1b2b66",
+        "code": "businessline",
+        "name": "businessline",
+        "title": "业务线",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "dataType": "txt",
+        "isKpi": false,
+        "path": [
+          "订单交易监控",
+          "维度-渠道&业务线",
+          "业务线"
+        ],
+        "isComputed": false,
+        "isMeasure": false,
+        "isPlaceholder": false,
+        "isShow": 1,
+        "showOrder": 1
+      }
+    ],
+    "colDimensions": [],
+    "measures": [
+      {
+        "id": "21e026af839d408e880f9dce2d70f628",
+        "code": "submit_gmv",
+        "name": "submit_gmv",
+        "title": "提单GMV",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "dataType": "nbr",
+        "isKpi": false,
+        "path": [
+          "订单交易监控",
+          "指标-提单",
+          "提单GMV"
+        ],
+        "isComputed": false,
+        "isMeasure": true,
+        "isPlaceholder": false,
+        "isShow": 1,
+        "showOrder": 1
+      },
+      {
+        "id": "9bb2da94a78a45dc818b02d880478c2b",
+        "code": "",
+        "name": "",
+        "title": "w1",
+        "displayTitle": "",
+        "sortType": "NONE",
+        "dataType": "cpt",
+        "customFieldConfigure": {
+          "type":"lod",
+          "lodConfig":{
+            "dateGranularity" : "auto",
+            "dimensionList": [
+              { "id": "7ad4ed6792cc43a2b4a3fa532e1b2b66",
+                "code": "businessline",
+                "name": "businessline",
+                "title": "业务线"}
+            ],
+            "measureId": "21e026af839d408e880f9dce2d70f628",
+            "aggExpressionType" : "avg"
+          },
+          "enable": 1,
+          "isMeasure": 1,
+          "expression": "[21e026af839d408e880f9dce2d70f628]/10000.0",
+          "expressionIdMapping": [
+            {
+              "id": "21e026af839d408e880f9dce2d70f628",
+              "code": "submit_gmv",
+              "title": "提单GMV"
+            }
+          ],
+          "isRatio": false,
+          "decimal": 2
+        },
+        "path": [],
+        "isKpi": false,
+        "isPlaceholder": false,
+        "showOrder": 2
+      }
+    ]
+  },
+  "setting": {
+    "autoSearch": false,
+    "queryRowLimit": 20000,
+    "filterEmptyLine": false,
+    "isFold": false,
+    "isAggQuery": 0,
+    "dateGranularity": "d",
+    "dateType": "range",
+    "rangeDate": {
+      "d": [
+        "2023-12-11",
+        "2023-12-17"
+      ],
+      "w": [
+        "202345",
+        "202350"
+      ],
+      "m": [
+        "202310",
+        "202312"
+      ],
+      "y": [
+        "2023",
+        "2023"
+      ]
+    },
+    "pointDate": {
+      "d": "2023-12-17",
+      "w": "202350",
+      "m": "202312",
+      "y": "2023"
+    },
+    "customCompare": {
+      "isActive": 0,
+      "isSameDuration": true,
+      "calcTypes": [
+        "r_value",
+        "ratio",
+        "value"
+      ],
+      "isSingleRow": false,
+      "showMode": "upGreen",
+      "periods": [
+        {
+          "id": "",
+          "title": {
+            "d": "自定义对比",
+            "w": "自定义对比",
+            "m": "自定义对比",
+            "y": "自定义对比"
+          },
+          "pointDate": {
+            "d": "",
+            "w": "",
+            "m": "",
+            "y": ""
+          },
+          "rangeDate": {
+            "d": [],
+            "w": [],
+            "m": [],
+            "y": []
+          }
+        }
+      ]
+    },
+    "defaultDateSetting": {
+      "startTime": {
+        "mode": "dynamic",
+        "day": {
+          "value": "2023-12-11",
+          "offset": 6
+        },
+        "week": {
+          "value": "202345",
+          "offset": 5
+        },
+        "month": {
+          "value": "202310",
+          "offset": 2
+        }
+      },
+      "endTime": {
+        "mode": "dynamic",
+        "day": {
+          "value": "2023-12-17",
+          "offset": 0
+        },
+        "week": {
+          "value": "202350",
+          "offset": 0
+        },
+        "month": {
+          "value": "202312",
+          "offset": 0
+        }
+      }
+    },
+    "ctrData": {
+      "isActive": 1,
+      "items": []
+    },
+    "tableStyle": {
+      "flexType": "default",
+      "mergeCell": false,
+      "upDownSortData": {
+        "isActive": 1,
+        "sortFields": []
+      },
+      "leftRightSortData": {
+        "isActive": 1,
+        "sortFields": []
+      }
+    }
+  },
+  "sessionId": "w5C9TQhQgxv3Y0txNGlNt",
+  "analysis": {
+    "thb": {
+      "items": [],
+      "isActive": 1,
+      "dateFieldId": ""
+    },
+    "thbHistoryData": {},
+    "zb": {
+      "items": [],
+      "isActive": 1
+    },
+    "total": {
+      "items": [],
+      "isActive": 0
+    },
+    "setting": {
+      "zbAndTotalSetting": {
+        "isActive": 1,
+        "activeMode": "zb"
+      }
+    },
+    "compare": {
+      "items": [],
+      "isActive": 0
+    },
+    "ctr": {
+      "isActive": 1,
+      "items": []
+    }
+  },
+  "meso": [
+    {
+      "id": "7ad4ed6792cc43a2b4a3fa532e1b2b66",
+      "code": "businessline",
+      "isAggQuery": 0
+    }
+  ]
+}

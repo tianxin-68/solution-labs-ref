@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.field.ctg.rel">
+
+    <delete id="deleteByCtgId" parameterType="String">
+        delete from ssm_field_ctg_rel where ctg_id = #{ctgId}
+    </delete>
+
+    <delete id="deleteByFieldIds" parameterType="java.util.HashMap">
+        delete from
+            ssm_field_ctg_rel
+        where ctg_type = #{type}
+        and field_id in
+        (
+            <foreach collection="fieldIds" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+        )
+    </delete>
+
+    <insert id="insert" parameterType="java.util.HashMap">
+        insert into ssm_field_ctg_rel
+        (
+            field_id,
+            ctg_type,
+            ctg_id,
+            is_active,
+            created_time,
+            created_by
+        )
+        values
+        <foreach collection="fieldCtgRelList" index="index" item="item" separator=",">
+        (
+            #{item.fieldId},
+            #{item.ctgType},
+            #{item.ctgId},
+            #{item.isActive},
+            now(),
+            #{item.createdBy}
+        )
+        </foreach>
+    </insert>
+    
+    <select id="selectByCtgId" parameterType="String" resultType="com.bi.queryer.ssm.mgr.fieldCtg.model.FieldCtgRelEntity">
+        SELECT
+          t1.field_id as fieldId,
+          t1.`is_active` as isActive,
+          t1.`ctg_id` as ctgId
+        FROM
+          ssm_field_ctg_rel t1
+        WHERE t1.`ctg_id` = #{ctgId}
+    </select>
+
+    <update id="activeByMap" parameterType="java.util.HashMap">
+        update
+            ssm_field_ctg_rel
+        set
+            is_active = 1,
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            ctg_id = #{ctgId}
+            and field_id in
+            (
+                <foreach collection="activeFieldIdList" index="index" item="item" separator=",">
+                    #{item}
+                </foreach>
+            )
+
+    </update>
+
+    <update id="disableByMap" parameterType="java.util.HashMap">
+        update
+            ssm_field_ctg_rel
+        set
+            is_active = 0,
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where
+            ctg_id = #{ctgId}
+            and field_id in
+            (
+            <foreach collection="disableFieldIdList" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+            )
+    </update>
+
+    <delete id="deleteById" parameterType="String">
+        delete from ssm_field_ctg_rel where ctg_id = #{id}
+    </delete>
+
+    <delete id="batchDelete" parameterType="java.util.HashMap">
+        delete from ssm_field_ctg_rel
+        where ctg_id in
+        (
+            <foreach collection="ctgIds" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+        )
+    </delete>
+
+</mapper>

@@ -1,0 +1,59 @@
+{
+  "filter": [
+    {
+      "id": "a7328e54f2374bca8cb08c0ee8a128ed",
+      "code": "v_dws_prd_product_d_old_prdid",
+      "name": "old_prdid",
+      "title": "产品id",
+      "isAggQuery" : 0,
+      "queryDateGranularity" : "d",
+      "filterValueType": "include",
+      "filterValueMode": "",
+      "valuesTitle": "包含：123",
+      "values": [
+        {
+          "id": "123",
+          "title": "123",
+          "realId": "",
+          "levelFieldName": "",
+          "levelFieldId": ""
+        }
+      ],
+      "showOrder": 1
+    },
+    {
+      "id": "738829de6d5b426d8e2ab7397327266a",
+      "code": "v_ads_zzqs_shp_shop_offer_sheet_dtl_d_order_create_time",
+      "name": "order_create_time",
+      "title": "订单创建时间",
+      "filterValueType": "include",
+      "filterValueMode": "",
+      "valuesTitle": "2022-10-17 00:00:00 到 当前时间",
+      "values": [
+        {
+          "id": "20221017000000",
+          "title": "2022-10-17 00:00:00",
+          "realId": "",
+          "levelFieldId": "",
+          "levelFieldName": ""
+        },
+        {
+          "id": "${CurrentTime}",
+          "title": "当前时间",
+          "realId": "",
+          "levelFieldId": "",
+          "levelFieldName": ""
+        }
+      ],
+      "showOrder": 2
+    }
+  ],
+  "result": {
+    "rowDimensions":[{}],
+    "measures" : [{}]
+  },
+  "setting": {
+    "queryRowLimit": 100
+  },
+  "sessionId" : "1xx223dbd"
+}

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.portal.menu.access.log">
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.portal.entity.PortalMenuAccessLogEntity">
+        insert into ssm_portal_menu_access_log
+        (
+            user_name,
+            menu_id,
+            menu_name,
+            portal_id
+        )
+        values
+        (
+            #{userName},
+            #{menuId},
+            #{menuName},
+            #{portalId}
+        )
+    </insert>
+
+</mapper>

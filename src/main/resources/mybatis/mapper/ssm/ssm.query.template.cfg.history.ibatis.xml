@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.query.template.cfg.history">
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.query.template.view.model.TemplateCfgHistoryEntity">
+        insert into ssd_query_template_cfg_history
+        (
+            cfg_id,
+            view_id,
+            tpl_id,
+            tpl_config,
+            created_by,
+            created_time
+        )
+        values
+        (
+          #{cfgId},
+          #{viewId},
+          #{tplId},
+          #{tplConfig},
+          #{createdBy},
+          now()
+        )
+    </insert>
+
+    <select id="listByViewId" parameterType="String" resultType="Long">
+        SELECT
+            pkid
+        FROM
+            ssd_query_template_cfg_history
+        WHERE
+            view_id = #{viewId}
+        ORDER BY
+            created_time DESC
+    </select>
+
+    <delete id="batchDelete" parameterType="java.util.ArrayList">
+        delete from
+            ssd_query_template_cfg_history
+        where
+            pkid in
+            <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </delete>
+
+</mapper>

@@ -1,0 +1,21 @@
+{
+  "filter": [  { } ],
+  "result": {
+    "rowDimensions": [  { }  ],
+    "colDimensions": [],
+    "measures": [ {} ]
+  },
+  "setting": {
+    "autoSearch": false,
+    "queryRowLimit": 20000,
+    "filterEmptyLine": false,
+    "isFold": false,
+    "isAggQuery": 0,
+    "dateGranularity": "d",
+    "dateType": "range",
+    "showLunarDate": 0
+  },
+  "sessionId": "",
+  "analysis": {},
+  "meso": []
+}

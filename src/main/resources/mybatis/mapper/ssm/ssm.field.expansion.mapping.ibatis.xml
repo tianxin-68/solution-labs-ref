@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.field.expansion.mapping">
+
+    <!-- old_field_id -> new_field_id 一对多，按老字段 id 批量查 -->
+    <select id="queryByOldFieldIds" parameterType="java.util.List"
+            resultType="com.bi.queryer.ssm.api.entity.FieldExpansionMappingEntity">
+        select
+            old_field_id as oldFieldId,
+            new_field_id as newFieldId
+        from ssm_field_expansion_mapping
+        where old_field_id in
+        <foreach collection="list" open="(" separator="," close=")" item="fieldId">
+            #{fieldId}
+        </foreach>
+    </select>
+
+</mapper>

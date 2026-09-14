@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="chat.data.result">
+
+    <insert id="insertChatDataResult" parameterType="com.bi.queryer.ssm.llm.chatSession.entity.ChatDataResult">
+        insert into chat_data_result (
+            chat_data_id,
+            chat_id,
+            data_snapshot_id,
+            data_query_view_id,
+            data_query_config,
+            data_query_remark,
+            data_content,
+            data_preview_content,
+            data_size,
+            data_row_count,
+            data_column_count
+        ) values (
+            #{chatDataId},
+            #{chatId},
+            #{dataSnapshotId},
+            #{dataQueryViewId},
+            #{dataQueryConfig},
+            #{dataQueryRemark},
+            #{dataContent},
+            #{dataPreviewContent},
+            #{dataSize},
+            #{dataRowCount},
+            #{dataColumnCount}
+        )
+    </insert>
+
+    <insert id="insertChatDataResults" parameterType="java.util.List">
+        insert into chat_data_result (
+            chat_data_id,
+            chat_id,
+            data_snapshot_id,
+            data_query_view_id,
+            data_query_config,
+            data_query_remark,
+            data_content,
+            data_preview_content,
+            data_size,
+            data_row_count,
+            data_column_count
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.chatDataId},
+                #{item.chatId},
+                #{item.dataSnapshotId},
+                #{item.dataQueryViewId},
+                #{item.dataQueryConfig},
+                #{item.dataQueryRemark},
+                #{item.dataContent},
+                #{item.dataPreviewContent},
+                #{item.dataSize},
+                #{item.dataRowCount},
+                #{item.dataColumnCount}
+            )
+        </foreach>
+    </insert>
+
+    <select id="listChatDataResultByChatDataId" parameterType="string"
+            resultType="com.bi.queryer.ssm.llm.chatSession.entity.ChatDataResult">
+        select
+            chat_data_id as chatDataId,
+            chat_id as chatId,
+            data_snapshot_id as dataSnapshotId,
+            data_query_view_id as dataQueryViewId,
+            data_query_config as dataQueryConfig,
+            data_query_remark as dataQueryRemark,
+            data_content as dataContent,
+            data_preview_content as dataPreviewContent,
+            data_size as dataSize,
+            data_row_count as dataRowCount,
+            data_column_count as dataColumnCount
+        from chat_data_result
+        where chat_data_id = #{chatDataId}
+    </select>
+
+</mapper>

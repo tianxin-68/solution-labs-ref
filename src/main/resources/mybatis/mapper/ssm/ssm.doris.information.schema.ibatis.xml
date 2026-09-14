@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.doris.information.schema">
+
+    <select id="getTableDataUpdateTime" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.meta.DorisTableInformation">
+        select
+            concat(t1.TABLE_SCHEMA, '.', t1.TABLE_NAME) as tableFullName,
+            DATE_FORMAT( t1.UPDATE_TIME, '%Y-%m-%d %H:%i:%s') as dataUpdateTime
+        from
+            information_schema.tables t1
+        where
+            concat(t1.TABLE_SCHEMA, '.', t1.TABLE_NAME) in (
+                <foreach collection="list" index="index" item="item" separator=",">
+                    #{item}
+                </foreach>
+            )
+    </select>
+
+    <select id="getMaxTableDataUpdateTime" parameterType="java.util.ArrayList" resultType="String">
+        select
+            DATE_FORMAT(max(t1.UPDATE_TIME) , '%Y-%m-%d %H:%i:%s')  as dataUpdateTime
+        from
+            information_schema.tables t1
+        where
+            concat(t1.TABLE_SCHEMA, '.', t1.TABLE_NAME) in (
+            <foreach collection="list" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+            )
+    </select>
+
+    <select id="getTableInfo" parameterType="java.util.HashMap" resultType="java.util.Map">
+        SHOW TABLE STATUS FROM ${dbName} LIKE #{tableName}
+    </select>
+    
+    <select id="getNearRealtimeLastBatch" resultType="String">
+        select date_time from bi_view.v_dim_realtime_last_batch_h
+    </select>
+
+</mapper>

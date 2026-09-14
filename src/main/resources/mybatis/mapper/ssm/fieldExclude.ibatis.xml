@@ -1,0 +1,609 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="fieldExclude">
+
+    <sql id="sqlFilter">
+        <if test="searchTxt != null and '' != searchTxt">
+            and
+            (
+            t.`field_name` LIKE concat('%',#{searchTxt},'%')
+            or
+            t.`exclude_field_name` LIKE concat('%',#{searchTxt},'%')
+            or
+            ctg1.`ctg_name` LIKE concat('%',#{searchTxt},'%')
+            or
+            ctg2.`ctg_name` LIKE concat('%',#{searchTxt},'%')
+            )
+        </if>
+    </sql>
+
+    <select id="queryFieldExcludeList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.MetaFieldExclude">
+        select
+            e1.code,
+            e1.name,
+            e1.excludeCode,
+            e1.excludeName,
+            e1.categoryId,
+            e1.categoryName,
+            e1.excludeCategoryId,
+            e1.excludeCategoryName,
+            e1.excludeDesc,
+            e1.isActive
+        FROM (
+        SELECT
+        t.field_code as code,
+        t.field_name as name,
+        t.exclude_field_code as excludeCode,
+        t.exclude_field_name as excludeName,
+        <choose>
+            <when test="type=='fieldExclude'">
+                #{ctgId} as categoryId,
+                #{ctgName} as categoryName,
+                ctg2.`ctg_id` as excludeCategoryId,
+                ctg2.`ctg_name` as excludeCategoryName,
+            </when>
+            <when test="type=='ctgExclude'">
+                t.ctg_id as categoryId,
+                ctg1.`ctg_name` as categoryName,
+                t.exclude_ctg_id as excludeCategoryId,
+                ctg2.`ctg_name` as excludeCategoryName,
+            </when>
+            <when test="type=='fieldCtgExclude'">
+                #{ctgId} as categoryId,
+                #{ctgName} as categoryName,
+                t.exclude_ctg_id as excludeCategoryId,
+                ctg2.`ctg_name` as excludeCategoryName,
+            </when>
+            <otherwise>
+                t.ctg_id as categoryId,
+                ctg1.`ctg_name` as categoryName,
+                t.exclude_ctg_id as excludeCategoryId,
+                ctg2.`ctg_name` as excludeCategoryName,
+            </otherwise>
+        </choose>
+
+        t.exclude_desc as excludeDesc,
+        t.is_active as isActive,
+        t.`created_time`
+        FROM
+        ssd_field_exclude t
+        <choose>
+            <when test="type=='fieldExclude'">
+                INNER JOIN ssd_field_def sfd1 on t.field_code = sfd1.field_code
+                INNER JOIN ssd_field_def sfd2 on t.exclude_field_code = sfd2.field_code
+                INNER JOIN ssd_field_ctg ctg2 on ctg2.`ctg_id` = sfd2.end_ctg_id
+            </when>
+            <when test="type=='fieldCtgExclude'">
+                INNER JOIN ssd_field_def sfd1 on t.field_code = sfd1.field_code
+                INNER JOIN ssd_field_ctg ctg2
+                ON ctg2.`ctg_id` = t.exclude_ctg_id
+                AND ctg2.`ctg_type` = 'back'
+                AND ctg2.is_active = 1
+            </when>
+            <when test="type=='ctgExclude'">
+                INNER JOIN ssd_field_ctg ctg1
+                ON ctg1.`ctg_id` = t.ctg_id
+                AND ctg1.`ctg_type` = 'back'
+                AND ctg1.is_active = 1
+                LEFT JOIN ssd_field_ctg ctg2
+                ON ctg2.`ctg_id` = t.exclude_ctg_id
+                AND ctg2.`ctg_type` = 'back'
+                AND ctg2.is_active = 1
+            </when>
+            <otherwise>
+                INNER JOIN ssd_field_ctg ctg1
+                ON ctg1.`ctg_id` = t.ctg_id
+                AND ctg1.`ctg_type` = 'back'
+                AND ctg1.is_active = 1
+                LEFT JOIN ssd_field_ctg ctg2
+                ON ctg2.`ctg_id` = t.exclude_ctg_id
+                AND ctg2.`ctg_type` = 'back'
+                AND ctg2.is_active = 1
+            </otherwise>
+        </choose>
+
+         WHERE 1=1
+         <include refid="sqlFilter"/>
+        <choose>
+            <when test="type=='fieldExclude'">
+                AND sfd1.end_ctg_id = #{ctgId}
+                AND t.field_code IS NOT NULL
+                AND t.exclude_field_code IS NOT NULL
+            </when>
+            <when test="type=='ctgExclude'">
+                AND t.ctg_id = #{ctgId}
+                AND t.exclude_ctg_id IS NOT NULL
+                AND ctg2.`ctg_name` IS NOT NULL
+            </when>
+            <when test="type=='fieldCtgExclude'">
+                AND sfd1.end_ctg_id = #{ctgId}
+                AND t.field_code IS NOT NULL
+                AND t.exclude_ctg_id IS NOT NULL
+            </when>
+            <otherwise>
+                AND t.exclude_ctg_id IS NOT NULL
+                AND ctg2.`ctg_name` IS NOT NULL
+            </otherwise>
+        </choose>
+        <if test="type=='fieldExclude' or type=='ctgExclude'">
+        UNION ALL
+            SELECT
+            t.field_code as excludeCode,
+            t.field_name as excludeName,
+            t.exclude_field_code as code,
+            t.exclude_field_name as name,
+            <choose>
+                <when test="type=='fieldExclude'">
+                    ctg2.`ctg_id` as categoryId,
+                    ctg2.`ctg_name` as categoryName,
+                    #{ctgId} as excludeCategoryId,
+                    #{ctgName} as excludeCategoryName,
+                </when>
+                <when test="type=='ctgExclude'">
+                    t.exclude_ctg_id as categoryId,
+                    ctg2.`ctg_name` as categoryName,
+                    t.ctg_id as excludeCategoryId,
+                    ctg1.`ctg_name` as excludeCategoryName,
+                </when>
+                <otherwise>
+
+                </otherwise>
+            </choose>
+
+            t.exclude_desc as excludeDesc,
+            t.is_active as isActive,
+            t.`created_time`
+            FROM
+            ssd_field_exclude t
+            <choose>
+                <when test="type=='fieldExclude' or type=='fieldCtgExclude'">
+                    INNER JOIN ssd_field_def sfd1 on t.exclude_field_code = sfd1.field_code
+                    INNER JOIN ssd_field_def sfd2 on t.field_code = sfd2.field_code
+                    INNER JOIN ssd_field_ctg ctg2 on ctg2.`ctg_id` = sfd2.end_ctg_id
+                </when>
+                <when test="type=='ctgExclude'">
+                    INNER JOIN ssd_field_ctg ctg1
+                    ON ctg1.`ctg_id` = t.ctg_id
+                    AND ctg1.`ctg_type` = 'back'
+                    AND ctg1.is_active = 1
+                    INNER JOIN ssd_field_ctg ctg2
+                    ON ctg2.`ctg_id` = t.exclude_ctg_id
+                    AND ctg2.`ctg_type` = 'back'
+                    AND ctg2.is_active = 1
+                </when>
+                <otherwise>
+
+                </otherwise>
+            </choose>
+
+            WHERE 1=1
+            <include refid="sqlFilter"/>
+            <choose>
+                <when test="type=='fieldExclude'">
+                    AND sfd1.end_ctg_id = #{ctgId}
+                    AND t.field_code IS NOT NULL
+                    AND t.exclude_field_code IS NOT NULL
+                </when>
+                <when test="type=='ctgExclude'">
+                    AND t.exclude_ctg_id = #{ctgId}
+                    AND t.ctg_id IS NOT NULL
+                    AND ctg1.`ctg_name` IS NOT NULL
+                </when>
+                <otherwise>
+
+                </otherwise>
+            </choose>
+        </if>
+        ) e1
+        WHERE e1.isActive = 1
+        GROUP BY
+            e1.code,
+            e1.name,
+            e1.excludeCode,
+            e1.excludeName,
+            e1.categoryId,
+            e1.categoryName,
+            e1.excludeCategoryId,
+            e1.excludeCategoryName,
+            e1.excludeDesc,
+            e1.isActive
+        <choose>
+            <when test="sortKey != null and '' != sortKey">
+                ORDER BY ${sortKey} ${sortType}
+            </when>
+            <otherwise>
+                ORDER BY e1.name asc,e1.excludeName asc,e1.categoryName asc,e1.excludeCategoryName asc
+            </otherwise>
+        </choose>
+        -- ORDER BY e1.`created_time` DESC
+        LIMIT ${pageRowLower}, ${prePageSize}
+    </select>
+
+    <select id="queryFieldExcludeListCount"  parameterType="java.util.HashMap" resultType="Integer">
+
+        SELECT
+        count(1)
+        FROM
+        (
+        select
+        e1.code,
+        e1.name,
+        e1.excludeCode,
+        e1.excludeName,
+        e1.categoryId,
+        e1.categoryName,
+        e1.excludeCategoryId,
+        e1.excludeCategoryName,
+        e1.excludeDesc,
+        e1.isActive
+        FROM (
+        SELECT
+        t.field_code as code,
+        t.field_name as name,
+        t.exclude_field_code as excludeCode,
+        t.exclude_field_name as excludeName,
+        <choose>
+            <when test="type=='fieldExclude'">
+                #{ctgId} as categoryId,
+                #{ctgName} as categoryName,
+                ctg2.`ctg_id` as excludeCategoryId,
+                ctg2.`ctg_name` as excludeCategoryName,
+            </when>
+            <when test="type=='ctgExclude'">
+                t.ctg_id as categoryId,
+                ctg1.`ctg_name` as categoryName,
+                t.exclude_ctg_id as excludeCategoryId,
+                ctg2.`ctg_name` as excludeCategoryName,
+            </when>
+            <when test="type=='fieldCtgExclude'">
+                #{ctgId} as categoryId,
+                #{ctgName} as categoryName,
+                t.exclude_ctg_id as excludeCategoryId,
+                ctg2.`ctg_name` as excludeCategoryName,
+            </when>
+            <otherwise>
+                t.ctg_id as categoryId,
+                ctg1.`ctg_name` as categoryName,
+                t.exclude_ctg_id as excludeCategoryId,
+                ctg2.`ctg_name` as excludeCategoryName,
+            </otherwise>
+        </choose>
+
+        t.exclude_desc as excludeDesc,
+        t.is_active as isActive,
+        t.`created_time`
+        FROM
+        ssd_field_exclude t
+        <choose>
+            <when test="type=='fieldExclude'">
+                INNER JOIN ssd_field_def sfd1 on t.field_code = sfd1.field_code
+                INNER JOIN ssd_field_def sfd2 on t.exclude_field_code = sfd2.field_code
+                INNER JOIN ssd_field_ctg ctg2 on ctg2.`ctg_id` = sfd2.end_ctg_id
+            </when>
+            <when test="type=='fieldCtgExclude'">
+                INNER JOIN ssd_field_def sfd1 on t.field_code = sfd1.field_code
+                INNER JOIN ssd_field_ctg ctg2
+                ON ctg2.`ctg_id` = t.exclude_ctg_id
+                AND ctg2.`ctg_type` = 'back'
+                AND ctg2.is_active = 1
+            </when>
+            <when test="type=='ctgExclude'">
+                INNER JOIN ssd_field_ctg ctg1
+                ON ctg1.`ctg_id` = t.ctg_id
+                AND ctg1.`ctg_type` = 'back'
+                AND ctg1.is_active = 1
+                INNER JOIN ssd_field_ctg ctg2
+                ON ctg2.`ctg_id` = t.exclude_ctg_id
+                AND ctg2.`ctg_type` = 'back'
+                AND ctg2.is_active = 1
+            </when>
+            <otherwise>
+                INNER JOIN ssd_field_ctg ctg1
+                ON ctg1.`ctg_id` = t.ctg_id
+                AND ctg1.`ctg_type` = 'back'
+                AND ctg1.is_active = 1
+                INNER JOIN ssd_field_ctg ctg2
+                ON ctg2.`ctg_id` = t.exclude_ctg_id
+                AND ctg2.`ctg_type` = 'back'
+                AND ctg2.is_active = 1
+            </otherwise>
+        </choose>
+
+        WHERE 1=1
+        <include refid="sqlFilter"/>
+        <choose>
+            <when test="type=='fieldExclude'">
+                AND sfd1.end_ctg_id = #{ctgId}
+                AND t.field_code IS NOT NULL
+                AND t.exclude_field_code IS NOT NULL
+            </when>
+            <when test="type=='ctgExclude'">
+                AND t.ctg_id = #{ctgId}
+                AND t.exclude_ctg_id IS NOT NULL
+                AND ctg2.`ctg_name` IS NOT NULL
+            </when>
+            <when test="type=='fieldCtgExclude'">
+                AND sfd1.end_ctg_id = #{ctgId}
+                AND t.field_code IS NOT NULL
+                AND t.exclude_ctg_id IS NOT NULL
+            </when>
+            <otherwise>
+                AND t.exclude_ctg_id IS NOT NULL
+                AND ctg2.`ctg_name` IS NOT NULL
+            </otherwise>
+        </choose>
+        <if test="type=='fieldExclude' or type=='ctgExclude'">
+            UNION ALL
+            SELECT
+            t.field_code as excludeCode,
+            t.field_name as excludeName,
+            t.exclude_field_code as code,
+            t.exclude_field_name as name,
+            <choose>
+                <when test="type=='fieldExclude'">
+                    ctg2.`ctg_id` as categoryId,
+                    ctg2.`ctg_name` as categoryName,
+                    #{ctgId} as excludeCategoryId,
+                    #{ctgName} as excludeCategoryName,
+                </when>
+                <when test="type=='ctgExclude'">
+                    t.exclude_ctg_id as categoryId,
+                    ctg2.`ctg_name` as categoryName,
+                    t.ctg_id as excludeCategoryId,
+                    ctg1.`ctg_name` as excludeCategoryName,
+                </when>
+                <otherwise>
+
+                </otherwise>
+            </choose>
+
+            t.exclude_desc as excludeDesc,
+            t.is_active as isActive,
+            t.`created_time`
+            FROM
+            ssd_field_exclude t
+            <choose>
+                <when test="type=='fieldExclude' or type=='fieldCtgExclude'">
+                    INNER JOIN ssd_field_def sfd1 on t.exclude_field_code = sfd1.field_code
+                    INNER JOIN ssd_field_def sfd2 on t.field_code = sfd2.field_code
+                    INNER JOIN ssd_field_ctg ctg2 on ctg2.`ctg_id` = sfd2.end_ctg_id
+                </when>
+                <when test="type=='ctgExclude'">
+                    INNER JOIN ssd_field_ctg ctg1
+                    ON ctg1.`ctg_id` = t.ctg_id
+                    AND ctg1.`ctg_type` = 'back'
+                    AND ctg1.is_active = 1
+                    INNER JOIN ssd_field_ctg ctg2
+                    ON ctg2.`ctg_id` = t.exclude_ctg_id
+                    AND ctg2.`ctg_type` = 'back'
+                    AND ctg2.is_active = 1
+                </when>
+                <otherwise>
+
+                </otherwise>
+            </choose>
+
+            WHERE 1=1
+            <include refid="sqlFilter"/>
+            <choose>
+                <when test="type=='fieldExclude'">
+                    AND sfd1.end_ctg_id = #{ctgId}
+                    AND t.field_code IS NOT NULL
+                    AND t.exclude_field_code IS NOT NULL
+                </when>
+                <when test="type=='ctgExclude'">
+                    AND t.exclude_ctg_id = #{ctgId}
+                    AND t.ctg_id IS NOT NULL
+                    AND ctg1.`ctg_name` IS NOT NULL
+                </when>
+                <otherwise>
+
+                </otherwise>
+            </choose>
+        </if>
+        ) e1
+        WHERE e1.isActive = 1
+        GROUP BY
+        e1.code,
+        e1.name,
+        e1.excludeCode,
+        e1.excludeName,
+        e1.categoryId,
+        e1.categoryName,
+        e1.excludeCategoryId,
+        e1.excludeCategoryName,
+        e1.excludeDesc,
+        e1.isActive
+        <choose>
+            <when test="sortKey != null and '' != sortKey">
+                ORDER BY ${sortKey} ${sortType}
+            </when>
+            <otherwise>
+                ORDER BY e1.name asc,e1.excludeName asc,e1.categoryName asc,e1.excludeCategoryName asc
+            </otherwise>
+        </choose>
+        ) ac
+
+    </select>
+
+    <delete id="deleteFieldExclude" parameterType="com.bi.queryer.ssm.meta.MetaFieldExclude">
+
+        delete from ssd_field_exclude
+        where
+            <choose>
+                <when test="type=='fieldExclude'">
+                    field_code = #{code} and exclude_field_code is not null
+                </when>
+                <when test="type=='fieldCtgExclude'">
+                    field_code = #{code} and exclude_ctg_id is not null
+                </when>
+                <otherwise>
+                    ctg_id = #{categoryId}
+                </otherwise>
+            </choose>
+
+    </delete>
+
+    <delete id="deleteFieldExcludeCtg" parameterType="com.bi.queryer.ssm.meta.MetaFieldExclude">
+
+        delete from ssd_field_exclude
+        where
+        ctg_id = #{categoryId}
+        AND exclude_ctg_id = #{excludeCategoryId}
+
+    </delete>
+
+    <select id="queryCtgToCtgExcludeExist" parameterType="com.bi.queryer.ssm.meta.MetaFieldExclude" resultType="Integer">
+
+        SELECT
+        count(1)
+        FROM
+        ssd_field_exclude
+        WHERE 1=1
+        AND ctg_id = #{categoryId}
+       AND exclude_ctg_id = #{excludeCategoryId}
+
+    </select>
+
+
+    <insert id="insertIntoFieldExclude" parameterType="com.bi.queryer.ssm.meta.MetaFieldExclude">
+
+        insert into ssd_field_exclude
+        (
+            field_code,
+            field_name,
+            exclude_field_code,
+            exclude_field_name,
+            ctg_id,
+            exclude_ctg_id,
+            exclude_desc,
+            is_active,
+            created_time,
+            created_by
+        )
+        values
+        <foreach collection="fieldExcludeList" index="index" item="item" separator="," >
+            (#{item.code},#{item.name},#{item.excludeCode},#{item.excludeName},#{item.categoryId},#{item.excludeCategoryId},#{item.excludeDesc},#{item.isActive},now(),#{item.createdBy})
+        </foreach>
+
+    </insert>
+    
+    <delete id="deleteFieldExcludeSingle" parameterType="com.bi.queryer.ssm.meta.MetaFieldExclude">
+
+        delete from ssd_field_exclude
+
+        where
+        <choose>
+            <when test="type=='fieldExclude'">
+                (field_code = #{code} and exclude_field_code = #{excludeCode})
+                OR
+                (field_code = #{excludeCode} and exclude_field_code = #{code})
+            </when>
+            <when test="type=='fieldCtgExclude'">
+                field_code = #{code} and exclude_ctg_id = #{excludeCategoryId}
+            </when>
+            <otherwise>
+                (ctg_id = #{categoryId} and exclude_ctg_id = #{excludeCategoryId})
+                OR
+                (ctg_id = #{excludeCategoryId} and exclude_ctg_id = #{categoryId})
+            </otherwise>
+        </choose>
+
+    </delete>
+
+    <select id="getFieldExcludeIds" parameterType="java.util.HashMap" resultType="String">
+        select e1.excludeId FROM (
+            select
+            <choose>
+                <when test="type=='fieldExclude'">
+                    sfd.field_id AS excludeId
+                </when>
+                <otherwise>
+                    t.exclude_ctg_id AS excludeId
+                </otherwise>
+            </choose>
+            from ssd_field_exclude t
+            left join ssd_field_def sfd on t.exclude_field_code = sfd.field_code
+            where
+            <choose>
+                <when test="type=='fieldExclude' or type=='fieldCtgExclude'">
+                    t.field_code = #{code}
+                </when>
+                <otherwise>
+                    t.ctg_id = #{categoryId}
+                </otherwise>
+            </choose>
+            <if test="type=='fieldExclude' or type=='ctgExclude'">
+                UNION ALL
+                select
+                <choose>
+                    <when test="type=='fieldExclude'">
+                        sfd.field_id  AS excludeId
+                    </when>
+                    <otherwise>
+                        t.ctg_id  AS excludeId
+                    </otherwise>
+                </choose>
+                from ssd_field_exclude t
+                left join ssd_field_def sfd on t.field_code = sfd.field_code
+                where
+                <choose>
+                    <when test="type=='fieldExclude' or type=='fieldCtgExclude'">
+                        t.exclude_field_code = #{code}
+                    </when>
+                    <otherwise>
+                        t.exclude_ctg_id = #{categoryId}
+                    </otherwise>
+                </choose>
+            </if>
+        ) e1
+        GROUP BY e1.excludeId
+
+    </select>
+
+    <select id="getFieldExcludeDesc" parameterType="java.util.HashMap" resultType="String">
+        select exclude_desc from ssd_field_exclude
+        where
+        <choose>
+            <when test="type=='fieldExclude' or type=='fieldCtgExclude'">
+                field_code = #{code}
+            </when>
+            <otherwise>
+                ctg_id = #{categoryId}
+            </otherwise>
+        </choose>
+        limit 0,1
+    </select>
+
+    <insert id="insertIntoFieldExcludeSingle" parameterType="com.bi.queryer.ssm.meta.MetaFieldExclude">
+
+        insert into ssd_field_exclude
+        (
+        field_code,
+        field_name,
+        exclude_field_code,
+        exclude_field_name,
+        ctg_id,
+        exclude_ctg_id,
+        exclude_desc,
+        is_active,
+        created_time,
+        created_by
+        )
+        values
+         (
+         #{code},
+         #{name},
+         #{excludeCode},
+         #{excludeName},
+         #{categoryId},
+         #{excludeCategoryId},
+         #{excludeDesc},
+         #{isActive},
+         now(),
+         #{createdBy}
+         )
+
+    </insert>
+
+</mapper>

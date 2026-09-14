@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.hot.info">
+
+    <!-- 查询所有可用热表信息：用于缓存(不分页) -->
+    <select id="queryAllHotTableInfo" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableInfo">
+        select
+            t1.hot_table_id as hotTableId,
+            t1.source_table_name as sourceTableName,
+            t1.hot_table_name as hotTableName,
+            t1.hot_db_engine as hotDbEngine,
+            t1.hot_data_init_days as hotDataInitDays,
+            t1.data_min_date as dataMinDate,
+            t1.data_max_date as dataMaxDate,
+            t1.data_finish_time as dataFinishTime,
+            t1.etl_script_id as etlScriptId,
+            t1.etl_script_name as etlScriptName,
+            t1.etl_job_name as etlJobName,
+            t1.is_active as isActive,
+            t1.created_by as createdBy,
+            date_format(t1.created_time, '%Y-%m-%d %H:%i:%s') as createdTime,
+            t1.updated_by as updatedBy,
+            date_format(t1.updated_time, '%Y-%m-%d %H:%i:%s') as updatedTime
+        from ssm_hot_table_info t1
+        where 1=1
+          and t1.is_active = 1
+          and EXISTS (
+            select 1 from ssm_hot_table_source t2 where t2.source_table_name = t1.source_table_name and t2.is_active = 1
+        )
+        order by createdTime
+    </select>
+
+    <select id="queryEtlJobByNames" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.SysEtlJobInfo">
+        select
+            t1.ETL_JOB as etlJob,
+            t1.LAST_TXDATE as lastTxdate,
+            t1.LAST_ENDTIME as lastEndTime,
+            t1.JOBTYPE as jobType
+        from etl_job t1
+        where 1=1
+            and t1.LAST_JOBSTATUS = 'Done'
+        <if test="etlJobNames != null and etlJobNames.size()>0">
+            and t1.ETL_JOB in
+            (
+            <foreach  collection="etlJobNames" index="index" item="item" separator="," >
+                #{item}
+            </foreach>
+            )
+        </if>
+    </select>
+
+    <select id="getHotTableInfoBySourceTableName" parameterType="String"  resultType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableInfo">
+        select
+            t1.hot_table_id as hotTableId,
+            t1.source_table_name as sourceTableName,
+            t1.hot_table_name as hotTableName,
+            t1.hot_db_engine as hotDbEngine,
+            t1.hot_data_init_days as hotDataInitDays,
+            t1.data_min_date as dataMinDate,
+            t1.data_max_date as dataMaxDate,
+            t1.data_finish_time as dataFinishTime,
+            t1.etl_script_id as etlScriptId,
+            t1.etl_script_name as etlScriptName,
+            t1.etl_job_name as etlJobName,
+            t1.is_active as isActive,
+            t1.created_by as createdBy,
+            date_format(t1.created_time, '%Y-%m-%d %H:%i:%s') as createdTime,
+            t1.updated_by as updatedBy,
+            date_format(t1.updated_time, '%Y-%m-%d %H:%i:%s') as updatedTime
+        from ssm_hot_table_info t1
+        where 1=1
+          and t1.is_active = 1
+          and t1.source_table_name = #{sourceTableName}
+    </select>
+
+    <update id="disable" parameterType="java.util.HashMap">
+        update ssm_hot_table_info t1
+          set t1.is_active = 0
+        where t1.hot_table_name = #{hotTableName}
+        <if test="hotDbEngine != '' and hotDbEngine != null">
+            and t1.hot_db_engine = #{hotDbEngine}
+        </if>
+    </update>
+
+    <delete id="deleteHotTableInfo" parameterType="java.util.HashMap">
+        delete from ssm_hot_table_info
+        where 1=1
+
+        <if test="sourceTableNameList != null and sourceTableNameList.size()>0">
+            and source_table_name  in
+            (
+            <foreach  collection="sourceTableNameList" index="index" item="item" separator="," >
+                #{item}
+            </foreach>
+            )
+        </if>
+
+        <if test="hotTableName != '' and hotTableName != null">
+            and hot_table_name = #{hotTableName}
+        </if>
+    </delete>
+
+    <insert id="insertHotTableInfo" parameterType="java.util.HashMap">
+        insert into ssm_hot_table_info(
+            hot_table_id,
+            source_table_name,
+            hot_table_name,
+            hot_db_engine,
+            hot_data_init_days,
+            data_min_date,
+            data_max_date,
+            etl_job_name,
+            is_active,
+            created_by,
+            created_time
+        )
+        select
+            md5(uuid()) as hot_table_id,
+            t1.source_table_name,
+            concat(
+                    'bi_hot.h_',
+                    substring(t1.source_table_name, locate('.', t1.source_table_name) + 1, length(t1.source_table_name) - locate('.', t1.source_table_name))
+                ) as hot_table_name,
+            'trino' as hot_db_engine,
+            t1.hot_data_init_days,
+            date_format(date_sub(curdate(), interval t1.hot_data_init_days day), '%Y-%m-%d') as data_min_date,
+            date_format(date_sub(curdate(), interval 1 day), '%Y-%m-%d') as data_max_date,
+            upper(
+                    concat('HOT_H_',
+                           substring(t1.source_table_name, locate('.', t1.source_table_name) + 1, length(t1.source_table_name) - locate('.', t1.source_table_name))
+                        )
+                ) as etl_job_name,
+            1 as is_active,
+            '${hotTableOwner}' as created_by,
+            now() as created_time
+        from ssm_hot_table_source t1
+        where t1.support_hot_db_engine like '%trino%'
+        and t1.is_active = 1
+        <if test="sourceTableNameList != null and sourceTableNameList.size()>0">
+            and t1.source_table_name  in
+            (
+            <foreach  collection="sourceTableNameList" index="index" item="item" separator="," >
+                #{item}
+            </foreach>
+            )
+        </if>
+        union all
+        select
+            md5(uuid()) as hot_table_id,
+            t1.source_table_name,
+            concat(
+                    'bi_hot.h_',
+                    substring(t1.source_table_name, locate('.', t1.source_table_name) + 1, length(t1.source_table_name) - locate('.', t1.source_table_name))
+                ) as hot_table_name,
+            'doris' as hot_db_engine,
+            t1.hot_data_init_days,
+            date_format(date_sub(curdate(), interval t1.hot_data_init_days day), '%Y-%m-%d') as data_min_date,
+            date_format(date_sub(curdate(), interval 1 day), '%Y-%m-%d') as data_max_date,
+            upper(
+                    concat('DRH_H_',
+                           substring(t1.source_table_name, locate('.', t1.source_table_name) + 1, length(t1.source_table_name) - locate('.', t1.source_table_name))
+                        )
+                ) as etl_job_name,
+            1 as is_active,
+            '${hotTableOwner}' as created_by,
+            now() as created_time
+        from ssm_hot_table_source t1
+        where t1.support_hot_db_engine like '%doris%'
+        and t1.is_active = 1
+        <if test="sourceTableNameList != null and sourceTableNameList.size()>0">
+            and t1.source_table_name  in
+            (
+            <foreach  collection="sourceTableNameList" index="index" item="item" separator="," >
+                #{item}
+            </foreach>
+            )
+        </if>
+    </insert>
+
+    <update id="updateFinishTime" parameterType="java.util.HashMap">
+        update ssm_hot_table_info
+        set data_finish_time = #{dataFinishTime}
+        where etl_job_name = #{etlJobName}
+    </update>
+
+    <update id="updateHotTableInfo" parameterType="java.util.HashMap">
+        update
+            ssm_hot_table_info
+        set
+            data_max_date = date_format(date_sub(curdate(), interval 1 day), '%Y-%m-%d'),
+            data_finish_time = null ,
+            is_active = 1,
+            updated_time = now(),
+            updated_by = '${hotTableOwner}'
+        where 1=1
+        <if test="sourceTableNameList != null and sourceTableNameList.size()>0">
+            and source_table_name  in
+            (
+            <foreach  collection="sourceTableNameList" index="index" item="item" separator="," >
+                #{item}
+            </foreach>
+            )
+        </if>
+    </update>
+
+    <update id="updateHotTableMinDate" parameterType="java.util.HashMap">
+        UPDATE
+            ssm_hot_table_info t1
+        INNER JOIN
+        (
+        SELECT
+            source_table_name,
+            DATE_FORMAT(
+            DATE_SUB(
+            CURDATE(),
+            INTERVAL hot_data_max_days DAY
+            ),
+            '%Y-%m-%d'
+            ) AS hot_data_min_date
+        FROM
+            ssm_hot_table_source
+        WHERE data_update_mode = 'incremental'
+        AND source_table_name IN (
+                <foreach  collection="sourceTableNameList" index="index" item="item" separator="," >
+                    #{item}
+                </foreach>
+            )
+        ) t2  ON t1.source_table_name = t2.source_table_name
+        SET t1.data_min_date = t2.hot_data_min_date
+        WHERE t1.data_min_date <![CDATA[ <= ]]>  t2.hot_data_min_date
+        AND t1.source_table_name IN (
+            <foreach  collection="sourceTableNameList" index="index" item="item" separator="," >
+                #{item}
+            </foreach>
+        )
+    </update>
+
+    <update id="updateMinDateBySourceTable" parameterType="java.util.HashMap">
+        update ssm_hot_table_info
+        set data_min_date = #{minDate}
+        where source_table_name = #{sourceTableName}
+    </update>
+
+</mapper>

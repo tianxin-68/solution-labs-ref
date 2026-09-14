@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.template.link.field">
+
+    <delete id="batchDeleteByLinkId" parameterType="java.util.HashMap">
+        delete from
+                   ssd_query_template_link_field
+               where link_id in (
+                   <foreach item="item" collection="linkIdList" separator=",">
+                       #{item}
+                   </foreach>
+                   )
+    </delete>
+
+    <insert id="batchInsert" parameterType="java.util.HashMap">
+        insert into ssd_query_template_link_field
+            (link_id, field_id, field_code, field_title,sort_id)
+        values
+        <foreach item="item" collection="templateLinkFieldList" separator=",">
+            (#{item.linkId}, #{item.fieldId}, #{item.fieldCode}, #{item.fieldTitle},#{item.sortId})
+        </foreach>
+    </insert>
+
+    <select id="getByLinkIds" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.model.TemplateLinkFieldRsp">
+         select
+            link_id as linkId,
+            field_id as fieldId,
+            field_code as fieldCode,
+            field_title as fieldTitle,
+            sort_id as sortId
+         from ssd_query_template_link_field
+         where link_id in
+         <foreach item="item" collection="linkIdList" separator="," open="(" close=")" index="">
+             #{item}
+         </foreach>
+    </select>
+
+</mapper>

@@ -1,0 +1,902 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="fieldDef">
+
+    <sql id="sqlFilter">
+        <if test="searchTxt != null and '' != searchTxt">
+            and (
+                 t.`field_name` LIKE concat('%',#{searchTxt},'%')
+                 or
+                 t.`field_code` LIKE concat('%',#{searchTxt},'%')
+                 or
+                 t.`field_title` LIKE concat('%',#{searchTxt},'%')
+                )
+        </if>
+
+        <if test="isMeasure != null and '' != isMeasure">
+            and  t.is_measure = #{isMeasure}
+        </if>
+        <if test="isSensitive != null and '' != isSensitive">
+            and  t.is_sensitive = #{isSensitive}
+        </if>
+
+       <choose>
+           <when test=" fact_table == '1'.toString()">
+               and t.fct_table_id = #{tableId}
+           </when>
+           <when test=" fact_table == '0'.toString()">
+               and t.dim_table_id = #{tableId}
+            </when>
+           <otherwise>
+
+           </otherwise>
+       </choose>
+    </sql>
+
+    <select id="queryFieldDefList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.MetaField">
+        SELECT
+          CASE WHEN LENGTH(t.fct_table_name)=0 or t.fct_table_name is null THEN t.dim_table_name ELSE t.fct_table_name END as belongTableName,
+          t.field_id AS id,
+          t.field_code AS `code`,
+          t.field_name AS `name`,
+          case when t.field_data_type = 'Bigint' then 'Integer' else t.field_data_type end AS dataType,
+          t.field_title AS title,
+          t.is_show AS isShow,
+          t.is_filter AS isFilter,
+          t.filter_type AS filterShowType,
+          t.is_result AS isResult,
+          t.is_measure AS isMeasure,
+          t.is_sensitive AS isSensitive,
+          t.agg_type AS aggExpression,
+          t.show_format AS showFormatExpression,
+          t.field_weight AS weight,
+          t.key_field_name AS fieldKeyName,
+          t.key_field_data_type AS fieldKeyType,
+          t.filter_table_id AS filterTableId,
+          t.filter_table_name AS filterTableName,
+          t.filter_sql AS filterSQL,
+          t.sort_id AS showOrder,
+          t.exp_append_string AS exportAppendString,
+          t.sensitive_type AS sensitiveDataType,
+          t.is_active AS isActive,
+          t.field_desc AS remark,
+          t.dim_table_id as dimTableId,
+          t.dim_table_name as dimTableName,
+          t.fct_table_id as factTableId,
+          t.fct_table_name as factTableName,
+          t.filter_tips as filterTips,
+          t.key_field_id as fieldKeyId,
+          t.field_extend_list as fieldExtendList,
+          t.filter_value_mode as filterValueMode,
+          t.can_col_dim as canColDim,
+          t.is_common_date as isCommonDate,
+          t.date_granularity as dateGranularity,
+          u.kpi_name as kpiName,
+          DATE_FORMAT(t.created_time,'%Y-%m-%d %H:%i:%s') AS createdTime,
+          DATE_FORMAT(t.updated_time,'%Y-%m-%d %H:%i:%s') AS updatedTime,
+          t.created_by as createdBy,
+          t.updated_by as updatedBy,
+          case when t.is_measure = 1 then u.measure_code else u.dim_code_1 end as kpiNo
+        FROM
+          ssd_field_def t
+        LEFT JOIN ssm_field_kpi_rel u on t.field_code = u.field_code
+        LEFT JOIN ssd_table_def def ON (def.`table_id` = t.`fct_table_id` or def.`table_id` = t.`dim_table_id`)
+          where def.is_active = 1
+          <include refid="sqlFilter"/>
+            <choose>
+                <when test="sortKey != null and '' != sortKey">
+                    ORDER BY ${sortKey} ${sortType}, belongTableName ,t.sort_id,t.field_code
+                </when>
+                <otherwise>
+                    ORDER BY belongTableName,t.sort_id,t.field_code
+                </otherwise>
+            </choose>
+
+        LIMIT ${pageRowLower}, ${prePageSize}
+
+    </select>
+
+    <select id="queryFieldCtgRel" parameterType="String" resultType="com.bi.queryer.ssm.meta.MetaFieldCtgRel">
+        SELECT
+            k1.`field_id` as fieldId,
+            GROUP_CONCAT(k1.`ctg_id`) AS ctgId,
+            GROUP_CONCAT(k2.`ctg_name_path`) AS ctgName
+        FROM
+            `ssm_field_ctg_rel` k1
+                INNER JOIN v_ssd_field_ctg k2 ON k1.`ctg_id` = k2.`ctg_id` AND k1.`ctg_type` = #{ctgType}
+        WHERE
+            k2.`is_active` = 1
+          and k1.is_active = 1
+        GROUP BY
+            k1.`field_id`
+    </select>
+
+    <select id="queryFieldDefListCount" parameterType="java.util.HashMap" resultType="Integer">
+        SELECT
+            count(1)
+        FROM
+            ssd_field_def t
+        LEFT JOIN ssd_table_def u ON (u.`table_id` = t.`fct_table_id` or u.`table_id` = t.`dim_table_id`)
+        where u.is_active = 1
+        <include refid="sqlFilter"/>
+    </select>
+
+    <insert id="insertIntoFieldDef" parameterType="com.bi.queryer.ssm.meta.MetaField">
+
+        insert into ssd_field_def
+        (
+            field_id,
+            field_code,
+            field_name,
+            field_data_type,
+            field_title,
+            field_desc,
+
+            is_show,
+            is_filter,
+            filter_type,
+            is_result,
+            is_measure,
+            is_sensitive,
+            agg_type,
+            show_format,
+            dim_table_id,
+            dim_table_name,
+            fct_table_id,
+            fct_table_name,
+            field_weight,
+            key_field_name,
+            key_field_data_type,
+            filter_table_id,
+            filter_table_name,
+            filter_sql,
+            sort_id,
+            exp_append_string,
+            sensitive_type,
+            is_active,
+            created_time,
+            created_by,
+            filter_tips,
+            key_field_id,
+            field_extend_list,
+            filter_value_mode,
+            can_col_dim,
+            is_common_date,
+            date_granularity
+        )
+        values
+        (
+            #{id},
+            #{code},
+            #{name},
+            #{dataType},
+            #{title},
+            #{remark},
+
+            #{isShow},
+            #{isFilter},
+            #{filterShowType},
+            #{isResult},
+            #{isMeasure},
+            #{isSensitive},
+            #{aggExpression},
+            #{showFormatExpression},
+            #{dimTableId},
+            #{dimTableName},
+            #{factTableId},
+            #{factTableName},
+            #{weight},
+            #{fieldKeyName},
+            #{fieldKeyType},
+            #{filterTableId},
+            #{filterTableName},
+            #{filterSQL},
+            #{showOrder},
+            #{exportAppendString},
+            #{sensitiveDataType},
+            #{isActive},
+            now(),
+            #{createdBy},
+            #{filterTips},
+            #{fieldKeyId},
+            #{fieldExtendList},
+            #{filterValueMode},
+            #{canColDim},
+            #{isCommonDate},
+            #{dateGranularity}
+        )
+
+    </insert>
+
+    <update id="updateFieldDef" parameterType="com.bi.queryer.ssm.meta.MetaField">
+
+        update ssd_field_def t
+        set
+            t.field_code = #{code},
+            t.field_name = #{name},
+            t.field_data_type = #{dataType},
+            t.field_title = #{title},
+            t.field_desc = #{remark},
+      
+            t.is_show = #{isShow},
+            t.is_filter = #{isFilter},
+            t.filter_type = #{filterShowType},
+            t.is_result = #{isResult},
+            t.is_measure = #{isMeasure},
+            t.is_sensitive = #{isSensitive},
+            t.agg_type = #{aggExpression},
+            t.show_format = #{showFormatExpression},
+            t.dim_table_id =#{dimTableId},
+            t.dim_table_name = #{dimTableName},
+            t.fct_table_id = #{factTableId},
+            t.fct_table_name = #{factTableName},
+            t.field_weight = #{weight},
+            t.key_field_name = #{fieldKeyName},
+            t.key_field_data_type = #{fieldKeyType},
+            t.filter_table_id = #{filterTableId},
+            t.filter_table_name = #{filterTableName},
+            t.filter_sql = #{filterSQL},
+            t.sort_id = #{showOrder},
+            t.exp_append_string = #{exportAppendString},
+            t.sensitive_type = #{sensitiveDataType},
+            t.is_active = #{isActive},
+            t.updated_time = now(),
+            t.updated_by = #{updatedBy},
+            t.filter_tips = #{filterTips},
+            t.key_field_id = #{fieldKeyId},
+            t.field_extend_list = #{fieldExtendList},
+            t.filter_value_mode = #{filterValueMode},
+            t.can_col_dim = #{canColDim},
+            t.is_common_date = #{isCommonDate},
+            t.date_granularity = #{dateGranularity}
+          where t.field_id = #{id}
+    </update>
+
+    <delete id="deleteCodeKpiRel" parameterType="com.bi.queryer.ssm.meta.MetaField">
+        delete from ssm_field_kpi_rel where field_code = #{code}
+    </delete>
+
+    <insert id="insertCodeKpiRel" parameterType="java.util.Map">
+        insert into  ssm_field_kpi_rel(field_code,kpi_name,measure_code,dim_code_1,created_time,created_by)
+        values (#{fieldCode},#{kpiName},#{measureCode},#{dimCode1},now(),#{createdBy})
+    </insert>
+
+    <update id="asyncMgpMetric">
+        update ssm_field_kpi_rel
+        set measure_code = #{metricCode}
+        where measure_code in
+        (<foreach collection="replaceMetricCodes" item="code" separator=",">
+            #{code}
+        </foreach>)
+    </update>
+
+    <delete id="deleteFieldDefById" parameterType="String">
+        delete from ssd_field_def where field_id = #{id}
+    </delete>
+
+    <delete id="deleteFieldByTableId" parameterType="String">
+          delete from ssd_field_def where `dim_table_id` = #{tableId}
+            OR `fct_table_id` =  #{tableId}
+    </delete>
+
+    <select id="queryField" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.MetaField">
+        select
+          t.field_id AS id,
+          t.field_code AS `code`,
+          t.field_name AS `name`,
+          t.field_data_type AS dataType,
+          t.field_title AS title,
+
+          t.is_show AS isShow,
+          t.is_filter AS isFilter,
+          t.filter_type AS filterShowType,
+          t.is_result AS isResult,
+          t.is_measure AS isMeasure,
+          t.is_sensitive AS isSensitive,
+          t.agg_type AS aggExpression,
+          t.show_format AS showFormatExpression,
+          t.field_weight AS weight,
+          t.key_field_name AS fieldKeyName,
+          t.key_field_data_type AS fieldKeyType,
+          t.filter_table_id AS filterTableId,
+          t.filter_table_name AS filterTableName,
+          t.filter_sql AS filterSQL,
+          t.sort_id AS showOrder,
+          t.is_active AS isActive,
+          t.field_desc AS remark,
+          t.dim_table_id as dimTableId,
+          t.dim_table_name as dimTableName,
+          t.fct_table_id as factTableId,
+          t.fct_table_name as factTableName,
+          t.filter_tips as filterTips,
+          t.key_field_id as fieldKeyId,
+          t.field_extend_list as fieldExtendList,
+          t.filter_value_mode as filterValueMode
+            FROM
+          ssd_field_def t
+          where 1=1
+          and (t.`dim_table_id` = #{tableId}
+            OR t.`fct_table_id` =  #{tableId})
+          and t.field_name = #{name}
+         limit 0,1
+    </select>
+
+    <select id="queryFieldListByTableId" parameterType="String" resultType="com.bi.queryer.ssm.meta.TreeNode">
+        SELECT
+          t.`field_id` as id,
+          1 as isLeaf,
+          CONCAT(t.field_title,'【',t.`field_name`,'】(',td.table_name,')') AS label,
+          td.table_id as parentId,
+          td.table_name as parentName
+        FROM
+          ssd_field_def t
+          inner join ssd_table_def  td on  (
+            t.`dim_table_id` = td.table_id
+            OR t.`fct_table_id` =  td.table_id
+          )
+        WHERE t.`is_active` = 1
+          order by t.sort_id,t.field_code
+    </select>
+
+    <insert id="insertIntoHierarchyInfo" parameterType="com.bi.queryer.ssm.meta.HierarchyInfo" >
+
+          insert INTO ssd_field_hierarchy
+          (
+            field_id,
+            level_num,
+            level1_field_key_name,
+            level1_field_name,
+            level2_field_key_name,
+            level2_field_name,
+            level3_field_key_name,
+            level3_field_name,
+            level4_field_key_name,
+            level4_field_name,
+            level5_field_key_name,
+            level5_field_name,
+            level1_field_id,
+            level2_field_id,
+            level3_field_id,
+            level4_field_id,
+            level5_field_id,
+            is_active,
+            created_time,
+            created_by
+          )
+          values
+          (
+            #{fieldId},
+            #{levelNum},
+            #{level1FieldKeyName},
+            #{level1FieldName},
+            #{level2FieldKeyName},
+            #{level2FieldName},
+            #{level3FieldKeyName},
+            #{level3FieldName},
+            #{level4FieldKeyName},
+            #{level4FieldName},
+            #{level5FieldKeyName},
+            #{level5FieldName},
+            #{level1FieldId},
+            #{level2FieldId},
+            #{level3FieldId},
+            #{level4FieldId},
+            #{level5FieldId},
+            #{isActive},
+            now(),
+            #{createdBy}
+          )
+
+    </insert>
+
+    <update id="updateHierarchyInfo" parameterType="com.bi.queryer.ssm.meta.HierarchyInfo">
+
+        update ssd_field_hierarchy t
+        set
+         t.level_num = #{levelNum},
+         t.level1_field_key_name = #{level1FieldKeyName},
+         t.level1_field_name = #{level1FieldName},
+         t.level2_field_key_name = #{level2FieldKeyName},
+         t.level2_field_name = #{level2FieldName},
+         t.level3_field_key_name = #{level3FieldKeyName},
+         t.level3_field_name = #{level3FieldName},
+         t.level4_field_key_name = #{level4FieldKeyName},
+         t.level4_field_name = #{level4FieldName},
+         t.level5_field_key_name = #{level5FieldKeyName},
+         t.level5_field_name = #{level5FieldName},
+         t.level1_field_id = #{level1FieldId},
+         t.level2_field_id = #{level2FieldId},
+         t.level3_field_id = #{level3FieldId},
+         t.level4_field_id = #{level4FieldId},
+         t.level5_field_id = #{level5FieldId},
+         t.is_active = #{isActive},
+         t.updated_time = now(),
+         t.updated_by = #{updatedBy}
+         where t.field_id = #{fieldId}
+    </update>
+
+    <select id="queryHierarchyInfoCountByFieldId" parameterType="String" resultType="Integer">
+        select count(1) from  ssd_field_hierarchy t  where t.field_id = #{fieldId}
+    </select>
+
+    <select id="getHierarchyInfoByFieldId" parameterType="String" resultType="com.bi.queryer.ssm.meta.HierarchyInfo">
+
+        select
+            field_id as fieldId,
+            level_num as levelNum,
+            level1_field_key_name as level1FieldKeyName,
+            level1_field_name as level1FieldName,
+            level2_field_key_name as level2FieldKeyName,
+            level2_field_name as level2FieldName,
+            level3_field_key_name as level3FieldKeyName,
+            level3_field_name as level3FieldName,
+            level4_field_key_name as level4FieldName,
+            level4_field_name as level4FieldName,
+            level5_field_key_name as level5FieldKeyName,
+            level5_field_name as level5FieldName,
+            level1_field_id as level1FieldId,
+            level2_field_id as level2FieldId,
+            level3_field_id as level3FieldId,
+            level4_field_id as level4FieldId,
+            level5_field_id as level5FieldId,
+            is_active as isActive
+         from
+         ssd_field_hierarchy t
+         where t.field_id = #{fieldId}
+    </select>
+
+    <delete id="deleteFieldAuthDim" parameterType="String" >
+        delete from ssd_field_auth_dim where field_code = #{fieldCode}
+    </delete>
+
+    <insert id="insertIntoFieldAuthDim" parameterType="java.util.HashMap">
+
+        insert into ssd_field_auth_dim
+        (
+            field_code,
+            module_code,
+            dim_code,
+            created_time,
+            created_by
+        )
+        values
+        <foreach collection="authDimList" index="index" item="item" separator="," >
+            (#{fieldCode},#{item.moduleCode},#{item.dimCode},now(),#{createdBy})
+        </foreach>
+
+    </insert>
+
+    <select id="getFieldAuthDimByFieldCode" parameterType="String" resultType="String">
+
+        select dim_code from ssd_field_auth_dim where field_code = #{fieldCode}
+
+    </select>
+
+    <select id="getTableNameByFieldTableId" parameterType="java.util.HashMap" resultType="String">
+        select concat(t.table_schema,'.',t.table_name) from ssd_table_def t
+        where
+         t.table_id = #{tableId}
+    </select>
+
+
+    <update id="updateFieldTableName" parameterType="com.bi.queryer.ssm.meta.MetaTable">
+        update ssd_field_def t
+        set
+        <choose>
+            <when test="isFactTable == '1'.toString()">
+                t.fct_table_name = #{name},t.fct_table_id = #{id},t.dim_table_name = '', t.dim_table_id = ''
+            </when>
+            <otherwise>
+                t.dim_table_name = #{name}, t.dim_table_id = #{id},t.fct_table_name ='' ,t.fct_table_id = ''
+            </otherwise>
+        </choose>
+
+        where
+
+        t.`dim_table_id` = #{id}
+        OR t.`fct_table_id` =  #{id}
+
+    </update>
+
+    <update id="updateFieldActiveByTableActive" parameterType="com.bi.queryer.ssm.meta.MetaTable">
+        update ssd_field_def t
+        set
+        t.is_active = #{isActive}
+        where
+        t.`dim_table_id` = #{id}
+        OR t.`fct_table_id` =  #{id}
+    </update>
+
+    <select id="checkFieldExist" parameterType="String" resultType="Integer">
+        select count(1) from ssd_field_def t where t.field_id = #{id}
+    </select>
+
+    <!--查看关联模板-->
+    <select id="queryAssociateTemplates" parameterType="String" resultType="com.bi.queryer.ssm.meta.SSDQueryTemplate">
+        SELECT t.`tpl_name` AS name ,  t.`tpl_id` AS id FROM ssd_query_template t WHERE INSTR(t.`tpl_config` ,#{fieldId})>0
+    </select>
+
+    <select id="querySensitiveFieldList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.MetaSensitiveField">
+        SELECT
+        t.field_id AS id,
+        t.field_code AS `code`,
+        t.field_name AS `name`,
+        t.field_title AS title,
+        front.ctg_id AS categoryId,
+        front.`ctg_name` AS categoryName,
+        back.ctg_id AS virtualCategoryId,
+        back.`ctg_name` AS virtualCategoryName,
+        t.is_sensitive AS isSensitive,
+        t.is_active AS isActive
+        FROM
+        ssd_field_def t
+        LEFT JOIN (
+                SELECT
+                k1.`field_id`,
+                GROUP_CONCAT(k1.`ctg_id`) AS ctg_id,
+                GROUP_CONCAT(k2.`ctg_name_path`) AS ctg_name
+                FROM
+                `ssm_field_ctg_rel` k1
+                INNER JOIN `v_ssd_field_ctg` k2 ON k1.`ctg_id` = k2.`ctg_id` AND k1.`ctg_type` = 'front'
+                WHERE
+                k2.`is_active` = 1
+                GROUP BY k1.`field_id`
+        ) front ON t.`field_id`  = front.`field_id`
+        LEFT JOIN (
+                SELECT
+                k1.`field_id`,
+                GROUP_CONCAT(k1.`ctg_id`) AS ctg_id,
+                GROUP_CONCAT(k2.`ctg_name_path`) AS ctg_name
+                FROM
+                `ssm_field_ctg_rel` k1
+                INNER JOIN v_ssd_field_ctg k2 ON k1.`ctg_id` = k2.`ctg_id` AND k1.`ctg_type` = 'back'
+                WHERE
+                k2.`is_active` = 1
+                GROUP BY k1.`field_id`
+        ) back ON t.`field_id` = back.`field_id`
+        WHERE 1=1
+        <if test="isSensitive != null and '' != isSensitive">
+            and  t.is_sensitive = #{isSensitive}
+        </if>
+        ORDER BY front.ctg_id
+
+    </select>
+
+    <select id="getFieldTitleByFieldId" parameterType="String" resultType="String">
+        select field_title from ssd_field_def where field_id = #{fieldId} LIMIT 1
+    </select>
+
+    <!--通过表查询字段目录-->
+    <select id="getFieldCtgListByTableField" parameterType="String" resultType="String">
+        SELECT
+          t2.`ctg_id` AS ctgId
+        FROM
+          ssd_field_def t1
+          INNER JOIN `ssm_field_ctg_rel` t2 ON t1.`field_id` = t2.`field_id`
+        WHERE (
+            t1.dim_table_id =  #{tableId}
+            OR t1.fct_table_id =  #{tableId}
+          )
+          AND t2.`is_active` = 1
+          AND t2.`ctg_id` IS NOT NULL
+          AND t2.`ctg_id` != ''
+        GROUP BY t2.`ctg_id`
+    </select>
+
+    <!--通过表查询字段目录-->
+    <select id="getTableListByFieldCtg" parameterType="String" resultType="String">
+        SELECT
+          c.tableId
+        FROM
+          (SELECT
+            t1.dim_table_id AS tableId
+          FROM
+            ssd_field_def t1
+            INNER JOIN `ssm_field_ctg_rel` t2
+              ON t1.`field_id` = t2.`field_id`
+          WHERE t2.ctg_id = #{ctgId}
+            AND t2.`is_active` = 1
+            AND t1.dim_table_id IS NOT NULL
+            AND t1.dim_table_id != ''
+          GROUP BY t1.dim_table_id
+          UNION
+          ALL
+          SELECT
+            m1.fct_table_id AS tableId
+          FROM
+            ssd_field_def m1
+            INNER JOIN `ssm_field_ctg_rel` m2
+              ON m1.`field_id` = m2.`field_id`
+          WHERE m2.ctg_id = #{ctgId}
+            AND m2.is_active = 1
+            AND m1.fct_table_id IS NOT NULL
+            AND m1.fct_table_id != ''
+          GROUP BY m1.fct_table_id) c
+          LEFT JOIN ssd_table_def t
+            ON c.tableId = t.table_id
+        WHERE t.is_active = 1
+    </select>
+
+    <!--白皮书指标列表-->
+    <select id="getManualIndexWhitePaperList" resultType="com.bi.queryer.ssm.mgr.fieldDef.model.ManualIndexWhitePaperEntity">
+        select
+            t.metric_code as indexNo,
+            t.metric_name as indexName,
+            t.metric_desc as interpretation,
+            1 as isMeasure
+        from bi_mgp.mgp_metric_detail t
+        where 1=1
+          and t.is_onlined = 1
+          and t.is_lastest_online_version = 1
+
+        union all
+
+        select
+            t2.dim_code as indexNo,
+            t1.dim_name as indexName,
+            t1.dim_desc as interpretation,
+            0 as isMeasure
+        from bi_mgp.mgp_dim_detail t1
+        inner join bi_mgp.mgp_dim t2
+            on t1.dim_id = t2.dim_id
+        where 1=1
+          and t1.is_onlined = 1
+          and t1.is_lastest_online_version = 1
+
+        order by isMeasure desc, indexNo
+    </select>
+
+
+    <select id="getFieldDimEnumMeta" resultType="java.util.Map" parameterType="java.lang.Long">
+        select pkid pkId, filter_sql filterSql,executed from ssm_field_dim_enums where pkid >= #{pkId} order by pkid asc
+    </select>
+
+    <update id="updateFieldDimEnumMeta" parameterType="java.util.Map">
+        update ssm_field_dim_enums set `field_enums` = #{fieldEnums}, executed = 1, query_begin_time = #{queryBeginTime},
+            query_end_time = #{queryEndTime}, query_info = #{queryInfo} where pkid = #{pkId}
+    </update>
+
+    <select id="getDimEnumValues" resultType="com.bi.queryer.ssm.mgr.fieldDef.model.ManualIndexWhitePaperEntity">
+        SELECT
+          t1.dim_code AS indexNo,
+          SUBSTRING_INDEX(
+            GROUP_CONCAT(
+              dim_item_value
+              ORDER BY t2.dim_item_order SEPARATOR ','
+            ),
+            ',',
+            10
+          ) AS dimEnumValues,
+          count(1) as dimEnumCount
+        FROM
+          bi_mgp.mgp_dim t1
+          INNER JOIN bi_mgp.mgp_dim_item t2
+            ON t1.dim_id = t2.dim_id
+        GROUP BY t1.dim_code
+    </select>
+
+    <delete id="deleteByFieldIds" parameterType="java.util.List">
+        delete from ssd_field_def where field_id in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="batchDeleteByTableIdList" parameterType="java.util.HashMap">
+        delete from ssd_field_def where (
+            fct_table_id in
+           <foreach collection="tableIdList" item="item" open="(" separator="," close=")">
+            #{item}
+            </foreach>
+
+            or
+
+            dim_table_id in
+           <foreach collection="tableIdList" item="item" open="(" separator="," close=")">
+            #{item}
+            </foreach>
+        )
+    </delete>
+
+    <insert id="batchInsert" parameterType="java.util.HashMap">
+        insert into ssd_field_def
+        (
+            field_id,
+            field_code,
+            field_name,
+            field_data_type,
+            field_title,
+            field_desc,
+
+            is_show,
+            is_filter,
+            filter_type,
+            is_result,
+            is_measure,
+            is_sensitive,
+            agg_type,
+            show_format,
+            dim_table_id,
+            dim_table_name,
+            fct_table_id,
+            fct_table_name,
+            field_weight,
+            key_field_name,
+            key_field_data_type,
+            filter_table_id,
+            filter_table_name,
+            filter_sql,
+            sort_id,
+            exp_append_string,
+            sensitive_type,
+            is_active,
+            created_time,
+            created_by,
+            filter_tips,
+            key_field_id,
+            field_extend_list,
+            filter_value_mode,
+            can_col_dim,
+            is_common_date,
+            date_granularity,
+            date_agg_type,
+            is_date_non_agg,
+            field_type,
+            calc_code_expression
+        )
+        values
+            <foreach collection="fieldList" item="item" separator="," >
+               (
+                #{item.id},
+                #{item.code},
+                #{item.name},
+                #{item.dataType},
+                #{item.title},
+                #{item.remark},
+
+                #{item.isShow},
+                #{item.isFilter},
+                #{item.filterShowType},
+                #{item.isResult},
+                #{item.isMeasure},
+                #{item.isSensitive},
+                #{item.aggExpression},
+                #{item.showFormatExpression},
+                #{item.dimTableId},
+                #{item.dimTableName},
+                #{item.factTableId},
+                #{item.factTableName},
+                #{item.weight},
+                #{item.fieldKeyName},
+                #{item.fieldKeyType},
+                #{item.filterTableId},
+                #{item.filterTableName},
+                #{item.filterSQL},
+                #{item.showOrder},
+                #{item.exportAppendString},
+                #{item.sensitiveDataType},
+                #{item.isActive},
+                now(),
+                #{userName},
+                #{item.filterTips},
+                #{item.fieldKeyId},
+                #{item.fieldExtendList},
+                #{item.filterValueMode},
+                #{item.canColDim},
+                #{item.isCommonDate},
+                #{item.dateGranularity},
+                #{item.dateAggType},
+                #{item.isDateNonAgg},
+                #{item.fieldType},
+                #{item.calcCodeExpression}
+               )
+           </foreach>
+
+    </insert>
+
+    <delete id="batchDeleteFieldKpi" parameterType="java.util.HashMap">
+        delete from ssm_field_kpi_rel where field_code in
+        <foreach collection="fieldCodeList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <insert id="batchInsertFieldKpi" parameterType="java.util.HashMap">
+        insert into ssm_field_kpi_rel
+        (
+            field_code,
+            kpi_name,
+            measure_code,
+            dim_code_1,
+            created_time,
+            created_by
+        )
+        values
+            <foreach collection="fieldKpiList" item="item" separator="," >
+                (
+                    #{item.fieldCode},
+                    #{item.kpiName},
+                    #{item.measureCode},
+                    #{item.dimCode1},
+                    now(),
+                    #{userName}
+                )
+            </foreach>
+    </insert>
+
+    <select id="queryFieldCodeByMetricCode" parameterType="String" resultType="String">
+        select distinct field_code from ssm_field_kpi_rel where measure_code = #{whitePaperCode}
+    </select>
+
+    <select id="queryFieldCodeByDimCode" parameterType="String" resultType="String">
+        select distinct field_code from ssm_field_kpi_rel where dim_code_1 = #{whitePaperCode}
+    </select>
+
+    <update id="batchUpdateFieldProperty" parameterType="java.util.HashMap">
+        update ssd_field_def
+            set
+                is_sensitive =#{metaField.isSensitive},
+                sensitive_type = #{metaField.sensitiveDataType},
+                exp_append_string = #{metaField.exportAppendString},
+                field_title = #{metaField.title},
+                filter_type = #{metaField.filterShowType},
+                filter_sql = #{metaField.filterSQL},
+                <if test="metaField.aggExpression != null and '' != metaField.aggExpression">
+                    agg_type = #{metaField.aggExpression},
+                </if>
+                show_format = #{metaField.showFormatExpression},
+                updated_time = now(),
+                <if test="metaField.dataType != null and '' != metaField.dataType">
+                    field_data_type = #{metaField.dataType},
+                </if>
+                updated_by = #{userName}
+        where field_code in
+        <foreach collection="fieldCodes" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+
+    <insert id="batchInsertFieldValueMap" parameterType="com.bi.queryer.ssm.meta.MetaFieldValueMap">
+        insert into ssm_field_value_map
+        (
+            field_code,
+            field_key,
+            field_value,
+            created_by,
+            created_time
+        )
+        values
+        <foreach collection="fieldItemList" item="item" separator="," >
+            (
+            #{item.fieldCode},
+            #{item.fieldKey},
+            #{item.fieldValue},
+            #{item.createdBy},
+            now()
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteFieldValueMap" parameterType="java.util.HashMap">
+        delete from ssm_field_value_map where field_code in
+        <foreach collection="fieldCodeList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+
+    <!--白皮书指标列表-->
+    <select id="getWhitePaperListByCodes" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.mgr.fieldDef.model.ManualIndexWhitePaperEntity">
+        SELECT
+            wp_code as indexNo,
+            wp_desc as interpretation
+        FROM
+            bi_mgp.`v_white_paper`
+        WHERE wp_code IN (
+            <foreach collection="list" item="item" separator=",">
+                #{item}
+            </foreach>
+            )
+    </select>
+
+</mapper>

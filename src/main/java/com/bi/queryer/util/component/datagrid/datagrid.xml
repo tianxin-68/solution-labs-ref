@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Config>
+	<DataSource type="default">
+		<SQL><![CDATA[]]></SQL>
+		<Parameters>
+			<Parameter id="" dataType="">xx</Parameter>
+			<Parameter id="" dataType="">xx</Parameter>
+			<Parameter id="" dataType="">xx</Parameter>
+		</Parameters>
+	</DataSource>
+	<DataGrid id="abc" pageSize="30" showTitle="false" isPagination="true" showExport="true" singleSelect="true" checkSelectCascade="true" remoteSort="false">
+		<Title fontSize="12">xxx</Title>
+		<ColumnGroups>
+			<Group id="grp1" title="分组1"></Group>
+			<Group id="grp2" title="分组2">
+				<Group id="grp2.1" title="分组2.1"></Group><!-- 预留，前期只支持一层嵌套-->
+			</Group>
+		</ColumnGroups>
+		<Columns>
+			<Column title="字段1" field="f1" group="grp1" width="-1" isFrozen="false" align="center" sortable="false" hidden="false" defaultSortType="asc" defaultSortColumn="false" check="false" exportable="true" exportFormat="true" nullValue="--" valueFormat="" valueSuffix="" valuePrefix="" enableAlarm=""></Column>
+			<Column title="字段2" field="f2"></Column>
+		</Columns>
+	</DataGrid>
+</Config>

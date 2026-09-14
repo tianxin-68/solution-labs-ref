@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.portal.role.dept">
+
+    <delete id="deleteRoleDeptByRoleId" parameterType="String">
+          delete from
+            ssm_portal_role_dept
+        where
+            role_id = #{roleId}
+    </delete>
+
+
+    <insert id="insertRoleDept" parameterType="java.util.ArrayList">
+        insert into ssm_portal_role_dept
+        (
+        role_id,
+        dept_id,
+        created_by,
+        created_time
+        )
+        values
+        <foreach  collection="list" index="index" item="item" separator="," >
+            (
+            #{item.roleId},
+            #{item.deptId},
+            #{item.createdBy},
+            now()
+            )
+        </foreach>
+    </insert>
+
+    <!-- 组织授权转人：把多个角色下的部门授权展开为具体用户（含子部门用户），用于「有权限的用户清单」 -->
+    <select id="queryDeptUserListBatch" parameterType="java.util.HashMap"
+            resultType="com.bi.queryer.ssm.portal.auth.vo.rsp.PortalAuthUserItem">
+        select distinct
+            hr.user_name    as userName,
+            hr.dept_name    as deptName,
+            rd.role_id      as roleId,
+            date_format(rd.created_time, '%Y-%m-%d %H:%i:%s') as authStartTime,
+            null            as authEndTime
+        from ssm_portal_role_dept rd
+        inner join bi_portal.hr_employee hr
+            on concat(hr.dept_id, '/') like concat('%', rd.dept_id, '/%')
+        where rd.role_id in
+        <foreach collection="roleIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        <if test="keyword != null and keyword != ''">
+            and (hr.user_name like concat('%', #{keyword}, '%')
+              or hr.dept_name  like concat('%', #{keyword}, '%'))
+        </if>
+        <if test="deptId != null and deptId != ''">
+            and concat(hr.dept_id, '/') like concat('%', #{deptId}, '/%')
+        </if>
+    </select>
+
+    <select id="queryDeptsByRoleIds" parameterType="java.util.ArrayList" resultType="String">
+        select distinct dept_id
+        from ssm_portal_role_dept
+        where role_id in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="queryRoleDeptByRoleId" parameterType="String" resultType="String">
+        select
+            dept_id
+        from
+            ssm_portal_role_dept
+        where
+            role_id = #{roleId}
+    </select>
+
+
+</mapper>

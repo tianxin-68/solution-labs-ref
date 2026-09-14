@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.analysisTemplate">
+    <insert id="create" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTemplateEntity">
+        insert into ssm_analysis_tpl_base
+        (analysis_tpl_id, analysis_tpl_name, analysis_tpl_owner, analysis_tpl_desc, draft_status, online_status, created_by, created_time, updated_time, source_data_type, analysis_tpl_type)
+        values
+        (#{analysisTplId}, #{analysisTplName}, #{analysisTplOwner}, #{analysisTplDesc},#{draftStatus}, #{onlineStatus}, #{createdBy}, now(), now(), #{sourceDataType}, #{analysisTplType})
+    </insert>
+
+    <!-- 更新模板基础信息 -->
+    <update id="updateAnalysisTemplateBase" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTemplateEntity">
+        update ssm_analysis_tpl_base
+        set analysis_tpl_name = #{analysisTplName},
+        <if test="sourceDataType != null">
+            source_data_type = #{sourceDataType},
+        </if>
+        <if test="analysisTplDesc != null">
+            analysis_tpl_desc = #{analysisTplDesc},
+        </if>
+        <if test="draftStatus != null">
+            draft_status = #{draftStatus},
+        </if>
+        <if test="onlineStatus != null">
+            online_status = #{onlineStatus},
+        </if>
+        <if test="analysisTplOwner != null">
+            analysis_tpl_owner = #{analysisTplOwner},
+        </if>
+        <if test="hasAiSummary != null">
+            has_ai_summary = #{hasAiSummary},
+        </if>
+        updated_by = #{updatedBy},
+        updated_time = now()
+        where analysis_tpl_id = #{analysisTplId}
+    </update>
+
+    <!-- 删除看板 -->
+    <update id="deleteAnalysisTemplate" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTemplateEntity">
+        update ssm_analysis_tpl_base
+        set is_active = 0,
+        updated_by = #{updatedBy},
+        updated_time = now()
+        where analysis_tpl_id = #{analysisTplId}
+    </update>
+
+    <!-- 获取模板基础信息 -->
+    <select id="getTemplateBaseList" parameterType="java.util.Map"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTemplateEntity">
+        select analysis_tpl_id as analysisTplId, analysis_tpl_name as analysisTplName, analysis_tpl_owner analysisTplOwner,
+            analysis_tpl_desc as analysisTplDesc, draft_status as draftStatus, online_status as onlineStatus,
+            created_by as createdBy, created_time as createdTime, updated_by as updatedBy, updated_time as updatedTime,
+            source_data_type as sourceDataType, has_ai_summary as hasAiSummary, analysis_tpl_type as analysisTplType
+        from ssm_analysis_tpl_base
+        where analysis_tpl_id in
+        <foreach collection="analysisTplIds" open="(" separator="," close=")" item="id">
+            #{id}
+        </foreach>
+        and is_active = 1
+    </select>
+
+    <!-- 获取编辑态锁 -->
+    <select id="getAnalysisTplNameById" parameterType="java.lang.String" resultType="java.lang.String">
+        select analysis_tpl_name
+        from ssm_analysis_tpl_base
+        where analysis_tpl_id = #{analysisTplId}
+          and is_active = 1
+        limit 1
+    </select>
+
+    <select id="getEditLock" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplCfgLocalLockEntity">
+        select analysis_tpl_id as analysisTplId, user_name as userName, created_time as createdTime
+        from ssm_analysis_tpl_cfg_local_lock
+        where analysis_tpl_id = #{analysisTplId}
+    </select>
+
+    <!-- 获取编辑态锁 -->
+    <update id="acquireEditLock" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplCfgLocalLockEntity">
+        insert into ssm_analysis_tpl_cfg_local_lock
+            (analysis_tpl_id, user_name, created_time)
+        values
+            (#{analysisTplId}, #{userName}, now())
+        ON DUPLICATE KEY update
+            user_name = #{userName}
+    </update>
+
+    <!-- 获取编辑态锁 -->
+    <delete id="releaseEditLock" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplCfgLocalLockEntity">
+        delete from ssm_analysis_tpl_cfg_local_lock
+        where analysis_tpl_id = #{analysisTplId} and user_name = #{userName}
+    </delete>
+
+    <!-- 获取草稿内容 -->
+    <select id="getLocalConfig" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplCfgLocalEntity">
+        select analysis_tpl_cfg_id as analysisTplCfgId, analysis_tpl_id as analysisTplId,
+            analysis_tpl_content as analysisTplContent, local_version_no as localVersionNo,
+            prod_version_no as prodVersionNo, created_by as createdBy, created_time as createdTime,
+            updated_by as updatedBy, updated_time as updatedTime
+        from ssm_analysis_tpl_cfg_local
+        where analysis_tpl_id = #{analysisTplId}
+    </select>
+
+    <!-- 增加local表信息 -->
+    <insert id="addLocalConfig" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplCfgLocalEntity">
+        insert into ssm_analysis_tpl_cfg_local
+        (analysis_tpl_cfg_id, analysis_tpl_id, analysis_tpl_content, local_version_no, prod_version_no, created_by, created_time, updated_by, updated_time)
+        values
+        (#{analysisTplCfgId}, #{analysisTplId},#{analysisTplContent},#{localVersionNo}, #{prodVersionNo}, #{createdBy}, now(), #{updatedBy}, now())
+    </insert>
+
+    <!-- 更新local表信息 -->
+    <update id="updateLocalConfig" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplCfgLocalEntity">
+        update ssm_analysis_tpl_cfg_local
+        set analysis_tpl_content = #{analysisTplContent},
+        prod_version_no = #{prodVersionNo},
+        updated_by = #{updatedBy},
+        updated_time = now()
+        where analysis_tpl_cfg_id = #{analysisTplCfgId}
+    </update>
+
+    <!-- 删除草稿 -->
+    <delete id="deleteLocalConfig" parameterType="java.lang.String">
+        delete from ssm_analysis_tpl_cfg_local
+        where analysis_tpl_cfg_id = #{analysisTplCfgId}
+    </delete>
+
+    <!-- 获取线上最大版本号 -->
+    <select id="getOnlineMaxVersionNo" parameterType="java.lang.String" resultType="java.lang.Long">
+        select max(version_no) maxVersionNo from ssm_analysis_tpl_cfg_prod
+        where analysis_tpl_id = #{analysisTplId} and is_latest = 1
+    </select>
+
+
+    <!-- 更新widget表信息 -->
+    <update id="saveWidgetConfig" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplWidgetEntity">
+        insert into ssm_analysis_tpl_widget
+            (widget_id, analysis_tpl_cfg_id, analysis_tpl_id, widget_type_code, parent_widget_id, widget_title, widget_desc
+            , widget_settings, widget_options, query_tpl_id,query_tpl_viewid_mapping, sort_id, created_by, created_time, updated_time)
+        values
+            (#{widgetId}, #{analysisTplCfgId}, #{analysisTplId}, #{widgetTypeCode}, #{parentWidgetId}, #{widgetTitle}, #{widgetDesc}
+            , #{widgetSettings}, #{widgetOptions}, #{queryTplId},#{queryTplViewIdMapping}, #{sortId}, #{createdBy}, now(), now())
+        ON DUPLICATE KEY update
+            analysis_tpl_cfg_id = #{analysisTplCfgId},
+            analysis_tpl_id = #{analysisTplId},
+            widget_type_code = #{widgetTypeCode},
+            parent_widget_id = #{parentWidgetId},
+            widget_title = #{widgetTitle},
+            widget_desc = #{widgetDesc},
+            widget_settings = #{widgetSettings},
+            widget_options = #{widgetOptions},
+            query_tpl_id = #{queryTplId},
+            query_tpl_viewid_mapping = #{queryTplViewIdMapping},
+            sort_id = #{sortId},
+            updated_by = #{updatedBy},
+            updated_time = now()
+    </update>
+
+    <!-- 删除widget表信息 -->
+    <update id="deleteWidgetConfig" parameterType="java.util.Map">
+        update ssm_analysis_tpl_widget set is_active = 0
+        where analysis_tpl_cfg_id = #{analysisTplCfgId}
+        <if test="onUsedWidgetIds != null and onUsedWidgetIds.size() > 0">
+            AND widget_id NOT IN
+            <foreach collection="onUsedWidgetIds" open="(" close=")" item="id" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </update>
+
+    <!-- 获取widget信息 -->
+    <select id="getWidgetConfigs" parameterType="java.lang.String"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplWidgetEntity">
+        select widget_id widgetId, analysis_tpl_cfg_id analysisTplCfgId, analysis_tpl_id analysisTplId,
+            widget_type_code widgetTypeCode, parent_widget_id parentWidgetId, widget_title widgetTitle,
+            widget_desc widgetDesc, widget_settings widgetSettings, widget_options widgetOptions,
+            query_tpl_id queryTplId,query_tpl_viewid_mapping as queryTplViewIdMapping, sort_id sortId, created_by createdBy, created_time as createdTime
+        from ssm_analysis_tpl_widget
+        where analysis_tpl_cfg_id = #{analysisTplCfgId} and is_active = 1
+    </select>
+
+    <!-- 获取线上配置内容 -->
+    <select id="getOnlineConfigs" parameterType="java.util.List"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplCfgProdEntity">
+        select analysis_tpl_cfg_id analysisTplCfgId, analysis_tpl_id analysisTplId, analysis_tpl_content analysisTplContent,
+            version_no versionNo, is_latest isLatest, created_by createdBy, created_time createdTime, updated_by updatedBy,
+            updated_time updatedTime
+        from ssm_analysis_tpl_cfg_prod
+        where analysis_tpl_id in
+        <foreach collection="list" open="(" close=")" item="id" separator=",">
+            #{id}
+        </foreach>
+        and is_latest = 1
+    </select>
+
+    <!-- 更新线上配置内容 -->
+    <insert id="addOnlineConfig" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplCfgProdEntity">
+        insert into ssm_analysis_tpl_cfg_prod
+        (analysis_tpl_cfg_id, analysis_tpl_id, analysis_tpl_content, version_no, is_latest, created_by, created_time, updated_time)
+        values
+        (#{analysisTplCfgId}, #{analysisTplId}, #{analysisTplContent}, #{versionNo}, #{isLatest}, #{createdBy}, now(), now())
+    </insert>
+
+    <!-- 更改线上配置内容状态 -->
+    <insert id="updateOnlineConfigStatus" parameterType="java.lang.String">
+        update ssm_analysis_tpl_cfg_prod set is_latest = 0 where analysis_tpl_id = #{analysisTplId} and is_latest = 1
+    </insert>
+
+    <!-- 获取组件类型列表 -->
+    <select id="listWidgetTypes" resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplWidgetTypeEntity">
+        select
+            widget_type_code as widgetTypeCode
+            , widget_type_name as widgetTypeName
+            , sort_id as sortId
+            , is_active as isActive
+            , created_by as createdBy
+            , created_time as createdTime
+            , updated_by as updatedBy
+            , updated_time as updatedTime
+        from ssm_analysis_tpl_widget_type
+        where is_active = 1
+    </select>
+
+    <!-- 添加看板和查询模板的关系 -->
+    <insert id="batchAddAnalysisTplWidgetQueryTplRel" parameterType="java.util.List">
+        INSERT INTO `ssm_analysis_tpl_widget_query_tpl_rel`
+        (`analysis_tpl_cfg_id`, `analysis_tpl_id`, `local_query_tpl_id`, `prod_query_tpl_id`, `created_by`, `created_time`, `updated_time`)
+        VALUES
+        <foreach collection="list" item="e" separator="," close=";">
+            (#{e.analysisTplCfgId}, #{e.analysisTplId}, #{e.localQueryTplId}, #{e.prodQueryTplId}, #{e.createdBy}, now(), now())
+        </foreach>
+    </insert>
+
+    <!-- 查询看板和查询模板的关系 -->
+    <select id="queryAnalysisTplWidgetQueryTplRel" parameterType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplWidgetQueryTplRelEntity"
+            resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplWidgetQueryTplRelEntity">
+        select `analysis_tpl_cfg_id` as analysisTplCfgId, `analysis_tpl_id` as analysisTplId,
+            `local_query_tpl_id` as localQueryTplId, `prod_query_tpl_id` as prodQueryTplId, `created_by` as createdBy
+        from `ssm_analysis_tpl_widget_query_tpl_rel`
+        where 1 = 1
+        <if test="analysisTplCfgId != null">
+            and analysis_tpl_cfg_id = #{analysisTplCfgId}
+        </if>
+        <if test="localQueryTplId != null">
+            and local_query_tpl_id = #{localQueryTplId}
+        </if>
+    </select>
+
+    <!-- 查询看板的默认配置 -->
+    <select id="getAnalysisTemplateDefaultOption" parameterType="java.lang.String" resultType="java.lang.String">
+        select default_option
+        from ssm_analysis_default_option
+        where option_key = #{key} and is_active = 1
+        limit 0, 1
+    </select>
+
+    <!--获取我创建的看板id-->
+    <select id="getUserCreateAnalysisTplIds" parameterType="java.util.HashMap" resultType="String">
+        SELECT
+          analysis_tpl_id
+        FROM
+          ssm_analysis_tpl_base
+        WHERE is_active = 1
+        and created_by = #{userName}
+        <if test="analysisTplType != null and analysisTplType != ''">
+            and analysis_tpl_type = #{analysisTplType}
+        </if>
+        ORDER BY updated_time DESC
+    </select>
+
+    <select id="getProdAnalysisTplByPortalId" parameterType="String" resultType="com.bi.queryer.ssm.portal.template.vo.AnalysisTemplateVO">
+        SELECT
+            t2.analysis_tpl_id as analysisTplId,
+            t2.analysis_tpl_name as analysisTplName,
+            t2.has_ai_summary as hasAiSummary,
+            t1.menu_id as menuId
+        FROM
+            ssm_portal_menu t1
+                INNER JOIN ssm_analysis_tpl_base t2
+                           ON t1.content_ref_id = t2.analysis_tpl_id
+        WHERE t2.online_status = 'online'
+          AND t1.portal_id = #{portalId}
+          AND t1.is_active = 1
+    </select>
+
+    <select id="getProdAnalysisTplByAnalysisTplId" parameterType="String" resultType="com.bi.queryer.ssm.portal.template.vo.AnalysisTemplateVO">
+        SELECT
+            t2.analysis_tpl_id as analysisTplId,
+            t2.analysis_tpl_name as analysisTplName,
+            t1.menu_id as menuId,
+            t2.has_ai_summary as hasAiSummary,
+            t1.portal_id as portalId
+        FROM
+            ssm_analysis_tpl_base t2
+                LEFT JOIN ssm_portal_menu t1
+                           ON t1.content_ref_id = t2.analysis_tpl_id
+        WHERE t2.analysis_tpl_id = #{analysisTplId}
+        limit 1
+    </select>
+
+    <delete id="deleteEtlJobByAnalysisTplId" parameterType="String">
+        delete from ssm_analysis_tpl_etl_job where analysis_tpl_id = #{analysisTplId}
+    </delete>
+
+    <insert id="batchInsertEtlJob" parameterType="java.util.HashMap">
+        insert into ssm_analysis_tpl_etl_job
+        (
+            analysis_tpl_id,
+            etl_job,
+            created_time,
+            created_by
+        )
+        values
+        <foreach item="item" index="index" collection="etlJobList" separator=",">
+            (
+             #{analysisTplId},
+             #{item},
+             now(),
+             #{userName}
+            )
+        </foreach>
+    </insert>
+
+    <select id="getEtlJobByAnalysisTplId" parameterType="String" resultType="String">
+        select
+            etl_job
+        from
+            ssm_analysis_tpl_etl_job
+        where
+            analysis_tpl_id = #{analysisTplId}
+    </select>
+
+    <select id="getAnalysisTplByQueryTplIds" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.portal.template.entity.AnalysisTplQueryTplRelEntity">
+        select b.analysis_tpl_id as analysisTplId, d.analysis_tpl_name as analysisTplName, c.local_query_tpl_id as localQueryTplId
+        from
+        (
+            select analysis_tpl_cfg_id, analysis_tpl_id from ssm_analysis_tpl_cfg_prod where is_latest = 1
+        )b join
+        (
+            select analysis_tpl_cfg_id, analysis_tpl_id, local_query_tpl_id  from ssm_analysis_tpl_widget_query_tpl_rel
+        )c on b.analysis_tpl_id = c.analysis_tpl_id and b.analysis_tpl_cfg_id = c.analysis_tpl_cfg_id
+        left join
+        (
+            select analysis_tpl_id,analysis_tpl_name, online_status from ssm_analysis_tpl_base
+        )d on b.analysis_tpl_id = d.analysis_tpl_id
+        where d.online_status = 'online' and c.local_query_tpl_id in
+        <foreach item="item" index="index" collection="queryTplIds" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <insert id="batchSaveWidgetConfig" parameterType="java.util.List">
+        insert into ssm_analysis_tpl_widget
+        (
+            widget_id,
+            analysis_tpl_cfg_id,
+            analysis_tpl_id,
+            widget_type_code,
+            parent_widget_id,
+            widget_title,
+            widget_desc,
+            widget_settings,
+            widget_options,
+            query_tpl_id,
+            query_tpl_viewid_mapping,
+            sort_id,
+            is_active,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time
+        )
+        values
+        <foreach item="item" index="index" collection="list" separator=",">
+            (
+                #{item.widgetId},
+                #{item.analysisTplCfgId},
+                #{item.analysisTplId},
+                #{item.widgetTypeCode},
+                #{item.parentWidgetId},
+                #{item.widgetTitle},
+                #{item.widgetDesc},
+                #{item.widgetSettings},
+                #{item.widgetOptions},
+                #{item.queryTplId},
+                #{item.queryTplViewIdMapping},
+                #{item.sortId},
+                #{item.isActive},
+                #{item.createdBy},
+                now(),
+                #{item.updatedBy},
+                now()
+            )
+        </foreach>
+    </insert>
+    
+    <delete id="deleteWidgetByAnalysisTplCfgId" parameterType="String">
+        delete from ssm_analysis_tpl_widget where analysis_tpl_cfg_id = #{analysisTplCfgId}
+    </delete>
+
+    <delete id="deleteWidgetQueryTplRelByAnalysisTplCfgId" parameterType="String">
+        delete from ssm_analysis_tpl_widget_query_tpl_rel where analysis_tpl_cfg_id = #{analysisTplCfgId}
+    </delete>
+
+    <insert id="copyAnalysisTplWidgetQueryTplRel" parameterType="java.util.HashMap">
+        insert into ssm_analysis_tpl_widget_query_tpl_rel
+        (
+            analysis_tpl_cfg_id,
+            analysis_tpl_id,
+            local_query_tpl_id,
+            prod_query_tpl_id,
+            is_active,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time
+        )
+       select
+           #{newAnalysisTplCfgId} as analysis_tpl_cfg_id,
+           analysis_tpl_id,
+           local_query_tpl_id,
+           prod_query_tpl_id,
+           is_active,
+           #{userName} as created_by,
+           now() as created_time,
+           #{userName} as updated_by,
+           now() as updated_time
+        from
+            ssm_analysis_tpl_widget_query_tpl_rel
+        where
+            analysis_tpl_id = #{analysisTplId}
+            and analysis_tpl_cfg_id = #{oldAnalysisTplCfgId}
+    </insert>
+
+    <!-- 从源配置复制组件行到目标配置（主键为 analysis_tpl_cfg_id + widget_id） -->
+    <insert id="copyWidgetConfigToNewCfg" parameterType="java.util.HashMap">
+        insert into ssm_analysis_tpl_widget
+        (
+            widget_id,
+            analysis_tpl_cfg_id,
+            analysis_tpl_id,
+            widget_type_code,
+            parent_widget_id,
+            widget_title,
+            widget_desc,
+            widget_settings,
+            widget_options,
+            query_tpl_id,
+            query_tpl_viewid_mapping,
+            sort_id,
+            is_active,
+            created_by,
+            created_time,
+            updated_by,
+            updated_time
+        )
+        select
+            widget_id,
+            #{newAnalysisTplCfgId} as analysis_tpl_cfg_id,
+            analysis_tpl_id,
+            widget_type_code,
+            parent_widget_id,
+            widget_title,
+            widget_desc,
+            widget_settings,
+            widget_options,
+            query_tpl_id,
+            query_tpl_viewid_mapping,
+            sort_id,
+            is_active,
+            #{userName} as created_by,
+            now() as created_time,
+            #{userName} as updated_by,
+            now() as updated_time
+        from
+            ssm_analysis_tpl_widget
+        where
+            analysis_tpl_id = #{analysisTplId}
+            and analysis_tpl_cfg_id = #{oldAnalysisTplCfgId}
+            and is_active = 1
+    </insert>
+</mapper>

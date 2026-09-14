@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.inspection">
+
+    <select id="queryInspectionCfgList" parameterType="String" resultType="com.bi.queryer.ssm.inspection.query.template.entity.InspectionCfgEntity">
+        select
+            inspection_subject_id as inspectionSubjectId,
+            inspection_subject_name as inspectionSubjectName,
+            inspection_subject_type as inspectionSubjectType,
+            inspection_subject_owner as inspectionSubjectOwner,
+            inspection_query_mode as inspectionQueryMode,
+            view_id as viewId,
+            view_name as viewName
+        from
+            ssm_inspection_cfg
+        where
+            inspection_query_mode = #{queryMode}
+    </select>
+
+    <select id="queryCountByViewId" parameterType="java.util.HashMap" resultType="Integer">
+        select count(1) as cnt from ssm_inspection_cfg where view_id = #{viewId}
+    </select>
+
+    <insert id="insert" parameterType="com.bi.queryer.ssm.inspection.query.template.entity.InspectionCfgEntity">
+        insert into ssm_inspection_cfg
+        (
+            inspection_subject_id,
+            inspection_subject_name,
+            inspection_subject_type,
+            inspection_subject_owner,
+            inspection_query_mode,
+            pkid,
+            created_time,
+            created_by,
+            view_id,
+            view_name
+        )
+        values
+        (
+          #{inspectionSubjectId},
+          #{inspectionSubjectName},
+          #{inspectionSubjectType},
+          #{inspectionSubjectOwner},
+          #{inspectionQueryMode},
+          md5(uuid()),
+          now(),
+          'sys',
+          #{viewId},
+          #{viewName}
+        )
+
+    </insert>
+
+</mapper>

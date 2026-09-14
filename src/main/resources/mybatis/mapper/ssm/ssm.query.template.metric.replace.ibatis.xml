@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.template.metric.replace">
+
+    <select id="listActive" resultType="com.bi.queryer.ssm.query.template.metric.replace.model.TemplateMetricReplaceEntity">
+        SELECT
+            id AS id,
+            old_wp_code AS oldWpCode,
+            new_wp_code AS newWpCode,
+            new_wp_name AS newWpName,
+            new_field_id AS newFieldId,
+            is_active AS isActive,
+            created_by AS createdBy,
+            created_time AS createdTime,
+            updated_by AS updatedBy,
+            updated_time AS updatedTime
+        FROM
+            template_metric_replace
+        WHERE
+            is_active = 1
+        ORDER BY
+            id ASC
+    </select>
+
+    <delete id="deleteCfgBakByCfgId" parameterType="java.util.HashMap">
+        DELETE FROM
+            template_metric_replace_cfg_bak
+        WHERE
+            cfg_id = #{cfgId}
+    </delete>
+
+    <delete id="deleteCfgBakByCfgIds" parameterType="java.util.HashMap">
+        DELETE FROM
+            template_metric_replace_cfg_bak
+        WHERE
+            cfg_id IN
+            <foreach collection="cfgIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </delete>
+
+    <select id="listCfgBakByCfgIds" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.metric.replace.model.TemplateMetricReplaceCfgBakEntity">
+        SELECT
+            id AS id,
+            tpl_id AS tplId,
+            cfg_id AS cfgId,
+            view_id AS viewId,
+            tpl_config AS tplConfig,
+            created_by AS createdBy,
+            created_time AS createdTime
+        FROM
+            template_metric_replace_cfg_bak
+        WHERE
+            cfg_id IN
+            <foreach collection="list" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </select>
+
+    <insert id="insertCfgBak" parameterType="com.bi.queryer.ssm.query.template.metric.replace.model.TemplateMetricReplaceCfgBakEntity">
+        INSERT INTO template_metric_replace_cfg_bak (
+            tpl_id,
+            cfg_id,
+            view_id,
+            tpl_config,
+            created_by,
+            created_time
+        ) VALUES (
+            #{tplId},
+            #{cfgId},
+            #{viewId},
+            #{tplConfig},
+            #{createdBy},
+            NOW()
+        )
+    </insert>
+
+    <insert id="insertCfgBakBatch" parameterType="java.util.List">
+        INSERT INTO template_metric_replace_cfg_bak (
+            tpl_id,
+            cfg_id,
+            view_id,
+            tpl_config,
+            created_by,
+            created_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.tplId},
+                #{item.cfgId},
+                #{item.viewId},
+                #{item.tplConfig},
+                #{item.createdBy},
+                NOW()
+            )
+        </foreach>
+    </insert>
+
+    <select id="listLatestBakByTplIds" parameterType="java.util.List" resultType="com.bi.queryer.ssm.query.template.metric.replace.model.TemplateMetricReplaceCfgBakEntity">
+        SELECT
+            id AS id,
+            tpl_id AS tplId,
+            cfg_id AS cfgId,
+            view_id AS viewId,
+            tpl_config AS tplConfig,
+            created_by AS createdBy,
+            created_time AS createdTime
+        FROM
+            template_metric_replace_cfg_bak
+        WHERE
+            tpl_id IN
+            <foreach collection="list" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        ORDER BY
+            tpl_id,
+            cfg_id
+    </select>
+
+    <insert id="insertFieldReplaceLog" parameterType="com.bi.queryer.ssm.query.template.metric.replace.model.TemplateFieldReplaceLogEntity">
+        INSERT INTO template_field_replace_log (
+            replace_task_id,
+            tpl_id,
+            view_id,
+            created_by,
+            created_time
+        ) VALUES (
+            #{replaceTaskId},
+            #{tplId},
+            #{viewId},
+            #{createdBy},
+            NOW()
+        )
+    </insert>
+
+    <insert id="insertFieldReplaceLogBatch" parameterType="java.util.List">
+        INSERT INTO template_field_replace_log (
+            replace_task_id,
+            tpl_id,
+            view_id,
+            created_by,
+            created_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.replaceTaskId},
+                #{item.tplId},
+                #{item.viewId},
+                #{item.createdBy},
+                NOW()
+            )
+        </foreach>
+    </insert>
+
+</mapper>

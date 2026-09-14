@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.data.auth.dataset.ctg">
+
+    <insert id="add" parameterType="java.util.HashMap">
+        insert into ssm_data_auth_dataset_ctg
+        (
+            owner_id,
+            owner_type,
+            item_type,
+            item_value,
+            created_time,
+            created_by
+        )
+        value
+        <foreach item="item" collection="authList" separator="," index="">
+            (
+            #{item.ownerId},
+            #{item.ownerType},
+            #{itemType},
+            #{itemValue},
+            now(),
+            #{createdBy}
+            )
+        </foreach>
+
+    </insert>
+
+    <delete id="delete" parameterType="java.util.HashMap">
+        delete from ssm_data_auth_dataset_ctg where item_type = #{itemType} and item_value = #{itemValue}
+    </delete>
+
+    <delete id="deleteByMap" parameterType="java.util.HashMap">
+        delete from ssm_data_auth_dataset_ctg where item_type = #{itemType} and item_value = #{itemValue} and owner_type = #{ownerType}
+    </delete>
+
+    <select id="selectByMap" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.mgr.fieldCtg.model.DatasetCtgDataAuthDetailRsq">
+        select
+            owner_id as ownerId,
+            owner_type as ownerType
+        from
+            ssm_data_auth_dataset_ctg
+        where
+            item_type = #{itemType}
+            and item_value = #{itemValue}
+    </select>
+
+    <select id="selectUserAuth" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.mgr.fieldCtg.model.DatasetCtgDataAuthRsq">
+        SELECT DISTINCT
+          item_type as itemType,
+          item_value as itemValue
+        FROM
+          (SELECT
+            item_type,
+            item_value
+          FROM
+            ssm_data_auth_dataset_ctg
+          WHERE owner_type = 'user'
+            AND owner_id = #{userName}
+          UNION
+          ALL
+          SELECT
+            item_type,
+            item_value
+          FROM
+            ssm_data_auth_dataset_ctg
+          WHERE owner_type = 'dept'
+            AND CONCAT(#{deptId}, '/') LIKE CONCAT('%', owner_id, '/%')) tmp
+    </select>
+
+    <delete id="deleteByUserName" parameterType="String">
+        delete
+        from
+            ssm_data_auth_dataset_ctg
+        where
+             owner_type = 'User'
+             and owner_id = #{userName}
+    </delete>
+
+    <select id="queryAuthByUserName" parameterType="String" resultType="com.bi.queryer.ssm.mgr.fieldCtg.model.DatasetCtgDataAuthRsq">
+        SELECT
+          'ctg' AS itemType,
+          item_code AS itemValue
+        FROM
+          bi_portal.sys_data_auth
+        WHERE module_code = 'ssd_ctg'
+          AND dim_code = 'ssm_ctg'
+          AND owner_type = 'User'
+          AND owner_id = #{userName}
+        UNION
+        ALL
+        SELECT
+          item_type AS itemType,
+          item_value AS itemValue
+        FROM
+          ssm_data_auth_dataset_ctg
+        WHERE owner_type = 'user'
+          AND owner_id = #{userName}
+    </select>
+
+    <delete id="batchDeleteByOwnIdList" parameterType="java.util.HashMap">
+        delete from ssm_data_auth_dataset_ctg
+               where
+              item_type = #{itemType}
+              and item_value =#{itemValue}
+              and owner_id in (
+            <foreach item="item" collection="ownerIdList" separator="," index="">#{item}
+              </foreach>
+        )
+
+    </delete>
+
+    <delete id="batchDelete" parameterType="java.util.HashMap">
+        delete from ssm_data_auth_dataset_ctg
+        where item_value in
+         (
+        <foreach item="item" collection="itemValueList" separator="," index="">#{item}
+        </foreach>
+         )
+    </delete>
+
+    <insert id="batchAdd" parameterType="java.util.HashMap">
+        insert into ssm_data_auth_dataset_ctg
+        (
+            owner_id,
+            owner_type,
+            item_type,
+            item_value,
+            created_time,
+            created_by
+        )
+        values
+        <foreach item="item" collection="dataAuthList" separator="," index="">
+            (
+            #{item.ownerId},
+            #{item.ownerType},
+            #{item.itemType},
+            #{item.itemValue},
+            now(),
+            #{item.createdBy}
+            )
+        </foreach>
+    </insert>
+
+    <select id="queryDataCtgAuth" parameterType="String" resultType="com.bi.queryer.ssm.api.vo.rsp.DataCtgAuthDetailRsp">
+        select
+            t2.USER_NAME as userName,
+            t2.USER_REALNAME as userRealName,
+            t2.DEPT_NAME as deptName,
+            '主动授权' as authSource,
+            '主动授权-用户' as authSourceDetail,
+            DATE_FORMAT(t1.created_time, '%Y-%m-%d') as authBeginDate,
+            '2099-12-31' as authEndDate,
+            0 as isCanDelete
+        from
+            ssm_data_auth_dataset_ctg t1
+                inner join bi_portal.hr_employee t2 on t1.owner_id = t2.USER_NAME
+        where
+            item_value = #{itemValue}
+          and owner_type = 'User'
+        union all
+        select
+            t2.USER_NAME as userName,
+            t2.USER_REALNAME as userRealName,
+            t2.DEPT_NAME as deptName,
+            '主动授权' as authSourceDetail,
+            concat('主动授权-部门-', t3.dept_path_name) as authSource,
+            DATE_FORMAT(t1.created_time, '%Y-%m-%d') as authBeginDate,
+            '2099-12-31' as authEndDate,
+            0 as isCanDelete
+        from
+            ssm_data_auth_dataset_ctg t1
+                inner join bi_portal.hr_employee t2 ON CONCAT(t2.dept_id, '/') LIKE CONCAT('%', t1.owner_id, '/%')
+                inner join bi_portal.sys_dept t3 on t1.owner_id = t3.dept_id
+        where
+            item_value = #{itemValue}
+          and t1.owner_type = 'Dept'
+    </select>
+
+</mapper>

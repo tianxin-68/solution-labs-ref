@@ -1,0 +1,11 @@
+同环比sql构建：
+1、模型sql中去掉where中exists条件
+2、各个对比with中select子句带上对比偏移日期，用于后续的日期join
+3、最外层select子句，去掉小计、总计的case when，调整到java结果层处理
+4、最外层select子句，所有维度+grouping相关字段，都需使用COALESCE
+5、最外层order by子句统一用别名排序
+6、lod查询时，分析sql构建row_number中排序字段使用COALESCE
+
+java层：
+1、查询：最终结果层，对总计、小计进行转换
+2、导出：最终结果层，对总计、小计进行转换

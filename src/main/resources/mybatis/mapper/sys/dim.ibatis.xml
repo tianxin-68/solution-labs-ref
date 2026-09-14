@@ -1,0 +1,517 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dim">
+
+    <sql id="sqlFilter">
+        <if test="moduleCode != null and '' != moduleCode">
+            and t.`module_code` = #{moduleCode}
+        </if>
+    </sql>
+
+    <select id="queryDimList" parameterType="java.util.HashMap" resultType="com.bi.queryer.sys.dim.vo.Dim">
+
+        SELECT
+        t.cfg_id AS cfgId,
+        t.module_code AS moduleCode,
+        t.module_name as moduleName,
+        t.dim_code as dimCode,
+        t.dim_name as dimName,
+        t.dim_table_name as dimTableName,
+        t.dim_table_sql as dimTableSql,
+        t.code_field_name as codeFieldName,
+        t.value_field_name as valueFieldName,
+        t.parent_code_field_name as parentCodeFieldName,
+        t.root_value as rootValue,
+        t.`IS_ACTIVE` AS isActive,
+        DATE_FORMAT(
+        t.created_time,
+        '%Y-%m-%d %H:%i:%s'
+        ) AS createdTime,
+        t.created_by AS createdBy,
+        t.updated_by AS updatedBy,
+        DATE_FORMAT(
+        t.updated_time,
+        '%Y-%m-%d %H:%i:%s'
+        ) AS updatedTime,
+        t.dim_datasource as dimDatasource,
+        t.dim_data_api as dimDataApi
+        FROM
+        bi_portal.sys_data_auth_cfg t
+        where 1=1
+        <include refid="sqlFilter"/>
+        ORDER BY moduleCode
+        LIMIT ${pageRowLower}, ${prePageSize}
+
+    </select>
+
+    <select id="queryDimListCount" parameterType="java.util.HashMap" resultType="Integer">
+
+        SELECT count(1) FROM
+        bi_portal.sys_data_auth_cfg t
+        where 1=1
+        <include refid="sqlFilter"/>
+
+    </select>
+
+    <insert id="insertDim" parameterType="com.bi.queryer.sys.dim.vo.Dim">
+
+        insert into
+        bi_portal.sys_data_auth_cfg
+        (
+        cfg_id,
+        module_code,
+        module_name,
+        dim_code,
+        dim_name,
+        dim_table_name,
+        dim_table_sql,
+        code_field_name,
+        value_field_name,
+        parent_code_field_name,
+        root_value,
+        dim_datasource,
+        is_active,
+        created_time,
+        created_by,
+        dim_data_api
+        )
+        values
+        (
+        #{cfgId},
+        #{moduleCode},
+        #{moduleName},
+        #{dimCode},
+        #{dimName},
+        #{dimTableName},
+        #{dimTableSql},
+        #{codeFieldName},
+        #{valueFieldName},
+        #{parentCodeFieldName},
+        #{rootValue},
+        #{dimDatasource},
+        #{isActive},
+        now(),
+        #{createdBy},
+        #{dimDataApi}
+        )
+    </insert>
+
+    <update id="updateDim" parameterType="com.bi.queryer.sys.dim.vo.Dim">
+
+        update bi_portal.sys_data_auth_cfg t
+        set
+            t.module_code = #{moduleCode},
+            t.module_name = #{moduleName},
+            t.dim_code = #{dimCode},
+            t.dim_name = #{dimName},
+            t.dim_table_name = #{dimTableName},
+            t.dim_table_sql = #{dimTableSql},
+            t.code_field_name = #{codeFieldName},
+            t.value_field_name = #{valueFieldName},
+            t.parent_code_field_name = #{parentCodeFieldName},
+            t.root_value = #{rootValue},
+            t.dim_datasource = #{dimDatasource},
+            t.is_active = #{isActive},
+            t.updated_time = now(),
+            t.updated_by = #{updatedBy},
+            t.dim_data_api = #{dimDataApi}
+         where t.cfg_id = #{cfgId}
+    </update>
+
+    <delete id="deleteDimByCfgid" parameterType="String">
+        delete from bi_portal.sys_data_auth_cfg where cfg_id = #{cfgId}
+    </delete>
+
+
+    <resultMap id="moduleDimListMap" type="com.bi.queryer.sys.dim.vo.DimItem">
+        <id property="id" column="id"/>
+        <result property="label" column="label"/>
+        <result property="index" column="index"/>
+
+        <collection property="children" ofType="com.bi.queryer.sys.dim.vo.DimItem" select="getDimListByModule" column="id">
+        </collection>
+
+    </resultMap>
+
+    <!--获取各模块维度集合-->
+    <select id="getModuleDimList" parameterType="String" resultMap="moduleDimListMap">
+          SELECT
+          t.`dict_item_code` as id,
+          t.`dict_item_name` as label,
+          t.`dict_item_index` as `index`,
+          'module' as `type`
+        FROM
+          bi_portal.sys_dict t
+        WHERE t.`dict_code` = #{dimCode}
+        ORDER BY t.`dict_item_index`
+
+    </select>
+
+    <select id="getDimListByModule" parameterType="String" resultType="com.bi.queryer.sys.dim.vo.DimItem">
+            SELECT
+              t.`dim_code` as id,
+              t.`dim_name` as label,
+              t.`module_code` as parentId,
+              'dim' as `type`,
+              t.`module_name` as moduleName,
+              t.`module_code` as moduleCode,
+              t.`dim_code` as dimCode,
+              t.`dim_name` as dimName
+            FROM
+              bi_portal.sys_data_auth_cfg t
+            WHERE t.`module_code` = #{id} and t.is_active = 1
+            order by label
+    </select>
+
+    <select id="checkDimCodeExist" parameterType="com.bi.queryer.sys.dim.vo.Dim" resultType="Integer">
+        select count(1) from bi_portal.sys_data_auth_cfg t where t.`module_code` = #{moduleCode} and t.`dim_code` = #{dimCode}
+        <if test="cfgId != null and '' != cfgId">
+            and t.cfg_id <![CDATA[!= ]]> #{cfgId}
+        </if>
+    </select>
+
+    <select id="getDimInfoByCode" parameterType="java.util.HashMap" resultType="com.bi.queryer.sys.dim.vo.Dim">
+        SELECT
+          t.cfg_id AS cfgId,
+          t.module_code AS moduleCode,
+          t.module_name as moduleName,
+          t.dim_code as dimCode,
+          t.dim_name as dimName,
+          t.dim_table_name as dimTableName,
+          t.code_field_name as codeFieldName,
+          t.value_field_name as valueFieldName,
+          t.parent_code_field_name as parentCodeFieldName,
+          t.root_value as rootValue,
+          t.dim_datasource as dimDatasource,
+          t.dim_table_sql as dimTableSql,
+          t.dim_data_api as dimDataApi
+          from bi_portal.sys_data_auth_cfg t
+          where t.module_code = #{moduleCode} and t.dim_code = #{dimCode}
+          LIMIT 0,1
+
+    </select>
+
+    <select id="getDimInfoOfRptByRptId" parameterType="string" resultType="com.bi.queryer.sys.dim.vo.Dim">
+        SELECT DISTINCT
+	        t.cfg_id AS cfgId,
+          t.module_code AS moduleCode,
+          t.module_name as moduleName,
+          t.dim_code as dimCode,
+          t.dim_name as dimName,
+          t.dim_table_name as dimTableName,
+          t.code_field_name as codeFieldName,
+          t.value_field_name as valueFieldName,
+          t.parent_code_field_name as parentCodeFieldName,
+          t.root_value as rootValue,
+          t.dim_datasource as dimDatasource,
+          t.dim_table_sql as dimTableSql,
+          t.dim_data_api as dimDataApi
+        FROM
+	        bi_portal.sys_data_auth_cfg t
+        LEFT JOIN `sys_data_auth_rpt` t1 ON t1.module_code = t.module_code
+        AND t1.dim_code = t.dim_code
+        WHERE
+	        t1.rpt_id = #{rptId}
+    </select>
+
+    <select id="getDimInfoOfFieldByCtgId" parameterType="string" resultType="com.bi.queryer.sys.dim.vo.Dim">
+        SELECT DISTINCT
+	        t.cfg_id AS cfgId,
+          t.module_code AS moduleCode,
+          t.module_name as moduleName,
+          t.dim_code as dimCode,
+          t.dim_name as dimName,
+          t.dim_table_name as dimTableName,
+          t.code_field_name as codeFieldName,
+          t.value_field_name as valueFieldName,
+          t.parent_code_field_name as parentCodeFieldName,
+          t.root_value as rootValue,
+          t.dim_datasource as dimDatasource,
+          t.dim_table_sql as dimTableSql,
+          t.dim_data_api as dimDataApi
+        FROM
+	    bi_portal.sys_data_auth_cfg t
+        LEFT JOIN `ssd_field_auth_dim` t1 ON t.module_code = t1.module_code
+        AND t.dim_code = t1.dim_code
+        LEFT JOIN ssd_field_def t2 ON t1.field_code = t2.field_code
+        WHERE
+	        1 = 1
+        AND t2.front_ctg_id = #{ctgId}
+
+    </select>
+
+    <select id="getDimInfoListByCode" parameterType="string" resultType="com.bi.queryer.sys.dim.vo.Dim">
+        SELECT
+	        t.cfg_id AS cfgId,
+          t.module_code AS moduleCode,
+          t.module_name as moduleName,
+          t.dim_code as dimCode,
+          t.dim_name as dimName,
+          t.dim_table_name as dimTableName,
+          t.code_field_name as codeFieldName,
+          t.value_field_name as valueFieldName,
+          t.parent_code_field_name as parentCodeFieldName,
+          t.root_value as rootValue,
+          t.dim_datasource as dimDatasource,
+          t.dim_table_sql as dimTableSql,
+          t.dim_data_api as dimDataApi
+        FROM
+	    bi_portal.sys_data_auth_cfg t
+	    where  t.module_code = #{moduleCode}
+
+
+    </select>
+
+    <select id="getDimTableDetail" parameterType="com.bi.queryer.sys.dim.vo.Dim" resultType="com.bi.queryer.sys.dim.vo.DimItem">
+        SELECT
+        ${codeFieldName} as id,
+        ${valueFieldName} as label
+
+        <if test="parentCodeFieldName !=null and '' != parentCodeFieldName">
+            , ${parentCodeFieldName} as parentId
+        </if>
+
+        FROM
+        <choose>
+            <when test="dimTableSql != null and '' != dimTableSql">
+                ( ${dimTableSql} ) t
+            </when>
+            <otherwise>
+                ${dimTableName}
+            </otherwise>
+        </choose>
+
+    </select>
+
+    <insert id="insertDataAuth" parameterType="java.util.List">
+
+        insert into bi_portal.sys_data_auth
+        (
+        auth_id,
+        owner_type,
+        owner_id,
+        module_code,
+        module_name,
+        dim_code,
+        dim_name,
+        item_code,
+        item_value,
+        dim_display_name,
+        remark,
+        created_time,
+        created_by
+        )
+        values
+
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+            #{item.authId},
+            #{item.ownerType},
+            #{item.ownerId},
+            #{item.moduleCode},
+            #{item.moduleName},
+            #{item.dimCode},
+            #{item.dimName},
+            #{item.itemCode},
+            #{item.itemValue},
+            #{item.dimDisplayName},
+            #{item.remark},
+            now(),
+            #{item.createdBy}
+            )
+        </foreach>
+
+        on duplicate key update auth_id=values(auth_id)
+
+    </insert>
+
+    <delete id="deleteDataAuthByOwnerId" parameterType="String">
+        delete from bi_portal.sys_data_auth where owner_id = #{ownerId}
+    </delete>
+
+    <select id="checkDataAuthExist" parameterType="com.bi.queryer.sys.dim.vo.DataAuth" resultType="Integer">
+       select count(1) from bi_portal.sys_data_auth t where t.owner_id = #{ownerId} and t.module_code = #{moduleCode} and t.dim_code = #{dimCode}
+       and t.item_code = #{itemCode}
+    </select>
+
+    <select id="queryDataAuthByOwnerId" parameterType="java.util.HashMap" resultType="com.bi.queryer.sys.dim.vo.DataAuth">
+                SELECT
+          da.module_code AS moduleCode,
+          da.module_name AS moduleName,
+          da.dim_code AS dimCode,
+          da.dim_name AS dimName,
+          da.item_code AS itemCode,
+          da.item_value AS itemValue,
+          da.dim_display_name AS dimDisplayName,
+          d.`dict_item_index` AS `index`
+        FROM
+          bi_portal.sys_data_auth da
+          INNER JOIN bi_portal.sys_dict d
+            ON da.`module_code` = d.`dict_item_code`
+        WHERE d.`dict_code` =  #{dimCode}
+          AND da.`owner_id` =  #{ownerId}
+        ORDER BY d.`dict_item_index`,da.`dim_name`
+    </select>
+
+
+    <sql id="sqlDataAuthFilter">
+        <if test="moduleCode != null and '' != moduleCode">
+            and t.`module_code` = #{moduleCode}
+        </if>
+        <if test="dimCode != null and '' != dimCode">
+            and t.`dim_code` = #{dimCode}
+        </if>
+        <if test="ownerId != null and '' != ownerId">
+            and (t.`owner_id` LIKE concat('%',#{ownerId},'%')
+            or
+            r.ROLE_NAME LIKE concat('%',#{ownerId},'%')
+            )
+        </if>
+    </sql>
+
+    <!--数据权限管控   权限列表-->
+    <select id="queryDataAuthList" parameterType="java.util.HashMap" resultType="com.bi.queryer.sys.dim.vo.DataAuth">
+        SELECT
+        t.`auth_id` as authId,
+        t.`owner_type` as ownerType,
+        CASE WHEN t.owner_type = 'Role' THEN r.ROLE_NAME ELSE t.owner_id END AS ownerId,
+        t.`module_code` as moduleCode,
+        t.`module_name` as moduleName,
+        t.`dim_code` as dimCode,
+        t.`dim_name` as dimName,
+        t.`item_code` as itemCode,
+        t.`item_value` as itemValue ,
+        t.`remark` ,
+        DATE_FORMAT(
+        t.created_time,
+        '%Y-%m-%d %H:%i:%s'
+        ) AS createdTime,
+        t.`created_by` as createdBy
+        FROM
+        bi_portal.sys_data_auth t
+        LEFT JOIN bi_portal.sys_role r ON t.`owner_id` = r.`ROLE_ID`
+        where 1=1
+        <include refid="sqlDataAuthFilter"/>
+        ORDER BY createdTime desc,dimName
+        LIMIT ${pageRowLower}, ${prePageSize}
+    </select>
+
+    <select id="queryDataAuthListCount" parameterType="java.util.HashMap" resultType="Integer">
+        SELECT
+        count(1)
+        FROM
+        bi_portal.sys_data_auth t
+        LEFT JOIN bi_portal.sys_role r ON t.`owner_id` = r.`ROLE_ID`
+        where 1=1
+        <include refid="sqlDataAuthFilter"/>
+    </select>
+
+    <delete id="deleteDataAuthByAuthId" parameterType="String">
+        delete from bi_portal.sys_data_auth where auth_id = #{authId}
+    </delete>
+
+    <!--查询所有数据权限-->
+    <select id="selectSyncDimList" resultType="com.bi.queryer.sys.dim.vo.DataAuth">
+        SELECT DISTINCT
+          tmp.*
+        FROM
+          (SELECT
+            t1.`owner_id` AS ownerId,
+            t1.`module_code` as moduleCode,
+            t1.`module_name` as moduleName,
+            t1.`dim_code` as dimCode,
+            t1.`dim_name` as dimName,
+            t1.`item_code` as itemCode,
+            t1.`item_value` as itemValue
+          FROM
+            bi_portal.sys_data_auth t1
+          WHERE t1.`owner_type` = 'User'
+          UNION
+          ALL
+          SELECT
+            t2.user_name as ownerId,
+            t1.`module_code` as moduleCode,
+            t1.`module_name` as moduleName,
+            t1.`dim_code` as dimCode,
+            t1.`dim_name` as dimName,
+            t1.`item_code` as itemCode,
+            t1.`item_value` as itemValue
+          FROM
+            bi_portal.sys_data_auth t1
+            INNER JOIN bi_portal.sys_user_role t2
+              ON t1.`owner_id` = t2.role_id
+              AND t1.`owner_type` = 'Role'
+          WHERE 1 = 1) tmp
+
+    </select>
+
+    <delete id="deleteAllDataAuth">
+        delete from bi_portal.sys_data_auth
+    </delete>
+
+    <insert id="insertSyncDataAuth" parameterType="java.util.List">
+
+        insert into bi_portal.sys_data_auth (user_name,module_code,module_name,dim_code,dim_name,item_code,item_value)
+        values
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+            #{item.ownerId},
+            #{item.moduleCode},
+            #{item.moduleName},
+            #{item.dimCode},
+            #{item.dimName},
+            #{item.itemCode},
+            #{item.itemValue}
+            )
+        </foreach>
+    </insert>
+
+    <!--获取关联的数据权限信息-->
+    <select id="getAssociateInfoByDataAuth" parameterType="com.bi.queryer.sys.dim.vo.DataAuth"
+            resultType="com.bi.queryer.sys.dim.vo.DataAuth">
+
+                    SELECT
+          t.`owner_type` as ownerType,
+          t.`owner_id` as ownerId,
+          t.remark
+        FROM
+          bi_portal.sys_data_auth t
+        WHERE t.`module_code` = #{moduleCode}
+          AND t.`dim_code` = #{dimCode}
+          AND t.`item_code` = #{itemCode}
+    </select>
+
+    <insert id="insertDataAuthWithActiveDurationDays" parameterType="java.util.List">
+        insert into bi_portal.sys_data_auth
+        (
+        auth_id, owner_type, owner_id, module_code, module_name, dim_code, dim_name,
+        item_code, item_value, dim_display_name, remark, created_time, created_by, active_duration_days
+        )
+        values
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+            #{item.authId}, #{item.ownerType}, #{item.ownerId}, #{item.moduleCode}, #{item.moduleName},
+            #{item.dimCode}, #{item.dimName}, #{item.itemCode}, #{item.itemValue}, #{item.dimDisplayName},
+            #{item.remark}, now(), #{item.createdBy}, #{item.activeDurationDays}
+            )
+        </foreach>
+        on duplicate key update
+            auth_id=values(auth_id),
+            active_duration_days=values(active_duration_days),
+            created_time=now()
+    </insert>
+
+    <delete id="deleteUserDataAuthByItems" parameterType="java.util.List">
+        delete from bi_portal.sys_data_auth
+        where owner_type = 'User'
+        and (
+        <foreach collection="list" index="index" item="item" separator=" or ">
+            (owner_id = #{item.ownerId}
+            and module_code = #{item.moduleCode}
+            and dim_code = #{item.dimCode}
+            and item_code = #{item.itemCode})
+        </foreach>
+        )
+    </delete>
+
+</mapper>

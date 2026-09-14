@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.template">
+
+    <!-- 模板保存 -->
+    <insert id="saveTemplate" parameterType="com.bi.queryer.ssm.query.template.model.TemplateEntity">
+        insert into ssd_query_template(tpl_id,cfg_id,tpl_type, tpl_name, tpl_desc, ctg_id, tpl_owner, created_by, created_time,dataset_id)
+        values(#{tplId}, #{cfgId},#{tplType},#{tplName}, #{tplDesc}, #{ctgId}, #{tplOwner}, #{createdBy},now(),#{datasetId})
+    </insert>
+
+    <!-- 模板保存 -->
+    <insert id="saveTemplateCfg" parameterType="com.bi.queryer.ssm.query.template.model.TemplateCfgEntity">
+        insert into ssd_query_template_cfg (cfg_id,tpl_config)
+        values
+         (#{cfgId}, #{tplConfig})
+    </insert>
+
+    <!--查询模版详情-->
+    <select id="queryTemplateEntityById" parameterType="com.bi.queryer.ssm.query.template.model.TemplateAddReq" resultType="com.bi.queryer.ssm.query.template.model.TemplateEntity">
+        select
+            t1.tpl_id AS tplId,
+            t1.tpl_name AS tplName,
+            t1.tpl_desc AS tplDesc,
+            t1.cfg_id as cfgId,
+            t1.ctg_id AS ctgId,
+            t1.tpl_type AS tplType,
+            t1.dataset_id as datasetId,
+            t1.created_by AS createdBy,
+            t1.tpl_owner AS tplOwner
+        from ssd_query_template t1
+        where t1.tpl_id = #{tplId}
+    </select>
+
+    <!-- 更新模板基础信息 -->
+    <select id="getTemplateNameByTplId" parameterType="java.lang.String" resultType="java.lang.String">
+        select t1.tpl_name
+        from ssd_query_template t1
+        where t1.tpl_id = #{tplId}
+        limit 1
+    </select>
+
+    <update id="updateTemplateBase" parameterType="com.bi.queryer.ssm.query.template.model.TemplateEntity">
+        update ssd_query_template
+        set tpl_name = #{tplName},
+            tpl_desc = #{tplDesc},
+            ctg_id = #{ctgId},
+            updated_by = #{updatedBy},
+            updated_time = now(),
+            dataset_id = #{datasetId},
+            tpl_owner = #{tplOwner}
+        where tpl_id = #{tplId}
+    </update>
+
+    <!-- 更新模板名称 -->
+    <update id="updateTemplateTitle" parameterType="com.bi.queryer.ssm.query.template.model.TemplateEntity">
+        update ssd_query_template
+        set tpl_name = #{tplName},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where tpl_id = #{tplId}
+    </update>
+
+    <!-- 更新模板名称及描述 -->
+    <update id="updateTemplateTitleAndDesc" parameterType="com.bi.queryer.ssm.query.template.model.TemplateEntity">
+        update ssd_query_template
+        set tpl_name = #{tplName},
+            tpl_desc = #{tplDesc},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where tpl_id = #{tplId}
+    </update>
+
+    <!--更新模版配置信息-->
+    <update id="updateTemplateCfg" parameterType="com.bi.queryer.ssm.query.template.model.TemplateCfgEntity">
+        update ssd_query_template_cfg
+        set tpl_config = #{tplConfig}
+        where cfg_id = #{cfgId}
+    </update>
+
+    <!-- 根据ctg查询所有模板（分页） -->
+    <select id="queryTemplateByCtg" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.query.template.model.TemplateViewPageRsp">
+        select
+            t.tpl_id AS tplId,
+            t.tpl_name AS tplName,
+            t.tpl_desc AS tplDesc,
+            t.created_by AS createdBy,
+            t.share_by AS shareBy,
+            DATE_FORMAT(t.created_time,'%Y-%m-%d %H:%i:%s') AS createdTime,
+            t.updated_by AS updatedBy,
+            DATE_FORMAT(t.updated_time,'%Y-%m-%d %H:%i:%s') AS updatedTime,
+            t.tpl_exp_max_rows as tplExpMaxRows,
+            t.ctg_id AS ctgId,
+            c.ctg_name AS ctgName,
+            case when f.is_top = 1 then 1 else 0 end AS isTop,
+            f.top_sort_id AS topSortId,
+            t.tpl_owner AS tplOwner,
+            t.tpl_type AS tplType,
+            case when f.tpl_id is null then 0 else 1 end as isFav,
+            t.dataset_id as datasetId,
+            c.ctg_type AS ctgType
+        from ssd_query_template t
+        left join ssd_query_template_ctg c on t.ctg_id = c.ctg_id
+        left join ssd_query_template_fav f on t.tpl_id = f.tpl_id and f.created_by = #{userName}
+        where (
+                (
+                    c.ctg_type in ('my','share')
+                    <if test=" isShowAll == 0">
+                     and FIND_IN_SET(#{userName}, t.tpl_owner) > 0
+                    </if>
+                )
+                    or
+                (c.ctg_type in ('space'))
+            )
+        <if test="'fav' != ctgId and isShowAll == 0">
+            and t.ctg_id in
+            <foreach item="item" collection="ctgIdList" separator="," open="(" close=")" index="">
+                #{item}
+            </foreach>
+        </if>
+        <if test=" tplIds != null">
+            and t.tpl_id in
+            <foreach item="item" collection="tplIds" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="'fav' == ctgId">
+            and  f.tpl_id is not null
+        </if>
+        <if test=" templateSearchText != '' and templateSearchText != null">
+            and (
+            t.tpl_name like concat('%', #{templateSearchText},'%')
+            or
+            t.created_by like concat('%', #{templateSearchText},'%')
+            or
+            t.tpl_id = #{templateSearchText}
+            )
+        </if>
+        <choose>
+            <when test=" sortKey == 'tplName'">
+                order by t.tpl_name ${sortType}
+            </when>
+            <when test=" sortKey == 'createdTime'">
+                order by t.created_time ${sortType}
+            </when>
+            <when test=" sortKey == 'createdBy'">
+                order by t.created_by ${sortType}
+            </when>
+<!--            <when test=" sortKey == 'ctgNamePath'">-->
+<!--                order by ctg.ctg_name_path ${sortType}-->
+<!--            </when>-->
+            <when test=" sortKey == 'tplName'">
+                order by t.tpl_name ${sortType}
+            </when>
+<!--            <when test=" sortKey == '__ctgPathAscCreateTimeDesc'">-->
+<!--                order by ctg.ctg_name_path asc, t.created_time desc-->
+<!--            </when>-->
+            <otherwise>
+<!--                order by ctg.ctg_name_path asc, t.tpl_name asc-->
+<!--                order by t.created_time desc-->
+            </otherwise>
+        </choose>
+        LIMIT ${pageRowLower}, ${prePageSize}
+    </select>
+
+    <select id="queryTemplateCountByCtg" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+        select
+            count(1)
+        from ssd_query_template t
+        left join ssd_query_template_ctg c on t.ctg_id = c.ctg_id
+        left join ssd_query_template_fav f on t.tpl_id = f.tpl_id and f.created_by = #{userName}
+        where
+            (
+                (
+                    c.ctg_type in ('my','share')
+                    <if test=" isShowAll == 0">
+                        and FIND_IN_SET(#{userName}, t.tpl_owner) > 0
+                    </if>
+                )
+                or
+                (c.ctg_type in ('space'))
+            )
+        <if test="'fav' != ctgId and isShowAll == 0">
+            and  t.ctg_id in
+            <foreach item="item" collection="ctgIdList" separator="," open="(" close=")" index="">
+                #{item}
+            </foreach>
+        </if>
+        <if test="'fav' == ctgId">
+            and  f.tpl_id is not null
+        </if>
+        <if test=" templateSearchText != '' and templateSearchText != null">
+            and (
+            t.tpl_name like concat('%', #{templateSearchText},'%')
+            or
+            t.created_by like concat('%', #{templateSearchText},'%')
+            or
+            t.tpl_id = #{templateSearchText}
+            )
+        </if>
+    </select>
+    <!-- 根据模版ID查询模版相关信息 -->
+    <select id="queryTemplateByIds" parameterType="java.util.List" resultType="com.bi.queryer.ssm.query.template.model.TemplateRsp">
+        select
+            t1.tpl_id AS tplId,
+            t1.tpl_name AS tplName,
+            t1.tpl_desc AS tplDesc,
+            t1.created_by AS createdBy,
+            DATE_FORMAT(t1.created_time,'%Y-%m-%d %H:%i:%s') AS createdTime,
+            t1.updated_by AS updatedBy,
+            DATE_FORMAT(t1.updated_time,'%Y-%m-%d %H:%i:%s') AS updatedTime,
+            t1.ctg_id AS ctgId,
+            t1.cfg_id AS cfgId,
+            t1.dataset_id as datasetId
+        from
+            ssd_query_template t1
+        where t1.tpl_id in
+        <foreach item="item" collection="list" separator="," open="(" close=")" index="">
+            #{item}
+        </foreach>
+    </select>
+
+    <!-- 批量查询模板 owner（tpl_owner），供指标膨胀按组织过滤公共视图 -->
+    <select id="listTplOwnerByTplIds" parameterType="java.util.List"
+            resultType="com.bi.queryer.ssm.query.template.model.TemplateEntity">
+        SELECT
+            tpl_id AS tplId,
+            tpl_owner AS tplOwner
+        FROM
+            ssd_query_template
+        WHERE
+            tpl_id IN
+        <foreach item="item" collection="list" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <delete id="batchDeleteTpl" parameterType="com.bi.queryer.ssm.query.template.model.TemplateBatchOperateReq">
+        delete from
+        ssd_query_template
+        where tpl_id in
+        <foreach item="item" collection="tplIdList" separator="," open="(" close=")" index="">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="batchDeleteTplShareRel" parameterType="com.bi.queryer.ssm.query.template.model.TemplateBatchOperateReq">
+        delete from
+            ssd_query_template_share_rel
+        where target_tpl_id in
+        <foreach item="item" collection="tplIdList" separator="," open="(" close=")" index="">
+            #{item}
+        </foreach>
+    </delete>
+
+    <update id="batchMoveTpl" parameterType="com.bi.queryer.ssm.query.template.model.TemplateBatchOperateReq">
+        update
+        ssd_query_template t
+        set t.ctg_id = #{ctgId}
+        where t.tpl_id in
+        <foreach item="item" collection="tplIdList" separator="," open="(" close=")" index="">
+            #{item}
+        </foreach>
+    </update>
+
+    <!--批量插入分享记录-->
+    <insert id="batchAddTplShare" parameterType="java.util.List">
+        insert into ssd_query_template_share (pkid,tpl_id,share_user_name,share_time,receiver_type,receiver_id,receiver_desc)
+        values
+        <foreach collection="list" item="record" separator=",">
+            (#{record.pkid},#{record.tplId}, #{record.shareUserName},
+            #{record.shareTime},#{record.receiverType},#{record.receiverId},#{record.receiverDesc})
+        </foreach>
+    </insert>
+
+    <!--批量插入模版-->
+    <insert id="batchAddTemplate" parameterType="java.util.List">
+        insert into ssd_query_template (tpl_id,tpl_name,tpl_desc,tpl_type,cfg_id,tpl_owner,ctg_id,created_time,created_by,updated_time,updated_by,dataset_id,share_by)
+        values
+        <foreach collection="list" item="record" separator=",">
+            (#{record.tplId}, #{record.tplName},#{record.tplDesc},#{record.tplType},
+             #{record.cfgId},#{record.tplOwner},#{record.ctgId},now(),
+            #{record.createdBy},now(),#{record.updatedBy},#{record.datasetId},#{record.shareBy})
+        </foreach>
+    </insert>
+
+    <!--批量插入模版分享关系-->
+    <insert id="batchAddTemplateRel" parameterType="java.util.List">
+        insert into ssd_query_template_share_rel (source_tpl_id,target_tpl_id,root_tpl_id,source_view_id,target_view_id,created_time,created_by)
+        values
+        <foreach collection="list" item="record" separator=",">
+            (#{record.sourceTplId}, #{record.targetTplId}, #{record.rootTplId},
+            #{record.sourceViewId}, #{record.targetViewId},
+            now(), #{record.createdBy})
+        </foreach>
+    </insert>
+
+    <!--插入模版分享关系-->
+    <insert id="addTemplateRel" parameterType="com.bi.queryer.ssm.query.template.model.TemplateShareRelEntity">
+        insert into ssd_query_template_share_rel (
+            source_tpl_id, target_tpl_id, root_tpl_id,
+            source_view_id, target_view_id, root_view_id,
+            created_time, created_by)
+        values
+            (#{sourceTplId}, #{targetTplId}, #{rootTplId},
+            #{sourceViewId}, #{targetViewId}, #{rootViewId},
+            now(), #{createdBy})
+    </insert>
+
+    <!--通过目标模板id查询根模板id-->
+    <select id="queryRootTplIdByTargetTplId" parameterType="String" resultType="String">
+        select root_tpl_id from ssd_query_template_share_rel where target_tpl_id = #{targetTplId} limit 1
+    </select>
+
+    <!--通过目标视图id查询根视图id-->
+    <select id="queryRootViewIdByTargetViewId" parameterType="String" resultType="String">
+        SELECT root_view_id FROM ssd_query_template_share_rel WHERE target_view_id = #{targetViewId} LIMIT 1
+    </select>
+
+
+    <!--通过目标视图id查询根模板id-->
+    <select id="getRootTplIdByTargetViewId" parameterType="String" resultType="String">
+        SELECT root_tpl_id
+        FROM ssd_query_template_share_rel
+        WHERE target_view_id = #{viewId}
+        LIMIT 1
+    </select>
+    
+    <select id="querySourceTplCtgIdByTargetTplId" parameterType="String" resultType="String">
+        SELECT
+            t2.ctg_id
+        FROM
+            ssd_query_template_share_rel t1
+                INNER JOIN ssd_query_template t2
+                           ON t1.root_tpl_id = t2.tpl_id
+        WHERE t1.target_tpl_id = #{targetTplId}
+        limit 0,1
+    </select>
+
+    <!--批量插入模版配置数据-->
+    <insert id="batchAddTemplateCfg" parameterType="java.util.List">
+        insert into ssd_query_template_cfg (cfg_id,tpl_config)
+        values
+        <foreach collection="list" item="record" separator=",">
+            (#{record.cfgId}, #{record.tplConfig})
+        </foreach>
+    </insert>
+
+    <!-- 通过id获取模板 -->
+    <select id="queryTemplateById" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.meta.SSDQueryTemplate">
+        select
+            t1.tpl_id AS id,
+            t1.tpl_name AS NAME,
+            t1.tpl_desc AS description,
+            t1.tpl_type as tplType,
+            t1.ctg_id AS ctgId,
+            t1.created_by AS createdBy,
+            DATE_FORMAT(t1.created_time,'%Y-%m-%d %H:%i:%s') AS createdTime,
+            t1.updated_by AS updatedBy,
+            DATE_FORMAT(t1.updated_time,'%Y-%m-%d %H:%i:%s') AS updatedTime,
+            t1.tpl_exp_max_rows as tplExpMaxRows,
+            case when t3.ctg_type in ('my','share') and FIND_IN_SET(#{userName}, t1.tpl_owner) > 0 then 1 else 0 end as canSave,
+            case when t3.ctg_type = 'space' then 1 else 0 end as isSpaceTpl,
+            t1.dataset_id as datasetId,
+            t1.tpl_owner as tplOwner
+        from ssd_query_template t1
+        inner join ssd_query_template_ctg t3 on t1.ctg_id = t3.ctg_id
+        where t1.tpl_id = #{templateId}
+    </select>
+
+    <select id="batchQueryTemplateCfg" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.query.template.model.TemplateRsp">
+        select
+            t1.tpl_id as tplId,
+            t1.tpl_name as tplName,
+            t2.tpl_config as tplConfig,
+            t1.dataset_id as datasetId
+        from
+            ssd_query_template t1
+            inner join ssd_query_template_cfg t2 on t1.cfg_id = t2.cfg_id
+         where t1.tpl_id in (
+            <foreach collection="tplIdList" item="item" separator=",">
+              #{item}
+            </foreach>
+        )
+    </select>
+
+    <!--批量查询模板更新时间-->
+    <select id="batchQueryTemplateUpdateTime" parameterType="java.util.List"  resultType="com.bi.queryer.ssm.query.template.model.TemplateEntity">
+        SELECT
+          tpl_id as tplId,
+          IFNULL(updated_time,created_time) as updatedTime,
+           dataset_id as datasetId
+        FROM
+          `ssd_query_template`
+        WHERE tpl_id IN (
+            <foreach item="item" collection="list" separator=",">
+                #{item}
+            </foreach>
+          )
+    </select>
+
+    <insert id="insertIntoTemplateCfg" parameterType="java.util.HashMap">
+        insert into ssd_query_template_cfg
+            (
+             cfg_id,
+             tpl_config
+            )
+        select
+            ${cfgIdCaseWhenSql} as cfg_id,
+            tpl_config as tpl_config
+        from
+            ssd_query_template_cfg
+         where
+            cfg_id in (
+                <foreach item="item" collection="cfgIdList" separator=",">
+                    #{item}
+                </foreach>
+            )
+    </insert>
+
+    <update id="updateTemplateUpdatedTime" parameterType="java.util.HashMap">
+        update
+            ssd_query_template
+        set
+            updated_time = now(),
+            updated_by = #{userName}
+        where
+            tpl_id = #{tplId}
+    </update>
+
+    <update id="updateTemplateDatasetId" parameterType="java.util.HashMap">
+        update
+            ssd_query_template
+        set
+            updated_time = now(),
+            updated_by = #{userName},
+            dataset_id = #{datasetId}
+        where
+            tpl_id = #{tplId}
+    </update>
+
+    <select id="getTemplateByCtgId" parameterType="String" resultType="com.bi.queryer.ssm.query.template.model.TemplateRsp">
+        SELECT
+            t1.tpl_id as tplId,
+            t1.tpl_name as tplName
+        FROM
+            ssd_query_template t1
+                INNER JOIN v_ssd_query_template_ctg t2
+                           ON t1.ctg_id = t2.ctg_id
+        WHERE t2.ctg_id_path LIKE concat('%',#{ctgId},'%')
+          AND tpl_type in ('normal','snapshot')
+        ORDER BY t2.ctg_name_path
+    </select>
+
+    <!-- 通过id获取模板更新信息 -->
+    <select id="queryTemplateUpdateInfoById" parameterType="String" resultType="com.bi.queryer.ssm.meta.SSDQueryTemplate">
+        select
+            t1.tpl_id AS id,
+            t1.updated_by AS updatedBy,
+            DATE_FORMAT(t1.updated_time,'%Y-%m-%d %H:%i:%s') AS updatedTime
+        from ssd_query_template t1
+        where t1.tpl_id = #{templateId}
+    </select>
+
+    <!-- 通过目录id获取模板目录全路径 -->
+    <select id="queryCtgFullPathByCtgId" parameterType="String" resultType="String">
+        SELECT
+            ctg_name_path
+        FROM
+            v_ssd_query_template_ctg
+        WHERE ctg_id = #{ctgId}
+        limit 0,1
+    </select>
+
+</mapper>

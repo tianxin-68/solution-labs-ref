@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.lunar.year.week">
+
+    <select id="queryAll" resultType="com.bi.queryer.ssm.engine.analysis.lunaryearweek.lunarYearWeekEntity">
+        SELECT
+            current_dt as currentDt,
+            lunar_year_week_1 as lunarYearWeek1,
+            lunar_year_week_2 as lunarYearWeek2,
+            lunar_year_week_3 as lunarYearWeek3
+        FROM
+            ssm_lunar_year_week_cfg
+        ORDER BY current_dt
+    </select>
+
+</mapper>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.hot.table.repair.task.log">
+    <select id="queryById" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableRepairTaskLog">
+        select
+            t1.task_id as taskId,
+            t1.source_table_name as sourceTableName,
+            t1.task_batch_no as taskBatchNo,
+            t1.task_script_type as  taskScriptType,
+            t1.task_exec_status as taskExecStatus,
+            t1.task_exec_info as taskExecInfo,
+            t1.task_exec_start_time as taskExecStartTime,
+            t1.task_exec_end_time as taskExecEndTime
+        from ssm_hot_table_repair_task_log t1
+        where 1=1
+            and t1.task_id = #{taskId}
+    </select>
+    <insert id="add" parameterType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableRepairTaskLog">
+        insert into ssm_hot_table_repair_task_log
+        (
+            task_id,
+            source_table_name,
+            task_batch_no,
+            task_script_type,
+            task_exec_id,
+            task_exec_status,
+            task_server_ip,
+            task_exec_info,
+            task_exec_start_time,
+            task_exec_end_time
+        )
+        values
+            (
+            #{taskId},
+            #{sourceTableName},
+            #{taskBatchNo},
+            #{taskScriptType},
+            #{taskExecId},
+            #{taskExecStatus},
+            #{taskServerIp},
+            #{taskExecInfo},
+            #{taskExecStartTime},
+            #{taskExecEndTime}
+            )
+    </insert>
+
+    <update id="cancelBySourceTable" parameterType="java.util.HashMap">
+        update ssm_hot_table_repair_task_log
+        set task_exec_status = 'cancel',
+            task_exec_end_time = now()
+        where 1=1
+            and task_exec_status in ('ready', 'padding', 'running')
+        <if test="sourceTableName != null and sourceTableName != '' ">
+            and source_table_name = #{sourceTableName}
+        </if>
+    </update>
+
+    <update id="cancelById" parameterType="java.util.HashMap">
+        update ssm_hot_table_repair_task_log
+        set task_exec_status = 'cancel',
+        task_exec_end_time = now()
+        where 1=1
+        and task_exec_status in ('ready', 'padding', 'running')
+        and task_id in(
+        <if test="taskIdList != null and taskIdList != '' ">
+            <foreach item="item" index="index" collection="taskIdList" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        )
+    </update>
+
+    <update id="updateStatusBySourceTable" parameterType="java.util.HashMap">
+        update ssm_hot_table_repair_task_log
+        set task_exec_status = #{execStatus},
+            task_exec_end_time = now()
+        where 1=1
+          and source_table_name = #{sourceTableName}
+    </update>
+
+    <update id="updateStatusById" parameterType="java.util.HashMap">
+        update ssm_hot_table_repair_task_log
+        set task_exec_status = #{execStatus},
+            task_exec_info = #{execInfo}
+            <if test="execEndTime != null and execEndTime != '' ">
+                , task_exec_end_time = #{execEndTime}
+            </if>
+        where 1=1
+          <if test="taskId != null and taskId != '' ">
+              and task_id = #{taskId}
+          </if>
+          <if test="taskIdList != null">
+            and task_id in(
+                <foreach item="item" index="index" collection="taskIdList" separator=",">
+                    #{item}
+                </foreach>
+            )
+        </if>
+    </update>
+    <delete id="deleteById" parameterType="java.util.HashMap">
+        delete from ssm_hot_table_repair_task_log where task_id = #{taskId}
+    </delete>
+
+    <update id="updateDataCheckStatusByTask" parameterType="com.bi.queryer.ssm.meta.accelerate.hot.HotTableRepairTask">
+        update ssm_hot_table_repair_task_log
+            set data_check_result = #{dataCheckResult},
+                data_check_info = #{dataCheckInfo},
+                data_check_time = now()
+        where task_id = #{taskId}
+    </update>
+
+    <update id="updateMinDateStatus" parameterType="java.util.HashMap">
+        update ssm_hot_table_repair_task_log
+        set is_hot_min_date_updated = #{isHotMinDateUpdated}
+        where task_id in(
+        <if test="taskIdList != null and taskIdList != '' ">
+            <foreach item="item" index="index" collection="taskIdList" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        )
+    </update>
+</mapper>

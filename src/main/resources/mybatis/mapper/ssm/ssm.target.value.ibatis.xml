@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.target.value">
+
+    <select id="queryAllField"  resultType="com.bi.queryer.ssm.meta.targetValue.TargetTableField">
+        select table_id as tableId,
+                table_title as tableTitle,
+                table_owner as tableOwner,
+                target_type as targetType,
+                date_type as dateType,
+                date_granularity as dateGranularity,
+                field_type as fieldType,
+                white_paper_code as whitePaperCode,
+                white_paper_name as whitePaperName,
+                is_positive as isPositive,
+                dt as dt
+        from ssm_entity_table_meta
+    </select>
+
+</mapper>

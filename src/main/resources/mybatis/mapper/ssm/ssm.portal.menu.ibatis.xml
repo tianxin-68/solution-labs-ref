@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ssm.portal.menu">
+
+    <select id="getMenuList" parameterType="java.util.HashMap" resultType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        SELECT
+          t1.portal_id as portalId,
+          t2.portal_name as portalName,
+          t1.menu_id AS menuId,
+          t1.menu_name AS menuName,
+          t1.menu_type AS menuType,
+          t1.menu_desc AS menuDesc,
+          t1.content_ref_id AS contentRefId,
+          t1.parent_menu_id as parentMenuId
+        FROM
+          ssm_portal_menu t1
+            INNER JOIN `ssm_portal` t2
+            ON t1.`portal_id` = t2.`portal_id`
+        WHERE t1.is_active = 1
+         <if test="portalId != null and '' != portalId">
+             and t1.portal_id = #{portalId}
+         </if>
+        ORDER BY t1.sort_id
+    </select>
+
+    <select id="queryMaxSortId" parameterType="java.util.HashMap" resultType="Double">
+        SELECT IFNULL(MAX(sort_id),0) FROM ssm_portal_menu
+        <if test="parentMenuId != null and '' != parentMenuId">
+            where parent_menu_id = #{parentMenuId}
+        </if>
+    </select>
+
+    <select id="queryMinSortId" parameterType="java.util.HashMap" resultType="Double">
+        SELECT IFNULL(MIN(sort_id),0) FROM ssm_portal_menu
+        <if test="parentMenuId != null and '' != parentMenuId">
+            where parent_menu_id = #{parentMenuId}
+        </if>
+    </select>
+
+    <update id="updateMenuSortId" parameterType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        update
+            ssm_portal_menu
+        set
+            sort_id = #{sortId}
+        where
+            menu_id = #{menuId}
+    </update>
+
+    <update id="incrementMenuSortId" parameterType="java.util.HashMap">
+        update
+            ssm_portal_menu
+        set
+            sort_id = sort_id + 1
+        where
+            parent_menu_id = #{parentMenuId}
+            <choose>
+                <when test="'after'.toString() == dragType">
+                    and sort_id > #{sortId}
+                </when>
+                <otherwise>
+                    and sort_id >= #{sortId}
+                </otherwise>
+            </choose>
+
+    </update>
+
+    <insert id="add" parameterType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        insert into ssm_portal_menu
+        (
+            menu_id,
+            portal_id,
+            menu_name,
+            menu_type,
+            parent_menu_id,
+            menu_desc,
+            content_ref_id,
+            sort_id,
+            is_active,
+            created_by,
+            created_time
+        )
+        values
+        (
+            #{menuId},
+            #{portalId},
+            #{menuName},
+            #{menuType},
+            #{parentMenuId},
+            #{menuDesc},
+            #{contentRefId},
+            #{sortId},
+            1,
+            #{createdBy},
+            now()
+        )
+    </insert>
+
+    <insert id="batchAdd" parameterType="java.util.List">
+        insert into ssm_portal_menu
+        (
+            menu_id,
+            portal_id,
+            menu_name,
+            menu_type,
+            parent_menu_id,
+            menu_desc,
+            content_ref_id,
+            sort_id,
+            is_active,
+            created_by,
+            created_time
+        )
+        values
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.menuId},
+                #{item.portalId},
+                #{item.menuName},
+                #{item.menuType},
+                #{item.parentMenuId},
+                #{item.menuDesc},
+                #{item.contentRefId},
+                #{item.sortId},
+                1,
+                #{item.createdBy},
+                now()
+            )
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        update
+            ssm_portal_menu
+        set
+            portal_id = #{portalId},
+            menu_name = #{menuName},
+            menu_type = #{menuType},
+            parent_menu_id = #{parentMenuId},
+            menu_desc = #{menuDesc},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where menu_id = #{menuId}
+    </update>
+
+    <update id="updateMenuNameByContentRefId" parameterType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        update
+            ssm_portal_menu
+        set
+            menu_name = #{menuName},
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where content_ref_id = #{contentRefId}
+    </update>
+
+    <select id="get" parameterType="String" resultType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        select
+            menu_id as menuId,
+            portal_id as portalId,
+            menu_name as menuName,
+            menu_type as menuType,
+            menu_url as menuUrl,
+            parent_menu_id as parentMenuId,
+            menu_desc as menuDesc,
+            content_ref_id as contentRefId,
+            sort_id as sortId,
+            created_by as createdBy 
+        from
+            ssm_portal_menu
+        where
+             menu_id = #{menuId}
+    </select>
+
+    <!-- 通过目录节点id（menu_id）或看板id（content_ref_id）反查所属门户，用于「有任意节点权限即有门户权限」 -->
+    <select id="queryPortalIdsByResIds" parameterType="java.util.ArrayList" resultType="String">
+        select distinct portal_id
+        from ssm_portal_menu
+        where is_active = 1
+          and (menu_id in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+           or content_ref_id in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+          )
+    </select>
+
+    <select id="queryNamesByIds" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        select menu_id as menuId, menu_name as menuName
+        from ssm_portal_menu
+        where menu_id in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="getByPortalId" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.portal.entity.PortalMenu" >
+        select
+            menu_id as menuId,
+            portal_id as portalId,
+            menu_name as menuName,
+            menu_type as menuType,
+            parent_menu_id as parentMenuId,
+            menu_desc as menuDesc,
+            content_ref_id as contentRefId,
+            sort_id as sortId
+        from ssm_portal_menu
+        where is_active = 1
+        and portal_id = #{portalId}
+        <if test="menuType != null">
+            and menu_type = #{menuType}
+        </if>
+        order by sort_id
+    </select>
+
+    <select id="getByParentId" resultType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        select
+            menu_id as menuId,
+            portal_id as portalId,
+            menu_name as menuName,
+            menu_type as menuType,
+            parent_menu_id as parentMenuId,
+            menu_desc as menuDesc,
+            content_ref_id as contentRefId,
+            sort_id as sortId
+        from
+            ssm_portal_menu
+        where
+            is_active = 1
+            and parent_menu_id = #{menuId}
+        order by sort_id
+    </select>
+
+    <delete id="delete" parameterType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        update
+            ssm_portal_menu
+        set is_active = 0,
+            updated_by = #{updatedBy},
+            updated_time = now()
+        where menu_id = #{menuId}
+    </delete>
+
+    <delete id="deleteByIds" parameterType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        update
+        ssm_portal_menu
+        set is_active = 0,
+        updated_by = #{updatedBy},
+        updated_time = now()
+        where menu_id in
+        <foreach collection="menuIds" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <select id="getPortalMenuInfoByAnalysisTplIds" parameterType="java.util.ArrayList" resultType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        SELECT
+          t1.menu_id as menuId,
+          t1.portal_id as portalId,
+          t2.`portal_name` as portalName,
+          t1.`content_ref_id` as contentRefId
+        FROM
+          ssm_portal_menu t1
+          INNER JOIN `ssm_portal` t2
+            ON t1.`portal_id` = t2.`portal_id`
+        WHERE t1.is_active = 1
+          AND t1.content_ref_id IN (
+            <foreach collection="list" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+          )
+    </select>
+
+    <select id="getPortalMenuPath" parameterType="java.util.Map" resultType="com.bi.queryer.ssm.portal.entity.PortalMenu">
+        select a.menu_id as menuId, a.portal_id as portalId, a.content_ref_id as contentRefId,c.portal_name as portalName,
+                a.menu_name as menuName, a.menu_desc as menuDesc,
+                concat(case when b.menu_name is null then '' else concat('/', b.menu_name) end , '/' , a.menu_name) as menuUrl,
+                a.menu_type as menuType
+        from
+        (
+            select menu_id, portal_id, parent_menu_id,menu_name,menu_desc,content_ref_id,menu_type from ssm_portal_menu
+            where is_active = 1 and menu_type in
+            <if test="menuTypes != null">
+                <foreach collection="menuTypes" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="menuIds != null">
+                and menu_id in
+                <foreach collection="menuIds" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="refIds != null">
+                and content_ref_id in
+                <foreach collection="refIds" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        )a left join
+        (
+            select menu_id, portal_id, parent_menu_id,menu_name,content_ref_id from ssm_portal_menu
+        )b on a.parent_menu_id = b.menu_id
+        left join
+        (
+            select portal_id,portal_name from ssm_portal
+        )c on a.portal_id = c.portal_id
+        where c.portal_id is not null
+    </select>
+
+</mapper>

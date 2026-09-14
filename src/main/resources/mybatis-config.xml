@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	<settings>
+        <setting name="logImpl" value="LOG4J"/>
+        <!-- 
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+         -->
+	    <setting name="callSettersOnNulls" value="true" />
+    </settings>
+	<typeAliases>
+		<!-- 
+		<package name="com.bi.queryer" />
+		 -->
+	</typeAliases>
+	<plugins>
+		<plugin interceptor="com.github.pagehelper.PageInterceptor">
+			<!-- 指定方言，Mysql数据库 -->
+			<property name="helperDialect" value="mysql"/>
+			<property name="reasonable" value="false"/>
+			<property name="supportMethodsArguments" value="false"/>
+			<property name="params" value="countSql"/>
+			<property name="pageSizeZero" value="true"/>
+			<property name="autoRuntimeDialect" value="true"/>
+		</plugin>
+	</plugins>
+</configuration>
